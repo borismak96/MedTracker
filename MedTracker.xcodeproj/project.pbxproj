@@ -48,9 +48,6 @@
 			isa = PBXGroup;
 			children = (
 				9B851C7F2C41D8DF006BEED4 /* MedTracker */,
-				MODELGROUP2C41D8DF006BE /* Models */,
-				VIEWMODELGROUPC41D8DF00 /* ViewModels */,
-				VIEWGROUPC41D8DF006BEED /* Views */,
 				9B851C7E2C41D8DF006BEED4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +67,9 @@
 				9B851C822C41D8DF006BEED4 /* ContentView.swift */,
 				9B851C842C41D8E0006BEED4 /* Assets.xcassets */,
 				9B851C862C41D8E0006BEED4 /* Preview Content */,
+				MODELGROUP2C41D8DF006BE /* Models */,
+				VIEWMODELGROUPC41D8DF00 /* ViewModels */,
+				VIEWGROUPC41D8DF006BEED /* Views */,
 			);
 			path = MedTracker;
 			sourceTree = "<group>";
