@@ -27,9 +27,15 @@ struct HomeView: View {
     var headerSection: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(viewModel.profile.name.isEmpty ? "Hello!" : "Hello, \(viewModel.profile.name)!")
-                    .font(.title2)
-                    .bold()
+                if viewModel.profile.name.isEmpty {
+                    Text("Hello!")
+                        .font(.title2)
+                        .bold()
+                } else {
+                    Text("Hello, \(viewModel.profile.name)!")
+                        .font(.title2)
+                        .bold()
+                }
                 Text("Let's stay on track today.")
                     .foregroundColor(.secondary)
             }
@@ -45,10 +51,17 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Today's Medication")
                             .font(.headline)
-                        Text(viewModel.profile.medicationName.isEmpty ? "Your Medication" : viewModel.profile.medicationName)
-                            .font(.title)
-                            .bold()
-                            .foregroundColor(.blue)
+                        if viewModel.profile.medicationName.isEmpty {
+                            Text("Your Medication")
+                                .font(.title)
+                                .bold()
+                                .foregroundColor(.blue)
+                        } else {
+                            Text(viewModel.profile.medicationName)
+                                .font(.title)
+                                .bold()
+                                .foregroundColor(.blue)
+                        }
                         
                         HStack {
                             Image(systemName: "clock")
