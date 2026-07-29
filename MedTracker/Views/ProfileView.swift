@@ -17,6 +17,7 @@ struct ProfileView: View {
 
 struct ProfileForm: View {
     @Bindable var profile: UserProfile
+    @AppStorage("appLanguage") private var appLanguage = "system"
     
     var body: some View {
         Form {
@@ -39,6 +40,14 @@ struct ProfileForm: View {
                             Text("\(minute) min").tag(minute)
                         }
                     }
+                }
+            }
+            
+            Section(header: Text("App Settings")) {
+                Picker("Language", selection: $appLanguage) {
+                    Text("System").tag("system")
+                    Text("English").tag("en")
+                    Text("繁體中文").tag("zh-Hant")
                 }
             }
             
