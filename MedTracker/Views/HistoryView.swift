@@ -1,12 +1,13 @@
 import SwiftUI
+import SwiftData
 
 struct HistoryView: View {
-    @EnvironmentObject var viewModel: MedTrackerViewModel
+    @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.logs) { log in
+                ForEach(logs) { log in
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(log.date, style: .date)
