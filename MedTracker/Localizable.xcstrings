@@ -441,6 +441,46 @@
           }
         }
       }
+    },
+    "Take Medication": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服用藥物"
+          }
+        }
+      }
+    },
+    "Dose (e.g., 1 pill)": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劑量（例如：1粒）"
+          }
+        }
+      }
+    },
+    "Medicine: %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "藥物：%@"
+          }
+        }
+      }
+    },
+    "Dose: %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劑量：%@"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

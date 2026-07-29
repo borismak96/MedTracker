@@ -10,6 +10,10 @@ struct HomeView: View {
     @State private var skipReaction = ""
     @State private var skippedTime = Date()
     
+    @State private var showingTakeSheet = false
+    @State private var takeMedicineName = ""
+    @State private var takeDose = ""
+    
     var profile: UserProfile? { profiles.first }
     
     var todayLog: MedicationLog? {
@@ -42,7 +46,17 @@ struct HomeView: View {
                     if let profile = profile {
                         headerSection(profile: profile)
                         if let log = todayLog {
-                            TodayCard(log: log, profile: profile, showingSkipSheet: $showingSkipSheet, skippedTime: $skippedTime, skipReaction: $skipReaction, skipNotes: $skipNotes)
+                            TodayCard(
+                                log: log,
+                                profile: profile,
+                                showingSkipSheet: $showingSkipSheet,
+                                skippedTime: $skippedTime,
+                                skipReaction: $skipReaction,
+                                skipNotes: $skipNotes,
+                                showingTakeSheet: $showingTakeSheet,
+                                takeMedicineName: $takeMedicineName,
+                                takeDose: $takeDose
+                            )
                         }
                         statsSection
                     } else {
@@ -55,6 +69,11 @@ struct HomeView: View {
             .sheet(isPresented: $showingSkipSheet) {
                 if let log = todayLog {
                     skipSheetContent(for: log)
+                }
+            }
+            .sheet(isPresented: $showingTakeSheet) {
+                if let log = todayLog {
+                    takeSheetContent(for: log)
                 }
             }
         }
@@ -138,6 +157,39 @@ struct HomeView: View {
             })
         }
     }
+    
+    func takeSheetContent(for log: MedicationLog) -> some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Medication Details")) {
+                    TextField("Medication Name", text: $takeMedicineName)
+                    
+                    TextField("Dose (e.g., 1 pill)", text: $takeDose)
+                }
+                
+                Button(action: {
+                    log.isTaken = true
+                    log.medicineName = takeMedicineName.isEmpty ? nil : takeMedicineName
+                    log.dose = takeDose.isEmpty ? nil : takeDose
+                    
+                    // Clear skip details if they existed
+                    log.skippedTime = nil
+                    log.physicalReaction = nil
+                    log.notes = nil
+                    
+                    showingTakeSheet = false
+                }) {
+                    Text("Save")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .bold()
+                }
+            }
+            .navigationTitle("Take Medication")
+            .navigationBarItems(trailing: Button("Cancel") {
+                showingTakeSheet = false
+            })
+        }
+    }
 }
 
 struct TodayCard: View {
@@ -147,6 +199,10 @@ struct TodayCard: View {
     @Binding var skippedTime: Date
     @Binding var skipReaction: String
     @Binding var skipNotes: String
+    
+    @Binding var showingTakeSheet: Bool
+    @Binding var takeMedicineName: String
+    @Binding var takeDose: String
     
     var body: some View {
         VStack(spacing: 20) {
@@ -180,19 +236,34 @@ struct TodayCard: View {
             }
             
             if log.isTaken {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Taken Today")
-                        .bold()
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Taken Today")
+                            .bold()
+                    }
+                    
+                    if let medName = log.medicineName, !medName.isEmpty {
+                        Text("Medicine: \(medName)")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
+                    if let dose = log.dose, !dose.isEmpty {
+                        Text("Dose: \(dose)")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .background(Color.green.opacity(0.1))
                 .cornerRadius(12)
                 
                 Button(action: {
                     log.isTaken = false
+                    log.medicineName = nil
+                    log.dose = nil
                 }) {
                     Text("Undo")
                         .font(.footnote)
@@ -230,7 +301,9 @@ struct TodayCard: View {
             } else {
                 HStack(spacing: 16) {
                     Button(action: {
-                        log.isTaken = true
+                        takeMedicineName = profile.medicationName
+                        takeDose = ""
+                        showingTakeSheet = true
                     }) {
                         Text("Take Now")
                             .font(.headline)
