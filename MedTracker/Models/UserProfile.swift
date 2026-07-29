@@ -1,6 +1,8 @@
 import Foundation
+import SwiftData
 
-struct UserProfile: Codable {
+@Model
+class UserProfile {
     var name: String
     var medicationName: String
     var targetTimeHour: Int
@@ -13,6 +15,7 @@ struct UserProfile: Codable {
         self.targetTimeMinute = targetTimeMinute
     }
     
+    @Transient
     var targetTimeDescription: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short

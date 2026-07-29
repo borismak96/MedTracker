@@ -1,8 +1,10 @@
 import Foundation
+import SwiftData
 
-struct MedicationLog: Identifiable, Codable {
-    let id: UUID
-    let date: Date
+@Model
+class MedicationLog {
+    var id: UUID
+    var date: Date
     var isTaken: Bool
     var skippedTime: Date?
     var physicalReaction: String?
