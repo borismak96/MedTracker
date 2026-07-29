@@ -17,6 +17,17 @@ struct HistoryView: View {
                                 Text("Taken")
                                     .font(.subheadline)
                                     .foregroundColor(.green)
+                                
+                                if let med = log.medicineName, !med.isEmpty {
+                                    Text("Medicine: \(med)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                if let dose = log.dose, !dose.isEmpty {
+                                    Text("Dose: \(dose)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             } else if let skipped = log.skippedTime {
                                 Text("Missed at \(skipped, style: .time)")
                                     .font(.subheadline)
