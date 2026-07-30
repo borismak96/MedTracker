@@ -365,23 +365,31 @@ struct TodayCard: View {
                     }
                     
                     if let medName = log.medicineName, !medName.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Medicine:")
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Medications:")
                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
                                 .foregroundColor(.primary)
-                            Text(medName)
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    if let dose = log.dose, !dose.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Dose:")
-                                .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                .foregroundColor(.primary)
-                            Text(dose)
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
+                            
+                            let names = medName.components(separatedBy: "\n")
+                            let doses = log.dose?.components(separatedBy: "\n") ?? []
+                            
+                            ForEach(0..<names.count, id: \.self) { index in
+                                HStack {
+                                    Text(names[index])
+                                        .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    if index < doses.count, !doses[index].isEmpty {
+                                        Text(doses[index])
+                                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                            .foregroundColor(.primary.opacity(0.8))
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.mint.opacity(0.2))
+                                            .cornerRadius(6)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
