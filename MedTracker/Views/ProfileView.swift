@@ -45,39 +45,57 @@ struct ProfileForm: View {
     var body: some View {
         Form {
             Section {
-                HStack {
-                    Spacer()
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
-                        if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        } else {
-                            VStack {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .resizable()
-                                    .frame(width: 80, height: 80)
-                                    .foregroundColor(.mint)
-                                    .background(Circle().fill(Color.mint.opacity(0.2)))
-                                Text("Add Photo")
-                                    .font(.system(.caption, design: .rounded, weight: .bold))
-                                    .foregroundColor(.mint)
-                                    .padding(.top, 4)
+                VStack(spacing: 16) {
+                    if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .frame(width: 100, height: 100)
+                            .foregroundColor(.mint)
+                            .background(Circle().fill(Color.mint.opacity(0.2)))
+                    }
+                    
+                    HStack(spacing: 20) {
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                            Text(profile.profileImageData == nil ? "Add Photo" : "Change Photo")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.mint)
+                                .cornerRadius(12)
+                        }
+                        .onChange(of: selectedPhotoItem) { _, newItem in
+                            Task {
+                                if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                                    profile.profileImageData = data
+                                }
+                            }
+                        }
+                        
+                        if profile.profileImageData != nil {
+                            Button(action: {
+                                profile.profileImageData = nil
+                                selectedPhotoItem = nil
+                            }) {
+                                Text("Remove")
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.red)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.red.opacity(0.1))
+                                    .cornerRadius(12)
                             }
                         }
                     }
-                    .onChange(of: selectedPhotoItem) { _, newItem in
-                        Task {
-                            if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                                profile.profileImageData = data
-                            }
-                        }
-                    }
-                    Spacer()
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
             }
             .listRowBackground(Color.clear)
