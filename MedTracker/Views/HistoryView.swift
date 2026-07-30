@@ -161,14 +161,32 @@ struct HistoryView: View {
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                         }
                         if let med = log.medicineName, !med.isEmpty {
-                            Text("Medicine: \(med)")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        if let dose = log.dose, !dose.isEmpty {
-                            Text("Dose: \(dose)")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Medications:")
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
+                                
+                                let names = med.components(separatedBy: "\n")
+                                let doses = log.dose?.components(separatedBy: "\n") ?? []
+                                
+                                ForEach(0..<names.count, id: \.self) { index in
+                                    HStack {
+                                        Text(names[index])
+                                            .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        if index < doses.count, !doses[index].isEmpty {
+                                            Text(doses[index])
+                                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                .foregroundColor(.primary.opacity(0.8))
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.mint.opacity(0.2))
+                                                .cornerRadius(6)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -230,6 +248,25 @@ struct HistoryView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .background(Color.red.opacity(0.1))
+                .cornerRadius(12)
+            }
+            
+            if let log = log, let moodStr = log.mood, let mood = MoodStatus.from(string: moodStr) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: mood.icon)
+                            .foregroundColor(mood.color)
+                        Text("Mood: ")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(mood.color)
+                        Text(LocalizedStringKey(mood.rawValue))
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundColor(mood.color)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(mood.color.opacity(0.1))
                 .cornerRadius(12)
             }
         }
@@ -306,6 +343,7 @@ struct DailyRecordSheet: View {
     
     @State private var systolic = ""
     @State private var diastolic = ""
+    @State private var mood: MoodStatus? = nil
     
     var body: some View {
         NavigationView {
@@ -321,8 +359,8 @@ struct DailyRecordSheet: View {
                 
                 if status == .taken {
                     Section(header: Text("Medication Details")) {
-                        TextField("Medication Name", text: $medicineName)
-                        TextField("Dose (e.g., 1 pill)", text: $dose)
+                        TextField("Medication Name", text: $medicineName, axis: .vertical)
+                        TextField("Dose (e.g., 1 pill)", text: $dose, axis: .vertical)
                     }
                 } else if status == .missed {
                     Section(header: Text("Missed Details")) {
@@ -337,6 +375,31 @@ struct DailyRecordSheet: View {
                         .keyboardType(.numberPad)
                     TextField("Diastolic (Low) BP", text: $diastolic)
                         .keyboardType(.numberPad)
+                }
+                
+                Section(header: Text("Mood (Optional)")) {
+                    HStack(spacing: 15) {
+                        ForEach(MoodStatus.allCases, id: \.self) { m in
+                            Button(action: {
+                                withAnimation {
+                                    mood = mood == m ? nil : m
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(mood == m ? m.color.opacity(0.2) : Color(UIColor.systemGray6))
+                                        .frame(width: 45, height: 45)
+                                    
+                                    Image(systemName: m.icon)
+                                        .font(.system(size: 20))
+                                        .foregroundColor(mood == m ? m.color : .gray)
+                                }
+                                .scaleEffect(mood == m ? 1.1 : 1.0)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .buttonStyle(.borderless)
                 }
                 
                 Button(action: saveRecord) {
@@ -357,8 +420,12 @@ struct DailyRecordSheet: View {
         if let log = log {
             if log.isTaken {
                 status = .taken
-                medicineName = log.medicineName ?? profile.medicationName
-                dose = log.dose ?? profile.dose
+                
+                let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+                let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+                
+                medicineName = log.medicineName ?? medNames.joined(separator: "\n")
+                dose = log.dose ?? medDoses.joined(separator: "\n")
             } else if log.skippedTime != nil {
                 status = .missed
                 skippedTime = log.skippedTime ?? date
@@ -369,12 +436,17 @@ struct DailyRecordSheet: View {
             }
             systolic = log.systolic.map { "\($0)" } ?? ""
             diastolic = log.diastolic.map { "\($0)" } ?? ""
+            mood = MoodStatus.from(string: log.mood)
         } else {
             status = .none
-            medicineName = profile.medicationName
-            dose = profile.dose
+            let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+            let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+            
+            medicineName = medNames.joined(separator: "\n")
+            dose = medDoses.joined(separator: "\n")
             systolic = ""
             diastolic = ""
+            mood = nil
         }
     }
     
@@ -412,6 +484,7 @@ struct DailyRecordSheet: View {
         
         targetLog.systolic = Int(systolic)
         targetLog.diastolic = Int(diastolic)
+        targetLog.mood = mood?.rawValue
         
         try? modelContext.save()
         dismiss()

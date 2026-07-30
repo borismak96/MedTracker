@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var bpDiastolic = ""
     
     @State private var showingBPChart = false
+    @State private var showingMedicalCard = false
     
     var profile: UserProfile? { profiles.first }
     
@@ -81,6 +82,22 @@ struct HomeView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
                 }
+                
+                if showingMedicalCard {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                showingMedicalCard = false
+                            }
+                        }
+                    
+                    if let profile = profile {
+                        MedicalCardView(profile: profile, isShowing: $showingMedicalCard)
+                            .transition(.scale.combined(with: .opacity))
+                            .zIndex(1)
+                    }
+                }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingSkipSheet) {
@@ -110,9 +127,11 @@ struct HomeView: View {
                 Spacer()
                 
                 Button(action: {
-                    // Profile or Settings Action
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                        showingMedicalCard = true
+                    }
                 }) {
-                    Image(systemName: "bell.badge.fill")
+                    Image(systemName: "person.text.rectangle.fill")
                         .font(.system(size: 20))
                         .foregroundColor(.mint)
                         .padding(12)
@@ -195,11 +214,17 @@ struct HomeView: View {
                     Spacer()
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    let takenCount = logs.prefix(30).filter { $0.isTaken }.count
-                    Text("\(takenCount)/30")
+                    let calendar = Calendar.current
+                    let today = Date()
+                    let daysInMonth = calendar.range(of: .day, in: .month, for: today)?.count ?? 30
+                    let takenThisMonthCount = logs.filter { 
+                        calendar.isDate($0.date, equalTo: today, toGranularity: .month) && $0.isTaken 
+                    }.count
+                    
+                    Text("\(takenThisMonthCount)/\(daysInMonth)")
                         .font(.system(.title, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
-                    Text("Last 30 Days")
+                    Text("This Month")
                         .font(.system(.footnote, design: .rounded, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -280,6 +305,8 @@ struct TodayCard: View {
     @Binding var skipReaction: String
     @Binding var skipNotes: String
     
+    @State private var selectedMood: MoodStatus? = nil
+    
     var body: some View {
         VStack(spacing: 24) {
             HStack {
@@ -288,14 +315,20 @@ struct TodayCard: View {
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
                     
-                    if profile.medicationName.isEmpty {
+                    if profile.medications.isEmpty {
                         Text("Your Medication")
                             .font(.system(.title2, design: .rounded, weight: .bold))
                             .foregroundColor(.primary)
                     } else {
-                        Text(profile.medicationName)
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                            .foregroundColor(.primary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(profile.medications) { med in
+                                if !med.name.isEmpty {
+                                    Text("\(med.name)\(med.dose.isEmpty ? "" : " - \(med.dose)")")
+                                        .font(.system(.title3, design: .rounded, weight: .bold))
+                                        .foregroundColor(.primary)
+                                }
+                            }
+                        }
                     }
                     
                     HStack {
@@ -325,17 +358,45 @@ struct TodayCard: View {
                             .foregroundColor(.green)
                         Text("Taken Today")
                             .font(.system(.headline, design: .rounded, weight: .bold))
+                        
+                        if let moodStr = log.mood, let mood = MoodStatus.from(string: moodStr) {
+                            Spacer()
+                            ZStack {
+                                Circle().fill(mood.color.opacity(0.2)).frame(width: 40, height: 40)
+                                Image(systemName: mood.icon)
+                                    .foregroundColor(mood.color)
+                                    .font(.system(size: 20))
+                            }
+                        }
                     }
                     
                     if let medName = log.medicineName, !medName.isEmpty {
-                        Text("Medicine: \(medName)")
-                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                    if let dose = log.dose, !dose.isEmpty {
-                        Text("Dose: \(dose)")
-                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Medications:")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            let names = medName.components(separatedBy: "\n")
+                            let doses = log.dose?.components(separatedBy: "\n") ?? []
+                            
+                            ForEach(0..<names.count, id: \.self) { index in
+                                HStack {
+                                    Text(names[index])
+                                        .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    if index < doses.count, !doses[index].isEmpty {
+                                        Text(doses[index])
+                                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                            .foregroundColor(.primary.opacity(0.8))
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.mint.opacity(0.2))
+                                            .cornerRadius(6)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -347,6 +408,7 @@ struct TodayCard: View {
                     log.isTaken = false
                     log.medicineName = nil
                     log.dose = nil
+                    log.mood = nil
                 }) {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
@@ -377,18 +439,53 @@ struct TodayCard: View {
                     log.skippedTime = nil
                     log.physicalReaction = nil
                     log.notes = nil
+                    log.mood = nil
                 }) {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
                         .foregroundColor(.secondary)
                 }
             } else {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("How are you feeling today?")
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 15) {
+                        ForEach(MoodStatus.allCases, id: \.self) { mood in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedMood = mood
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(selectedMood == mood ? mood.color.opacity(0.2) : Color(UIColor.systemGray6))
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: mood.icon)
+                                        .font(.system(size: 24))
+                                        .foregroundColor(selectedMood == mood ? mood.color : .gray)
+                                }
+                                .scaleEffect(selectedMood == mood ? 1.1 : 1.0)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(.vertical, 8)
+                
                 HStack(spacing: 16) {
                     Button(action: {
                         withAnimation {
                             log.isTaken = true
-                            log.medicineName = profile.medicationName.isEmpty ? nil : profile.medicationName
-                            log.dose = profile.dose.isEmpty ? nil : profile.dose
+                            
+                            let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+                            let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+                            
+                            log.medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
+                            log.dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
+                            log.mood = selectedMood?.rawValue
                             
                             log.skippedTime = nil
                             log.physicalReaction = nil
@@ -465,22 +562,13 @@ struct VitalsCard: View {
                             .foregroundColor(.red)
                         Text("\(sys) / \(dia) mmHg")
                             .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.red)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .background(Color.red.opacity(0.1))
                 .cornerRadius(16)
-                
-                Button(action: { showingBPChart = true }) {
-                    Text("View BP Trends")
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(20)
-                }
                 
                 HStack(spacing: 16) {
                     Button(action: {
@@ -509,6 +597,16 @@ struct VitalsCard: View {
                             .background(Color.red.opacity(0.1))
                             .cornerRadius(20)
                     }
+                }
+                
+                Button(action: { showingBPChart = true }) {
+                    Text("View BP Trends")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(20)
                 }
             } else {
                 Button(action: {

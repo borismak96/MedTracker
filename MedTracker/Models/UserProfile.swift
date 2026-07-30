@@ -1,22 +1,30 @@
 import Foundation
 import SwiftData
 
+struct MedicationItem: Codable, Identifiable, Hashable {
+    var id: UUID = UUID()
+    var name: String = ""
+    var dose: String = "1"
+}
+
 @Model
 class UserProfile {
-    var name: String
-    var medicationName: String
-    var dose: String
-    var targetTimeHour: Int
-    var targetTimeMinute: Int
-    var profileImageData: Data?
+    var name: String = ""
+    var targetTimeHour: Int = 10
+    var targetTimeMinute: Int = 0
+    var profileImageData: Data? = nil
+    var medications: [MedicationItem] = []
     
-    init(name: String = "", medicationName: String = "", dose: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil) {
+    // Legacy fields to prevent database crashes
+    var medicationName: String = ""
+    var dose: String = ""
+    
+    init(name: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil, medications: [MedicationItem] = []) {
         self.name = name
-        self.medicationName = medicationName
-        self.dose = dose
         self.targetTimeHour = targetTimeHour
         self.targetTimeMinute = targetTimeMinute
         self.profileImageData = profileImageData
+        self.medications = medications
     }
     
     @Transient

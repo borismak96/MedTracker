@@ -43,6 +43,21 @@ struct ProfileForm: View {
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     
     var body: some View {
+        let timeBinding = Binding<Date>(
+            get: {
+                var components = DateComponents()
+                components.hour = profile.targetTimeHour
+                components.minute = profile.targetTimeMinute
+                return Calendar.current.date(from: components) ?? Date()
+            },
+            set: { newDate in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                profile.targetTimeHour = components.hour ?? 10
+                profile.targetTimeMinute = components.minute ?? 0
+                updateNotificationIfNeeded()
+            }
+        )
+        
         Form {
             Section {
                 VStack(spacing: 16) {
@@ -106,27 +121,47 @@ struct ProfileForm: View {
                 TextField("Name", text: $profile.name)
             }
             
-            Section(header: Text("Medication Details")) {
-                TextField("Medication Name", text: $profile.medicationName)
-                    .onChange(of: profile.medicationName) { _, _ in updateNotificationIfNeeded() }
-                
-                TextField("Dose (e.g., 1 pill)", text: $profile.dose)
-                
-                Picker("Target Hour", selection: $profile.targetTimeHour) {
-                    ForEach(0..<24) { hour in
-                        Text("\(hour):00").tag(hour)
-                    }
-                }
-                .onChange(of: profile.targetTimeHour) { _, _ in updateNotificationIfNeeded() }
-                
-                Picker("Target Minute", selection: $profile.targetTimeMinute) {
-                    ForEach(0..<60) { minute in
-                        if minute % 5 == 0 {
-                            Text("\(minute) min").tag(minute)
+            Section(header: Text("Medications")) {
+                List {
+                    ForEach($profile.medications) { $med in
+                        HStack(spacing: 12) {
+                            TextField("Medication Name", text: $med.name)
+                            
+                            Divider()
+                                .frame(height: 20)
+                            
+                            Picker("Dose", selection: $med.dose) {
+                                ForEach(1...20, id: \.self) { num in
+                                    Text("\(num)").tag("\(num)")
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .frame(width: 60)
                         }
+                        .padding(.vertical, 4)
+                    }
+                    .onDelete { indices in
+                        profile.medications.remove(atOffsets: indices)
+                    }
+                    
+                    Button(action: {
+                        withAnimation {
+                            profile.medications.append(MedicationItem())
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add Medication")
+                        }
+                        .foregroundColor(.mint)
                     }
                 }
-                .onChange(of: profile.targetTimeMinute) { _, _ in updateNotificationIfNeeded() }
+            }
+            .onChange(of: profile.medications) { _, _ in updateNotificationIfNeeded() }
+            
+            Section(header: Text("Reminder Time")) {
+                DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
             }
             
             Section(header: Text("App Settings")) {
@@ -159,6 +194,22 @@ struct ProfileForm: View {
                     }
                 }
             }
+            
+            Section {
+                Button(action: {
+                    updateNotificationIfNeeded()
+                    // Manually trigger a save to ensure SwiftData persists immediately,
+                    // although it usually auto-saves on changes.
+                    try? profile.modelContext?.save()
+                }) {
+                    Text("Save Settings")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 8)
+                }
+                .listRowBackground(Color.mint)
+            }
         }
         .font(.system(.body, design: .rounded))
         .scrollContentBackground(.hidden)
@@ -173,7 +224,8 @@ struct ProfileForm: View {
     }
     
     private func scheduleCurrentNotification() {
-        let medName = profile.medicationName.isEmpty ? String(localized: "your medication") : profile.medicationName
+        let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+        let medName = medNames.isEmpty ? String(localized: "your medication") : medNames.joined(separator: ", ")
         
         let title = String(localized: "Medication Reminder")
         // Using String format manually or localized string interpolation
