@@ -299,8 +299,7 @@ struct TodayCard: View {
     @Binding var skipReaction: String
     @Binding var skipNotes: String
     
-    @State private var selectedMood: String? = nil
-    private let moods = ["😫", "🙁", "😐", "🙂", "😄"]
+    @State private var selectedMood: MoodStatus? = nil
     
     var body: some View {
         VStack(spacing: 24) {
@@ -354,10 +353,14 @@ struct TodayCard: View {
                         Text("Taken Today")
                             .font(.system(.headline, design: .rounded, weight: .bold))
                         
-                        if let mood = log.mood {
+                        if let moodStr = log.mood, let mood = MoodStatus.from(string: moodStr) {
                             Spacer()
-                            Text(mood)
-                                .font(.system(size: 24))
+                            ZStack {
+                                Circle().fill(mood.color.opacity(0.2)).frame(width: 40, height: 40)
+                                Image(systemName: mood.icon)
+                                    .foregroundColor(mood.color)
+                                    .font(.system(size: 20))
+                            }
                         }
                     }
                     
@@ -435,18 +438,22 @@ struct TodayCard: View {
                         .foregroundColor(.secondary)
                     
                     HStack(spacing: 15) {
-                        ForEach(moods, id: \.self) { mood in
+                        ForEach(MoodStatus.allCases, id: \.self) { mood in
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     selectedMood = mood
                                 }
                             }) {
-                                Text(mood)
-                                    .font(.system(size: 32))
-                                    .padding(8)
-                                    .background(selectedMood == mood ? Color.mint.opacity(0.3) : Color.clear)
-                                    .clipShape(Circle())
-                                    .scaleEffect(selectedMood == mood ? 1.1 : 1.0)
+                                ZStack {
+                                    Circle()
+                                        .fill(selectedMood == mood ? mood.color.opacity(0.2) : Color(UIColor.systemGray6))
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: mood.icon)
+                                        .font(.system(size: 24))
+                                        .foregroundColor(selectedMood == mood ? mood.color : .gray)
+                                }
+                                .scaleEffect(selectedMood == mood ? 1.1 : 1.0)
                             }
                         }
                     }
@@ -464,7 +471,7 @@ struct TodayCard: View {
                             
                             log.medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
                             log.dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
-                            log.mood = selectedMood
+                            log.mood = selectedMood?.rawValue
                             
                             log.skippedTime = nil
                             log.physicalReaction = nil

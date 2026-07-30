@@ -1,5 +1,46 @@
 import Foundation
 import SwiftData
+import SwiftUI
+
+enum MoodStatus: String, CaseIterable {
+    case terrible = "Terrible"
+    case bad = "Bad"
+    case neutral = "Neutral"
+    case good = "Good"
+    case excellent = "Excellent"
+    
+    var icon: String {
+        switch self {
+        case .terrible: return "cloud.bolt.rain.fill"
+        case .bad: return "cloud.heavyrain.fill"
+        case .neutral: return "cloud.fill"
+        case .good: return "cloud.sun.fill"
+        case .excellent: return "sun.max.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .terrible: return .indigo
+        case .bad: return .blue
+        case .neutral: return .gray
+        case .good: return .orange
+        case .excellent: return .yellow
+        }
+    }
+    
+    static func from(string: String?) -> MoodStatus? {
+        guard let string = string else { return nil }
+        switch string {
+        case "😫": return .terrible
+        case "🙁": return .bad
+        case "😐": return .neutral
+        case "🙂": return .good
+        case "😄": return .excellent
+        default: return MoodStatus(rawValue: string)
+        }
+    }
+}
 
 @Model
 class MedicationLog {

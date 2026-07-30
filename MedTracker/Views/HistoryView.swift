@@ -243,21 +243,22 @@ struct HistoryView: View {
                 .cornerRadius(12)
             }
             
-            if let log = log, let mood = log.mood {
+            if let log = log, let moodStr = log.mood, let mood = MoodStatus.from(string: moodStr) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Image(systemName: "face.smiling.fill")
-                            .foregroundColor(.orange)
+                        Image(systemName: mood.icon)
+                            .foregroundColor(mood.color)
                         Text("Mood: ")
                             .font(.system(.headline, design: .rounded, weight: .bold))
-                            .foregroundColor(.orange)
-                        Text(mood)
-                            .font(.system(size: 24))
+                            .foregroundColor(mood.color)
+                        Text(LocalizedStringKey(mood.rawValue))
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundColor(mood.color)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                .background(Color.orange.opacity(0.1))
+                .background(mood.color.opacity(0.1))
                 .cornerRadius(12)
             }
         }
@@ -334,9 +335,7 @@ struct DailyRecordSheet: View {
     
     @State private var systolic = ""
     @State private var diastolic = ""
-    @State private var mood = ""
-    
-    private let moods = ["😫", "🙁", "😐", "🙂", "😄"]
+    @State private var mood: MoodStatus? = nil
     
     var body: some View {
         NavigationView {
@@ -372,17 +371,22 @@ struct DailyRecordSheet: View {
                 
                 Section(header: Text("Mood (Optional)")) {
                     HStack(spacing: 15) {
-                        ForEach(moods, id: \.self) { m in
+                        ForEach(MoodStatus.allCases, id: \.self) { m in
                             Button(action: {
                                 withAnimation {
-                                    mood = mood == m ? "" : m
+                                    mood = mood == m ? nil : m
                                 }
                             }) {
-                                Text(m)
-                                    .font(.system(size: 30))
-                                    .padding(8)
-                                    .background(mood == m ? Color.mint.opacity(0.3) : Color.clear)
-                                    .clipShape(Circle())
+                                ZStack {
+                                    Circle()
+                                        .fill(mood == m ? m.color.opacity(0.2) : Color(UIColor.systemGray6))
+                                        .frame(width: 45, height: 45)
+                                    
+                                    Image(systemName: m.icon)
+                                        .font(.system(size: 20))
+                                        .foregroundColor(mood == m ? m.color : .gray)
+                                }
+                                .scaleEffect(mood == m ? 1.1 : 1.0)
                             }
                         }
                     }
@@ -424,7 +428,7 @@ struct DailyRecordSheet: View {
             }
             systolic = log.systolic.map { "\($0)" } ?? ""
             diastolic = log.diastolic.map { "\($0)" } ?? ""
-            mood = log.mood ?? ""
+            mood = MoodStatus.from(string: log.mood)
         } else {
             status = .none
             let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
@@ -434,7 +438,7 @@ struct DailyRecordSheet: View {
             dose = medDoses.joined(separator: "\n")
             systolic = ""
             diastolic = ""
-            mood = ""
+            mood = nil
         }
     }
     
@@ -472,7 +476,7 @@ struct DailyRecordSheet: View {
         
         targetLog.systolic = Int(systolic)
         targetLog.diastolic = Int(diastolic)
-        targetLog.mood = mood.isEmpty ? nil : mood
+        targetLog.mood = mood?.rawValue
         
         try? modelContext.save()
         dismiss()
