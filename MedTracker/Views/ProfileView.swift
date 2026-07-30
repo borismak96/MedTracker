@@ -150,9 +150,6 @@ struct ProfileForm: View {
             
             Section(header: Text("Reminder Time")) {
                 DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .frame(maxWidth: .infinity, alignment: .center)
             }
             
             Section(header: Text("App Settings")) {
@@ -184,6 +181,22 @@ struct ProfileForm: View {
                         NotificationManager.shared.cancelNotifications()
                     }
                 }
+            }
+            
+            Section {
+                Button(action: {
+                    updateNotificationIfNeeded()
+                    // Manually trigger a save to ensure SwiftData persists immediately,
+                    // although it usually auto-saves on changes.
+                    try? profile.modelContext?.save()
+                }) {
+                    Text("Save Settings")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 8)
+                }
+                .listRowBackground(Color.mint)
             }
         }
         .font(.system(.body, design: .rounded))
