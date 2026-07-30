@@ -228,7 +228,12 @@ struct MedTrackerInteractiveWidgetEntryView : View {
     var entry: Provider.Entry
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
+            Text(LocalizedStringKey("Today's Medication"))
+                .font(.system(.caption, design: .rounded, weight: .bold))
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
             if let log = entry.log, log.isTaken {
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
