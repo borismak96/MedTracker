@@ -11,7 +11,8 @@ struct HistoryView: View {
     @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
     
     @State private var currentMonth: Date = Date()
-    @State private var selectedDateWrapper: DateWrapper? = nil
+    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
+    @State private var editingDateWrapper: DateWrapper? = nil
     
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
@@ -19,15 +20,23 @@ struct HistoryView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                monthHeader
-                weekdayHeader
-                calendarGrid
-                Spacer()
+            ScrollView {
+                VStack(spacing: 20) {
+                    monthHeader
+                    weekdayHeader
+                    calendarGrid
+                    
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    selectedDateSummary
+                    
+                    Spacer()
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle("History")
-            .sheet(item: $selectedDateWrapper) { dateWrapper in
+            .sheet(item: $editingDateWrapper) { dateWrapper in
                 if let profile = profile {
                     DailyRecordSheet(date: dateWrapper.date, profile: profile)
                 }
@@ -81,14 +90,101 @@ struct HistoryView: View {
             ForEach(0..<days.count, id: \.self) { index in
                 if let date = days[index] {
                     let log = logForDate(date)
-                    DayCell(date: date, log: log)
+                    let isSelected = Calendar.current.isDate(date, inSameDayAs: selectedDate)
+                    DayCell(date: date, log: log, isSelected: isSelected)
                         .onTapGesture {
-                            selectedDateWrapper = DateWrapper(date: date)
+                            selectedDate = date
                         }
                 } else {
                     Color.clear
                         .frame(height: 50)
                 }
+            }
+        }
+    }
+    
+    var selectedDateSummary: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text(selectedDate, format: .dateTime.month().day().weekday(.wide))
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    editingDateWrapper = DateWrapper(date: selectedDate)
+                }) {
+                    Text("Edit")
+                        .font(.subheadline)
+                        .bold()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(8)
+                }
+            }
+            
+            let log = logForDate(selectedDate)
+            if let log = log {
+                if log.isTaken {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Taken")
+                                .bold()
+                        }
+                        if let med = log.medicineName, !med.isEmpty {
+                            Text("Medicine: \(med)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        if let dose = log.dose, !dose.isEmpty {
+                            Text("Dose: \(dose)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(12)
+                } else if log.skippedTime != nil {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.red)
+                            Text("Missed at \(log.skippedTime ?? selectedDate, format: .dateTime.hour().minute())")
+                                .bold()
+                        }
+                        if let reaction = log.physicalReaction, !reaction.isEmpty {
+                            Text("Reaction: \(reaction)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        if let notes = log.notes, !notes.isEmpty {
+                            Text("Notes: \(notes)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(12)
+                } else {
+                    Text("Not Recorded")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(12)
+                }
+            } else {
+                Text("Not Recorded")
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(12)
             }
         }
     }
@@ -107,6 +203,7 @@ struct HistoryView: View {
 struct DayCell: View {
     let date: Date
     let log: MedicationLog?
+    let isSelected: Bool
     
     var body: some View {
         let calendar = Calendar.current
@@ -115,8 +212,8 @@ struct DayCell: View {
         VStack(spacing: 4) {
             Text("\(calendar.component(.day, from: date))")
                 .font(.system(size: 16))
-                .foregroundColor(isToday ? .blue : .primary)
-                .bold(isToday)
+                .foregroundColor(isSelected ? .white : (isToday ? .blue : .primary))
+                .bold(isToday || isSelected)
             
             Circle()
                 .fill(statusColor)
@@ -126,7 +223,7 @@ struct DayCell: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isToday ? Color.blue.opacity(0.1) : Color.clear)
+                .fill(isSelected ? Color.blue : (isToday ? Color.blue.opacity(0.1) : Color.clear))
         )
         .contentShape(Rectangle())
     }
