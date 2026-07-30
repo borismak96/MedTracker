@@ -98,6 +98,17 @@
         }
       }
     },
+    "Bad" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不好"
+          }
+        }
+      }
+    },
     "Blood Pressure" : {
       "localizations" : {
         "zh-Hant" : {
@@ -214,6 +225,17 @@
         }
       }
     },
+    "Doctor's Card" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "醫生看診卡"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "zh-Hant" : {
@@ -223,6 +245,9 @@
           }
         }
       }
+    },
+    "Dose" : {
+
     },
     "Dose (e.g., 1 pill)" : {
       "localizations" : {
@@ -275,6 +300,17 @@
         }
       }
     },
+    "Excellent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "極佳"
+          }
+        }
+      }
+    },
     "Fri" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -282,6 +318,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "五"
+          }
+        }
+      }
+    },
+    "Good" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不錯"
           }
         }
       }
@@ -383,16 +430,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "記錄血壓"
-          }
-        }
-      }
-    },
-    "Doctor's Card" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "醫生看診卡"
           }
         }
       }
@@ -558,11 +595,23 @@
       }
     },
     "Name Not Set" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "未設定名稱"
+          }
+        }
+      }
+    },
+    "Neutral" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "普通"
           }
         }
       }
@@ -913,47 +962,8 @@
         }
       }
     },
-    "Excellent" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "極佳"
-          }
-        }
-      }
-    },
-    "Good" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不錯"
-          }
-        }
-      }
-    },
-    "Neutral" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "普通"
-          }
-        }
-      }
-    },
-    "Bad" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不好"
-          }
-        }
-      }
-    },
     "Terrible" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hant" : {
           "stringUnit" : {
