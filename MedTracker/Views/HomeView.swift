@@ -90,38 +90,50 @@ struct HomeView: View {
     }
     
     func headerSection(profile: UserProfile) -> some View {
-        HStack {
-            Image(systemName: "person.crop.circle.fill")
-                .resizable()
-                .frame(width: 50, height: 50)
-                .foregroundColor(.mint)
-                .background(Circle().fill(Color.mint.opacity(0.2)))
-            
-            VStack(alignment: .leading, spacing: 4) {
-                if profile.name.isEmpty {
-                    Text("Hello, Friend!")
-                        .font(.system(.title2, design: .rounded, weight: .bold))
-                } else {
-                    Text("Hello, \(profile.name)!")
-                        .font(.system(.title2, design: .rounded, weight: .bold))
+        VStack(spacing: 20) {
+            // App Title and Notification Bell
+            HStack {
+                Text("MedTracker")
+                    .font(.system(.title, design: .rounded, weight: .heavy))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                Button(action: {
+                    // Profile or Settings Action
+                }) {
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.mint)
+                        .padding(12)
+                        .background(Circle().fill(Color.white))
+                        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                 }
-                Text("Let's stay on track today.")
-                    .font(.system(.subheadline, design: .rounded))
-                    .foregroundColor(.secondary)
             }
-            .padding(.leading, 8)
             
-            Spacer()
-            
-            Button(action: {
-                // Profile or Settings Action
-            }) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 20))
+            // Greeting and Avatar
+            HStack {
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .frame(width: 50, height: 50)
                     .foregroundColor(.mint)
-                    .padding(12)
-                    .background(Circle().fill(Color.white))
-                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .background(Circle().fill(Color.mint.opacity(0.2)))
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    if profile.name.isEmpty {
+                        Text("Hello, Friend!")
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                    } else {
+                        Text("Hello, \(profile.name)!")
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                    }
+                    Text("Let's stay on track today.")
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 8)
+                
+                Spacer()
             }
         }
     }
