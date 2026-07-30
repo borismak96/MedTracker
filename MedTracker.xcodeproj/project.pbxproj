@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		81DAB988EF10E11EDD17E522 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 870A7C086F9735A09C05FA2E /* SplashView.swift */; };
 		E9ABE51C7C03D5B824D591D8 /* MedicalCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */; };
 		STRING0012C41D8E0006BEED4 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */; };
 		9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B851C802C41D8DF006BEED4 /* MedTrackerApp.swift */; };
@@ -23,6 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		870A7C086F9735A09C05FA2E /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalCardView.swift; sourceTree = "<group>"; };
 		STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		9B851C7D2C41D8DF006BEED4 /* MedTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MedTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -101,6 +103,7 @@
 		VIEWGROUPC41D8DF006BEED /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				870A7C086F9735A09C05FA2E /* SplashView.swift */,
 				F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */,
 				BP0000000000000000000001 /* BloodPressureChartView.swift */,
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
@@ -189,6 +192,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				81DAB988EF10E11EDD17E522 /* SplashView.swift in Sources */,
 				E9ABE51C7C03D5B824D591D8 /* MedicalCardView.swift in Sources */,
             BP0000000000000000000002 /* BloodPressureChartView.swift in Sources */,
             NM0000000000000000000002 /* NotificationManager.swift in Sources */,
