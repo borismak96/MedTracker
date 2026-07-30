@@ -109,7 +109,7 @@ struct HomeView: View {
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundColor(.secondary)
             }
-            .padding(.left, 8)
+            .padding(.leading, 8)
             
             Spacer()
             
