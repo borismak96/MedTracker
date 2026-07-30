@@ -43,6 +43,21 @@ struct ProfileForm: View {
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     
     var body: some View {
+        let timeBinding = Binding<Date>(
+            get: {
+                var components = DateComponents()
+                components.hour = profile.targetTimeHour
+                components.minute = profile.targetTimeMinute
+                return Calendar.current.date(from: components) ?? Date()
+            },
+            set: { newDate in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                profile.targetTimeHour = components.hour ?? 10
+                profile.targetTimeMinute = components.minute ?? 0
+                updateNotificationIfNeeded()
+            }
+        )
+        
         Form {
             Section {
                 VStack(spacing: 16) {
@@ -134,21 +149,10 @@ struct ProfileForm: View {
             .onChange(of: profile.medications) { _, _ in updateNotificationIfNeeded() }
             
             Section(header: Text("Reminder Time")) {
-                Picker("Target Hour", selection: $profile.targetTimeHour) {
-                    ForEach(0..<24) { hour in
-                        Text("\(hour):00").tag(hour)
-                    }
-                }
-                .onChange(of: profile.targetTimeHour) { _, _ in updateNotificationIfNeeded() }
-                
-                Picker("Target Minute", selection: $profile.targetTimeMinute) {
-                    ForEach(0..<60) { minute in
-                        if minute % 5 == 0 {
-                            Text("\(minute) min").tag(minute)
-                        }
-                    }
-                }
-                .onChange(of: profile.targetTimeMinute) { _, _ in updateNotificationIfNeeded() }
+                DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
             
             Section(header: Text("App Settings")) {
