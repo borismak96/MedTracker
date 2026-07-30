@@ -242,6 +242,24 @@ struct HistoryView: View {
                 .background(Color.red.opacity(0.1))
                 .cornerRadius(12)
             }
+            
+            if let log = log, let mood = log.mood {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "face.smiling.fill")
+                            .foregroundColor(.orange)
+                        Text("Mood: ")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.orange)
+                        Text(mood)
+                            .font(.system(size: 24))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(12)
+            }
         }
     }
     
@@ -316,6 +334,9 @@ struct DailyRecordSheet: View {
     
     @State private var systolic = ""
     @State private var diastolic = ""
+    @State private var mood = ""
+    
+    private let moods = ["😫", "🙁", "😐", "🙂", "😄"]
     
     var body: some View {
         NavigationView {
@@ -347,6 +368,26 @@ struct DailyRecordSheet: View {
                         .keyboardType(.numberPad)
                     TextField("Diastolic (Low) BP", text: $diastolic)
                         .keyboardType(.numberPad)
+                }
+                
+                Section(header: Text("Mood (Optional)")) {
+                    HStack(spacing: 15) {
+                        ForEach(moods, id: \.self) { m in
+                            Button(action: {
+                                withAnimation {
+                                    mood = mood == m ? "" : m
+                                }
+                            }) {
+                                Text(m)
+                                    .font(.system(size: 30))
+                                    .padding(8)
+                                    .background(mood == m ? Color.mint.opacity(0.3) : Color.clear)
+                                    .clipShape(Circle())
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .buttonStyle(.borderless)
                 }
                 
                 Button(action: saveRecord) {
@@ -383,6 +424,7 @@ struct DailyRecordSheet: View {
             }
             systolic = log.systolic.map { "\($0)" } ?? ""
             diastolic = log.diastolic.map { "\($0)" } ?? ""
+            mood = log.mood ?? ""
         } else {
             status = .none
             let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
@@ -392,6 +434,7 @@ struct DailyRecordSheet: View {
             dose = medDoses.joined(separator: "\n")
             systolic = ""
             diastolic = ""
+            mood = ""
         }
     }
     
@@ -429,6 +472,7 @@ struct DailyRecordSheet: View {
         
         targetLog.systolic = Int(systolic)
         targetLog.diastolic = Int(diastolic)
+        targetLog.mood = mood.isEmpty ? nil : mood
         
         try? modelContext.save()
         dismiss()

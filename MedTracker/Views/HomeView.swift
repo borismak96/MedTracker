@@ -299,6 +299,9 @@ struct TodayCard: View {
     @Binding var skipReaction: String
     @Binding var skipNotes: String
     
+    @State private var selectedMood: String? = nil
+    private let moods = ["😫", "🙁", "😐", "🙂", "😄"]
+    
     var body: some View {
         VStack(spacing: 24) {
             HStack {
@@ -350,6 +353,12 @@ struct TodayCard: View {
                             .foregroundColor(.green)
                         Text("Taken Today")
                             .font(.system(.headline, design: .rounded, weight: .bold))
+                        
+                        if let mood = log.mood {
+                            Spacer()
+                            Text(mood)
+                                .font(.system(size: 24))
+                        }
                     }
                     
                     if let medName = log.medicineName, !medName.isEmpty {
@@ -382,6 +391,7 @@ struct TodayCard: View {
                     log.isTaken = false
                     log.medicineName = nil
                     log.dose = nil
+                    log.mood = nil
                 }) {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
@@ -412,12 +422,38 @@ struct TodayCard: View {
                     log.skippedTime = nil
                     log.physicalReaction = nil
                     log.notes = nil
+                    log.mood = nil
                 }) {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
                         .foregroundColor(.secondary)
                 }
             } else {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("How are you feeling today?")
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 15) {
+                        ForEach(moods, id: \.self) { mood in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedMood = mood
+                                }
+                            }) {
+                                Text(mood)
+                                    .font(.system(size: 32))
+                                    .padding(8)
+                                    .background(selectedMood == mood ? Color.mint.opacity(0.3) : Color.clear)
+                                    .clipShape(Circle())
+                                    .scaleEffect(selectedMood == mood ? 1.1 : 1.0)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(.vertical, 8)
+                
                 HStack(spacing: 16) {
                     Button(action: {
                         withAnimation {
@@ -428,6 +464,7 @@ struct TodayCard: View {
                             
                             log.medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
                             log.dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
+                            log.mood = selectedMood
                             
                             log.skippedTime = nil
                             log.physicalReaction = nil
