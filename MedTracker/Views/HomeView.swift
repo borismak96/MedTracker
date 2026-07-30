@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var bpDiastolic = ""
     
     @State private var showingBPChart = false
+    @State private var showingMedicalCard = false
     
     var profile: UserProfile? { profiles.first }
     
@@ -96,6 +97,11 @@ struct HomeView: View {
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
             }
+            .sheet(isPresented: $showingMedicalCard) {
+                if let profile = profile {
+                    MedicalCardView(profile: profile)
+                }
+            }
         }
     }
     
@@ -110,9 +116,9 @@ struct HomeView: View {
                 Spacer()
                 
                 Button(action: {
-                    // Profile or Settings Action
+                    showingMedicalCard = true
                 }) {
-                    Image(systemName: "bell.badge.fill")
+                    Image(systemName: "person.text.rectangle.fill")
                         .font(.system(size: 20))
                         .foregroundColor(.mint)
                         .padding(12)
