@@ -95,6 +95,7 @@ struct ProfileForm: View {
                             }
                         }
                     }
+                    .buttonStyle(.borderless)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
