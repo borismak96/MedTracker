@@ -82,6 +82,22 @@ struct HomeView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
                 }
+                
+                if showingMedicalCard {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                showingMedicalCard = false
+                            }
+                        }
+                    
+                    if let profile = profile {
+                        MedicalCardView(profile: profile, isShowing: $showingMedicalCard)
+                            .transition(.scale.combined(with: .opacity))
+                            .zIndex(1)
+                    }
+                }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingSkipSheet) {
@@ -97,11 +113,6 @@ struct HomeView: View {
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
             }
-            .sheet(isPresented: $showingMedicalCard) {
-                if let profile = profile {
-                    MedicalCardView(profile: profile)
-                }
-            }
         }
     }
     
@@ -116,7 +127,9 @@ struct HomeView: View {
                 Spacer()
                 
                 Button(action: {
-                    showingMedicalCard = true
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                        showingMedicalCard = true
+                    }
                 }) {
                     Image(systemName: "person.text.rectangle.fill")
                         .font(.system(size: 20))

@@ -3,28 +3,28 @@ import SwiftData
 
 struct MedicalCardView: View {
     var profile: UserProfile
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isShowing: Bool
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
-                
-                ScrollView {
-                    VStack {
-                        VStack(spacing: 0) {
-                            // Card Header
-                            HStack {
-                                Text("Medical Card")
-                                    .font(.system(.title2, design: .rounded, weight: .bold))
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Image(systemName: "cross.case.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.white)
-                            }
-                            .padding()
-                            .background(Color.mint)
+        VStack(spacing: 0) {
+            // Card Header
+            HStack {
+                Text("Medical Card")
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Button(action: {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                        isShowing = false
+                    }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            }
+            .padding()
+            .background(Color.mint)
                             
                             // User Info
                             HStack(spacing: 16) {
@@ -106,14 +106,5 @@ struct MedicalCardView: View {
                         .cornerRadius(24)
                         .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 8)
                         .padding(20)
-                        
-                        Spacer()
-                    }
-                }
-            }
-            .navigationTitle("Doctor's Card")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") { dismiss() }.font(.system(.body, design: .rounded, weight: .bold)))
-        }
     }
 }
