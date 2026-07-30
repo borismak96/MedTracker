@@ -490,15 +490,6 @@ struct VitalsCard: View {
                 }
                 Spacer()
                 
-                Button(action: { showingBPChart = true }) {
-                    Image(systemName: "chart.xyaxis.line")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.red)
-                        .frame(width: 50, height: 50)
-                        .background(Color.red.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                
                 ZStack {
                     Circle()
                         .fill(Color.red.opacity(0.15))
@@ -523,6 +514,16 @@ struct VitalsCard: View {
                 .padding()
                 .background(Color.red.opacity(0.1))
                 .cornerRadius(16)
+                
+                Button(action: { showingBPChart = true }) {
+                    Text("View BP Trends")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(20)
+                }
                 
                 HStack(spacing: 16) {
                     Button(action: {
@@ -566,6 +567,16 @@ struct VitalsCard: View {
                         .background(Color.red.opacity(0.8))
                         .cornerRadius(20)
                         .shadow(color: Color.red.opacity(0.3), radius: 8, x: 0, y: 4)
+                }
+                
+                Button(action: { showingBPChart = true }) {
+                    Text("View BP Trends")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(20)
                 }
             }
         }
