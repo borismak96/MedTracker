@@ -39,6 +39,16 @@
         }
       }
     },
+    "App Settings": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "應用程式設定"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "zh-Hant": {
@@ -59,12 +69,63 @@
         }
       }
     },
+    "Dose (e.g., 1 pill)": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劑量（例如：1粒）"
+          }
+        }
+      }
+    },
+    "Dose: %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劑量：%@"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯"
+          }
+        }
+      }
+    },
     "Enable Daily Reminders": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "每日提醒：固定時間服藥"
+            "value": "啟用每日提醒"
+          }
+        }
+      }
+    },
+    "English": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        }
+      }
+    },
+    "Fri": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五"
           }
         }
       }
@@ -100,6 +161,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "歷史記錄"
+          }
+        }
+      }
+    },
+    "Language": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語言"
           }
         }
       }
@@ -152,12 +223,32 @@
         }
       }
     },
+    "Medicine: %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "藥物：%@"
+          }
+        }
+      }
+    },
     "MedTracker": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "食藥記錄"
+          }
+        }
+      }
+    },
+    "Missed": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "忘記"
           }
         }
       }
@@ -192,6 +283,17 @@
         }
       }
     },
+    "Mon": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一"
+          }
+        }
+      }
+    },
     "Name": {
       "localizations": {
         "zh-Hant": {
@@ -202,12 +304,33 @@
         }
       }
     },
-    "Not recorded yet": {
+    "Not Recorded": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "尚未記錄"
+          }
+        }
+      }
+    },
+    "Not recorded yet": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未記錄"
+          }
+        }
+      }
+    },
+    "Notes: %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "備註：%@"
           }
         }
       }
@@ -252,12 +375,33 @@
         }
       }
     },
+    "Sat": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "六"
+          }
+        }
+      }
+    },
     "Save": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "儲存"
+          }
+        }
+      }
+    },
+    "Save Record": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "儲存記錄"
           }
         }
       }
@@ -288,6 +432,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "今日已跳過"
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "狀態"
+          }
+        }
+      }
+    },
+    "Sun": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日"
+          }
+        }
+      }
+    },
+    "System": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統預設"
+          }
+        }
+      }
+    },
+    "Take Medication": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服用藥物"
           }
         }
       }
@@ -342,6 +527,17 @@
         }
       }
     },
+    "Thu": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四"
+          }
+        }
+      }
+    },
     "Time": {
       "localizations": {
         "zh-Hant": {
@@ -372,12 +568,34 @@
         }
       }
     },
+    "Tue": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二"
+          }
+        }
+      }
+    },
     "Undo": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "復原"
+          }
+        }
+      }
+    },
+    "Wed": {
+      "extractionState": "stale",
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三"
           }
         }
       }
@@ -392,46 +610,6 @@
         }
       }
     },
-    "App Settings": {
-      "localizations": {
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "應用程式設定"
-          }
-        }
-      }
-    },
-    "Language": {
-      "localizations": {
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "語言"
-          }
-        }
-      }
-    },
-    "System": {
-      "localizations": {
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "系統預設"
-          }
-        }
-      }
-    },
-    "English": {
-      "localizations": {
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "English"
-          }
-        }
-      }
-    },
     "繁體中文": {
       "localizations": {
         "zh-Hant": {
@@ -442,42 +620,42 @@
         }
       }
     },
-    "Take Medication": {
+    "Reminders": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "服用藥物"
+            "value": "提醒"
           }
         }
       }
     },
-    "Dose (e.g., 1 pill)": {
+    "Medication Reminder": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "劑量（例如：1粒）"
+            "value": "服藥提醒"
           }
         }
       }
     },
-    "Medicine: %@": {
+    "It's time to take %@": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "藥物：%@"
+            "value": "現在是服用 %@ 的時間了"
           }
         }
       }
     },
-    "Dose: %@": {
+    "your medication": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "劑量：%@"
+            "value": "您的藥物"
           }
         }
       }
