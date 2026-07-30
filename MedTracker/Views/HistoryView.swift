@@ -216,6 +216,22 @@ struct HistoryView: View {
                     .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(12)
             }
+            
+            if let log = log, let sys = log.systolic, let dia = log.diastolic {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "waveform.path.ecg")
+                            .foregroundColor(.red)
+                        Text("Blood Pressure: \(sys) / \(dia) mmHg")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.red)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(12)
+            }
         }
     }
     
@@ -288,6 +304,9 @@ struct DailyRecordSheet: View {
     @State private var skipReaction = ""
     @State private var skipNotes = ""
     
+    @State private var systolic = ""
+    @State private var diastolic = ""
+    
     var body: some View {
         NavigationView {
             Form {
@@ -313,6 +332,13 @@ struct DailyRecordSheet: View {
                     }
                 }
                 
+                Section(header: Text("Vitals (Optional)")) {
+                    TextField("Systolic (High) BP", text: $systolic)
+                        .keyboardType(.numberPad)
+                    TextField("Diastolic (Low) BP", text: $diastolic)
+                        .keyboardType(.numberPad)
+                }
+                
                 Button(action: saveRecord) {
                     Text("Save Record")
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -332,7 +358,7 @@ struct DailyRecordSheet: View {
             if log.isTaken {
                 status = .taken
                 medicineName = log.medicineName ?? profile.medicationName
-                dose = log.dose ?? ""
+                dose = log.dose ?? profile.dose
             } else if log.skippedTime != nil {
                 status = .missed
                 skippedTime = log.skippedTime ?? date
@@ -341,15 +367,22 @@ struct DailyRecordSheet: View {
             } else {
                 status = .none
             }
+            systolic = log.systolic.map { "\($0)" } ?? ""
+            diastolic = log.diastolic.map { "\($0)" } ?? ""
         } else {
             status = .none
             medicineName = profile.medicationName
+            dose = profile.dose
+            systolic = ""
+            diastolic = ""
         }
     }
     
     func saveRecord() {
         let targetLog = log ?? MedicationLog(date: date)
-        if log == nil && status != .none {
+        let hasVitals = !systolic.isEmpty && !diastolic.isEmpty
+        
+        if log == nil && (status != .none || hasVitals) {
             modelContext.insert(targetLog)
         }
         
@@ -376,6 +409,9 @@ struct DailyRecordSheet: View {
             targetLog.physicalReaction = skipReaction.isEmpty ? nil : skipReaction
             targetLog.notes = skipNotes.isEmpty ? nil : skipNotes
         }
+        
+        targetLog.systolic = Int(systolic)
+        targetLog.diastolic = Int(diastolic)
         
         try? modelContext.save()
         dismiss()

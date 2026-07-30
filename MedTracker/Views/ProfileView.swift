@@ -110,6 +110,8 @@ struct ProfileForm: View {
                 TextField("Medication Name", text: $profile.medicationName)
                     .onChange(of: profile.medicationName) { _, _ in updateNotificationIfNeeded() }
                 
+                TextField("Dose (e.g., 1 pill)", text: $profile.dose)
+                
                 Picker("Target Hour", selection: $profile.targetTimeHour) {
                     ForEach(0..<24) { hour in
                         Text("\(hour):00").tag(hour)

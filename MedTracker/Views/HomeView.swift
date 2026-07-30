@@ -10,9 +10,11 @@ struct HomeView: View {
     @State private var skipReaction = ""
     @State private var skippedTime = Date()
     
-    @State private var showingTakeSheet = false
-    @State private var takeMedicineName = ""
-    @State private var takeDose = ""
+    @State private var showingBPSheet = false
+    @State private var bpSystolic = ""
+    @State private var bpDiastolic = ""
+    
+    @State private var showingBPChart = false
     
     var profile: UserProfile? { profiles.first }
     
@@ -60,10 +62,15 @@ struct HomeView: View {
                                     showingSkipSheet: $showingSkipSheet,
                                     skippedTime: $skippedTime,
                                     skipReaction: $skipReaction,
-                                    skipNotes: $skipNotes,
-                                    showingTakeSheet: $showingTakeSheet,
-                                    takeMedicineName: $takeMedicineName,
-                                    takeDose: $takeDose
+                                    skipNotes: $skipNotes
+                                )
+                                
+                                VitalsCard(
+                                    log: log,
+                                    showingBPSheet: $showingBPSheet,
+                                    showingBPChart: $showingBPChart,
+                                    bpSystolic: $bpSystolic,
+                                    bpDiastolic: $bpDiastolic
                                 )
                             }
                         } else {
@@ -81,10 +88,13 @@ struct HomeView: View {
                     skipSheetContent(for: log)
                 }
             }
-            .sheet(isPresented: $showingTakeSheet) {
+            .sheet(isPresented: $showingBPSheet) {
                 if let log = todayLog {
-                    takeSheetContent(for: log)
+                    bpSheetContent(for: log)
                 }
+            }
+            .sheet(isPresented: $showingBPChart) {
+                BloodPressureChartView(logs: logs)
             }
         }
     }
@@ -231,35 +241,32 @@ struct HomeView: View {
         }
     }
     
-    func takeSheetContent(for log: MedicationLog) -> some View {
+    func bpSheetContent(for log: MedicationLog) -> some View {
         NavigationView {
             Form {
-                Section(header: Text("Medication Details")) {
-                    TextField("Medication Name", text: $takeMedicineName)
+                Section(header: Text("Blood Pressure (mmHg)")) {
+                    TextField("Systolic (High)", text: $bpSystolic)
+                        .keyboardType(.numberPad)
                     
-                    TextField("Dose (e.g., 1 pill)", text: $takeDose)
+                    TextField("Diastolic (Low)", text: $bpDiastolic)
+                        .keyboardType(.numberPad)
                 }
                 
                 Button(action: {
-                    log.isTaken = true
-                    log.medicineName = takeMedicineName.isEmpty ? nil : takeMedicineName
-                    log.dose = takeDose.isEmpty ? nil : takeDose
-                    
-                    // Clear skip details if they existed
-                    log.skippedTime = nil
-                    log.physicalReaction = nil
-                    log.notes = nil
-                    
-                    showingTakeSheet = false
+                    if let sys = Int(bpSystolic), let dia = Int(bpDiastolic) {
+                        log.systolic = sys
+                        log.diastolic = dia
+                    }
+                    showingBPSheet = false
                 }) {
                     Text("Save")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .bold()
                 }
             }
-            .navigationTitle("Take Medication")
+            .navigationTitle("Log Blood Pressure")
             .navigationBarItems(trailing: Button("Cancel") {
-                showingTakeSheet = false
+                showingBPSheet = false
             })
         }
     }
@@ -272,10 +279,6 @@ struct TodayCard: View {
     @Binding var skippedTime: Date
     @Binding var skipReaction: String
     @Binding var skipNotes: String
-    
-    @Binding var showingTakeSheet: Bool
-    @Binding var takeMedicineName: String
-    @Binding var takeDose: String
     
     var body: some View {
         VStack(spacing: 24) {
@@ -382,9 +385,15 @@ struct TodayCard: View {
             } else {
                 HStack(spacing: 16) {
                     Button(action: {
-                        takeMedicineName = profile.medicationName
-                        takeDose = ""
-                        showingTakeSheet = true
+                        withAnimation {
+                            log.isTaken = true
+                            log.medicineName = profile.medicationName.isEmpty ? nil : profile.medicationName
+                            log.dose = profile.dose.isEmpty ? nil : profile.dose
+                            
+                            log.skippedTime = nil
+                            log.physicalReaction = nil
+                            log.notes = nil
+                        }
                     }) {
                         Text("Take Now")
                             .font(.system(.headline, design: .rounded, weight: .bold))
@@ -407,6 +416,124 @@ struct TodayCard: View {
                             .background(Color(UIColor.systemGray6))
                             .cornerRadius(20)
                     }
+                }
+            }
+        }
+        .padding(24)
+        .background(Color.white)
+        .cornerRadius(30)
+        .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+    }
+}
+
+struct VitalsCard: View {
+    @Bindable var log: MedicationLog
+    @Binding var showingBPSheet: Bool
+    @Binding var showingBPChart: Bool
+    @Binding var bpSystolic: String
+    @Binding var bpDiastolic: String
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Vitals")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundColor(.secondary)
+                    
+                    Text("Blood Pressure")
+                        .font(.system(.title2, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                }
+                Spacer()
+                
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.15))
+                        .frame(width: 70, height: 70)
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(.red)
+                }
+            }
+            
+            if let sys = log.systolic, let dia = log.diastolic {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "waveform.path.ecg")
+                            .font(.title3)
+                            .foregroundColor(.red)
+                        Text("\(sys) / \(dia) mmHg")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(16)
+                
+                Button(action: { showingBPChart = true }) {
+                    Text("View BP Trends")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(20)
+                }
+                
+                HStack(spacing: 16) {
+                    Button(action: {
+                        bpSystolic = "\(sys)"
+                        bpDiastolic = "\(dia)"
+                        showingBPSheet = true
+                    }) {
+                        Text("Edit")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color(UIColor.systemGray6))
+                            .cornerRadius(20)
+                    }
+                    
+                    Button(action: {
+                        log.systolic = nil
+                        log.diastolic = nil
+                    }) {
+                        Text("Remove")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(20)
+                    }
+                }
+            } else {
+                Button(action: {
+                    bpSystolic = ""
+                    bpDiastolic = ""
+                    showingBPSheet = true
+                }) {
+                    Text("Log Blood Pressure")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.8))
+                        .cornerRadius(20)
+                        .shadow(color: Color.red.opacity(0.3), radius: 8, x: 0, y: 4)
+                }
+                
+                Button(action: { showingBPChart = true }) {
+                    Text("View BP Trends")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(20)
                 }
             }
         }
