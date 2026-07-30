@@ -89,12 +89,22 @@
         }
       }
     },
+    "Edit": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯"
+          }
+        }
+      }
+    },
     "Enable Daily Reminders": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "每日提醒：固定時間服藥"
+            "value": "啟用每日提醒"
           }
         }
       }
@@ -244,7 +254,6 @@
       }
     },
     "Missed at %@": {
-      "extractionState": "stale",
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
@@ -312,6 +321,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "尚未記錄"
+          }
+        }
+      }
+    },
+    "Notes: %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "備註：%@"
           }
         }
       }
@@ -601,22 +620,42 @@
         }
       }
     },
-    "Edit": {
+    "Reminders": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "編輯"
+            "value": "提醒"
           }
         }
       }
     },
-    "Notes: %@": {
+    "Medication Reminder": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "備註：%@"
+            "value": "服藥提醒"
+          }
+        }
+      }
+    },
+    "It's time to take %@": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在是服用 %@ 的時間了"
+          }
+        }
+      }
+    },
+    "your medication": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您的藥物"
           }
         }
       }
