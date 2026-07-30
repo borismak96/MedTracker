@@ -24,32 +24,44 @@ struct HistoryView: View {
                 Color(UIColor.systemGroupedBackground)
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        VStack(spacing: 20) {
-                            monthHeader
-                            weekdayHeader
-                            calendarGrid
-                        }
-                        .padding(24)
-                        .background(Color.white)
-                        .cornerRadius(30)
-                        .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
-                        
-                        selectedDateSummary
-                            .padding(24)
-                            .background(Color.white)
-                            .cornerRadius(30)
-                            .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
-                        
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("History")
+                            .font(.system(.title, design: .rounded, weight: .heavy))
+                            .foregroundColor(.primary)
                         Spacer()
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 10)
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            VStack(spacing: 20) {
+                                monthHeader
+                                weekdayHeader
+                                calendarGrid
+                            }
+                            .padding(24)
+                            .background(Color.white)
+                            .cornerRadius(30)
+                            .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+                            
+                            selectedDateSummary
+                                .padding(24)
+                                .background(Color.white)
+                                .cornerRadius(30)
+                                .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                        .padding(.bottom, 30)
+                    }
                 }
             }
-            .navigationTitle("History")
+            .navigationBarHidden(true)
             .sheet(item: $editingDateWrapper) { dateWrapper in
                 if let profile = profile {
                     DailyRecordSheet(date: dateWrapper.date, profile: profile)
@@ -124,14 +136,13 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text(selectedDate, format: .dateTime.month().day().weekday(.wide))
-                    .font(.headline)
+                    .font(.system(.title3, design: .rounded, weight: .bold))
                 Spacer()
                 Button(action: {
                     editingDateWrapper = DateWrapper(date: selectedDate)
                 }) {
                     Text("Edit")
-                        .font(.subheadline)
-                        .bold()
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.blue.opacity(0.1))
@@ -147,16 +158,16 @@ struct HistoryView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                             Text("Taken")
-                                .bold()
+                                .font(.system(.headline, design: .rounded, weight: .bold))
                         }
                         if let med = log.medicineName, !med.isEmpty {
                             Text("Medicine: \(med)")
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                         if let dose = log.dose, !dose.isEmpty {
                             Text("Dose: \(dose)")
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -170,16 +181,16 @@ struct HistoryView: View {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.red)
                             Text("Missed at \(log.skippedTime ?? selectedDate, format: .dateTime.hour().minute())")
-                                .bold()
+                                .font(.system(.headline, design: .rounded, weight: .bold))
                         }
                         if let reaction = log.physicalReaction, !reaction.isEmpty {
                             Text("Reaction: \(reaction)")
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                         if let notes = log.notes, !notes.isEmpty {
                             Text("Notes: \(notes)")
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -189,6 +200,7 @@ struct HistoryView: View {
                     .cornerRadius(12)
                 } else {
                     Text("Not Recorded")
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
@@ -197,6 +209,7 @@ struct HistoryView: View {
                 }
             } else {
                 Text("Not Recorded")
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()

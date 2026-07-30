@@ -4,15 +4,34 @@ import SwiftData
 struct ProfileView: View {
     @Query private var profiles: [UserProfile]
     
-    var body: some View {
-        NavigationView {
-            if let profile = profiles.first {
-                ProfileForm(profile: profile)
-            } else {
-                Text("Loading profile...")
+        var body: some View {
+            NavigationView {
+                ZStack {
+                    Color(UIColor.systemGroupedBackground)
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 0) {
+                        HStack {
+                            Text("Profile")
+                                .font(.system(.title, design: .rounded, weight: .heavy))
+                                .foregroundColor(.primary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                        .padding(.bottom, 10)
+                        
+                        if let profile = profiles.first {
+                            ProfileForm(profile: profile)
+                        } else {
+                            ProgressView()
+                                .frame(maxHeight: .infinity)
+                        }
+                    }
+                }
+                .navigationBarHidden(true)
             }
         }
-    }
 }
 
 struct ProfileForm: View {
@@ -25,7 +44,6 @@ struct ProfileForm: View {
             Section(header: Text("Personal Info")) {
                 TextField("Name", text: $profile.name)
             }
-            // ... the rest of the form is unchanged ...
             
             Section(header: Text("Medication Details")) {
                 TextField("Medication Name", text: $profile.medicationName)
@@ -79,9 +97,10 @@ struct ProfileForm: View {
                 }
             }
         }
+        .font(.system(.body, design: .rounded))
         .scrollContentBackground(.hidden)
         .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
-        .navigationTitle("Profile")
+        .navigationBarHidden(true)
     }
     
     private func updateNotificationIfNeeded() {
