@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var bpSystolic = ""
     @State private var bpDiastolic = ""
     
+    @State private var showingBPChart = false
+    
     var profile: UserProfile? { profiles.first }
     
     var todayLog: MedicationLog? {
@@ -73,6 +75,7 @@ struct HomeView: View {
                                 VitalsCard(
                                     log: log,
                                     showingBPSheet: $showingBPSheet,
+                                    showingBPChart: $showingBPChart,
                                     bpSystolic: $bpSystolic,
                                     bpDiastolic: $bpDiastolic
                                 )
@@ -101,6 +104,9 @@ struct HomeView: View {
                 if let log = todayLog {
                     bpSheetContent(for: log)
                 }
+            }
+            .sheet(isPresented: $showingBPChart) {
+                BloodPressureChartView(logs: logs)
             }
         }
     }
@@ -466,6 +472,7 @@ struct TodayCard: View {
 struct VitalsCard: View {
     @Bindable var log: MedicationLog
     @Binding var showingBPSheet: Bool
+    @Binding var showingBPChart: Bool
     @Binding var bpSystolic: String
     @Binding var bpDiastolic: String
     
@@ -482,6 +489,15 @@ struct VitalsCard: View {
                         .foregroundColor(.primary)
                 }
                 Spacer()
+                
+                Button(action: { showingBPChart = true }) {
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(width: 50, height: 50)
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(Circle())
+                }
                 
                 ZStack {
                     Circle()

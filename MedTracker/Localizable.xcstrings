@@ -798,6 +798,66 @@
           }
         }
       }
+    },
+    "BP Trends": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "血壓趨勢"
+          }
+        }
+      }
+    },
+    "Recent Trends": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近期趨勢"
+          }
+        }
+      }
+    },
+    "No data to display yet.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚無數據可顯示。"
+          }
+        }
+      }
+    },
+    "Systolic": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收縮壓"
+          }
+        }
+      }
+    },
+    "Diastolic": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "舒張壓"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
