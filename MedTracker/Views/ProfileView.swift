@@ -25,6 +25,7 @@ struct ProfileForm: View {
             Section(header: Text("Personal Info")) {
                 TextField("Name", text: $profile.name)
             }
+            // ... the rest of the form is unchanged ...
             
             Section(header: Text("Medication Details")) {
                 TextField("Medication Name", text: $profile.medicationName)
@@ -58,7 +59,8 @@ struct ProfileForm: View {
             Section(header: Text("Reminders")) {
                 Toggle(isOn: $isNotificationEnabled) {
                     HStack {
-                        Image(systemName: "bell.badge")
+                        Image(systemName: "bell.badge.fill")
+                            .foregroundColor(.mint)
                         Text("Enable Daily Reminders")
                     }
                 }
@@ -77,6 +79,8 @@ struct ProfileForm: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("Profile")
     }
     

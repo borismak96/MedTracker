@@ -20,20 +20,34 @@ struct HistoryView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    monthHeader
-                    weekdayHeader
-                    calendarGrid
-                    
-                    Divider()
-                        .padding(.vertical, 8)
-                    
-                    selectedDateSummary
-                    
-                    Spacer()
+            ZStack {
+                Color(UIColor.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        VStack(spacing: 20) {
+                            monthHeader
+                            weekdayHeader
+                            calendarGrid
+                        }
+                        .padding(24)
+                        .background(Color.white)
+                        .cornerRadius(30)
+                        .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+                        
+                        selectedDateSummary
+                            .padding(24)
+                            .background(Color.white)
+                            .cornerRadius(30)
+                            .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    .padding(.bottom, 30)
                 }
-                .padding()
             }
             .navigationTitle("History")
             .sheet(item: $editingDateWrapper) { dateWrapper in
@@ -48,23 +62,26 @@ struct HistoryView: View {
         HStack {
             Button(action: { changeMonth(by: -1) }) {
                 Image(systemName: "chevron.left")
-                    .padding()
-                    .background(Color(UIColor.secondarySystemBackground))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.primary)
+                    .padding(12)
+                    .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
             }
             
             Spacer()
             
             Text(currentMonth, format: .dateTime.year().month())
-                .font(.title2)
-                .bold()
+                .font(.system(.title3, design: .rounded, weight: .bold))
             
             Spacer()
             
             Button(action: { changeMonth(by: 1) }) {
                 Image(systemName: "chevron.right")
-                    .padding()
-                    .background(Color(UIColor.secondarySystemBackground))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.primary)
+                    .padding(12)
+                    .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
             }
         }
@@ -211,19 +228,19 @@ struct DayCell: View {
         
         VStack(spacing: 4) {
             Text("\(calendar.component(.day, from: date))")
-                .font(.system(size: 16))
-                .foregroundColor(isSelected ? .white : (isToday ? .blue : .primary))
+                .font(.system(size: 16, design: .rounded))
+                .foregroundColor(isSelected ? .white : (isToday ? .mint : .primary))
                 .bold(isToday || isSelected)
             
             Circle()
                 .fill(statusColor)
-                .frame(width: 8, height: 8)
+                .frame(width: 6, height: 6)
         }
-        .frame(height: 50)
+        .frame(height: 44)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? Color.blue : (isToday ? Color.blue.opacity(0.1) : Color.clear))
+                .fill(isSelected ? Color.mint : (isToday ? Color.mint.opacity(0.1) : Color.clear))
         )
         .contentShape(Rectangle())
     }
