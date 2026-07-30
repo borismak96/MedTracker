@@ -83,7 +83,6 @@ struct ProfileForm: View {
                             Button(action: {
                                 withAnimation {
                                     profile.profileImageData = nil
-                                    selectedPhotoItem = nil
                                 }
                             }) {
                                 Text("Remove")
