@@ -140,35 +140,38 @@ struct HomeView: View {
     
     var statsSection: some View {
         HStack(spacing: 16) {
+            let streakColor = Color(red: 255/255, green: 193/255, blue: 36/255) // #FFC124
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "flame.fill")
-                        .foregroundColor(.orange)
+                        .foregroundColor(streakColor)
                         .padding(10)
-                        .background(Color.orange.opacity(0.15))
+                        .background(Color.white)
                         .clipShape(Circle())
                     Spacer()
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(streakCount)")
                         .font(.system(.title, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
                     Text("Day Streak")
                         .font(.system(.footnote, design: .rounded, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.9))
                 }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
+            .background(streakColor)
             .cornerRadius(24)
-            .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+            .shadow(color: streakColor.opacity(0.3), radius: 10, x: 0, y: 4)
             
+            let last30Color = Color(red: 56/255, green: 240/255, blue: 151/255) // #38F097
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "chart.bar.fill")
-                        .foregroundColor(.mint)
+                        .foregroundColor(last30Color)
                         .padding(10)
-                        .background(Color.mint.opacity(0.15))
+                        .background(Color.white)
                         .clipShape(Circle())
                     Spacer()
                 }
@@ -176,16 +179,17 @@ struct HomeView: View {
                     let takenCount = logs.prefix(30).filter { $0.isTaken }.count
                     Text("\(takenCount)/30")
                         .font(.system(.title, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
                     Text("Last 30 Days")
                         .font(.system(.footnote, design: .rounded, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.9))
                 }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
+            .background(last30Color)
             .cornerRadius(24)
-            .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+            .shadow(color: last30Color.opacity(0.3), radius: 10, x: 0, y: 4)
         }
     }
     
