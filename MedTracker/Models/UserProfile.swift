@@ -4,7 +4,7 @@ import SwiftData
 struct MedicationItem: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
     var name: String = ""
-    var dose: String = ""
+    var dose: String = "1"
 }
 
 @Model

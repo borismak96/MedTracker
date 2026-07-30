@@ -130,9 +130,14 @@ struct ProfileForm: View {
                             Divider()
                                 .frame(height: 20)
                             
-                            TextField("Dose (e.g., 1 pill)", text: $med.dose)
-                                .frame(width: 80)
-                                .multilineTextAlignment(.trailing)
+                            Picker("Dose", selection: $med.dose) {
+                                ForEach(1...20, id: \.self) { num in
+                                    Text("\(num)").tag("\(num)")
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .frame(width: 60)
                         }
                         .padding(.vertical, 4)
                     }
