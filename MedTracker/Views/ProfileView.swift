@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct ProfileView: View {
     @Query private var profiles: [UserProfile]
@@ -39,8 +40,48 @@ struct ProfileForm: View {
     @AppStorage("appLanguage") private var appLanguage = "system"
     @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
     
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    
     var body: some View {
         Form {
+            Section {
+                HStack {
+                    Spacer()
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                        if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        } else {
+                            VStack {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .frame(width: 80, height: 80)
+                                    .foregroundColor(.mint)
+                                    .background(Circle().fill(Color.mint.opacity(0.2)))
+                                Text("Add Photo")
+                                    .font(.system(.caption, design: .rounded, weight: .bold))
+                                    .foregroundColor(.mint)
+                                    .padding(.top, 4)
+                            }
+                        }
+                    }
+                    .onChange(of: selectedPhotoItem) { _, newItem in
+                        Task {
+                            if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                                profile.profileImageData = data
+                            }
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 10)
+            }
+            .listRowBackground(Color.clear)
+            
             Section(header: Text("Personal Info")) {
                 TextField("Name", text: $profile.name)
             }

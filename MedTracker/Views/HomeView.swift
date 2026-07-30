@@ -113,11 +113,20 @@ struct HomeView: View {
             
             // Greeting and Avatar
             HStack {
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .foregroundColor(.mint)
-                    .background(Circle().fill(Color.mint.opacity(0.2)))
+                if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 50, height: 50)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                } else {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .foregroundColor(.mint)
+                        .background(Circle().fill(Color.mint.opacity(0.2)))
+                }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     if profile.name.isEmpty {

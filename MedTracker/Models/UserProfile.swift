@@ -7,12 +7,14 @@ class UserProfile {
     var medicationName: String
     var targetTimeHour: Int
     var targetTimeMinute: Int
+    var profileImageData: Data?
     
-    init(name: String = "", medicationName: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0) {
+    init(name: String = "", medicationName: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil) {
         self.name = name
         self.medicationName = medicationName
         self.targetTimeHour = targetTimeHour
         self.targetTimeMinute = targetTimeMinute
+        self.profileImageData = profileImageData
     }
     
     @Transient
