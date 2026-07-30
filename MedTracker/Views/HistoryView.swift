@@ -358,7 +358,7 @@ struct DailyRecordSheet: View {
             if log.isTaken {
                 status = .taken
                 medicineName = log.medicineName ?? profile.medicationName
-                dose = log.dose ?? ""
+                dose = log.dose ?? profile.dose
             } else if log.skippedTime != nil {
                 status = .missed
                 skippedTime = log.skippedTime ?? date
@@ -372,6 +372,7 @@ struct DailyRecordSheet: View {
         } else {
             status = .none
             medicineName = profile.medicationName
+            dose = profile.dose
             systolic = ""
             diastolic = ""
         }

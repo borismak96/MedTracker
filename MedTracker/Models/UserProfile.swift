@@ -5,13 +5,15 @@ import SwiftData
 class UserProfile {
     var name: String
     var medicationName: String
+    var dose: String
     var targetTimeHour: Int
     var targetTimeMinute: Int
     var profileImageData: Data?
     
-    init(name: String = "", medicationName: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil) {
+    init(name: String = "", medicationName: String = "", dose: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil) {
         self.name = name
         self.medicationName = medicationName
+        self.dose = dose
         self.targetTimeHour = targetTimeHour
         self.targetTimeMinute = targetTimeMinute
         self.profileImageData = profileImageData

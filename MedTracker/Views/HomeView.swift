@@ -10,10 +10,6 @@ struct HomeView: View {
     @State private var skipReaction = ""
     @State private var skippedTime = Date()
     
-    @State private var showingTakeSheet = false
-    @State private var takeMedicineName = ""
-    @State private var takeDose = ""
-    
     @State private var showingBPSheet = false
     @State private var bpSystolic = ""
     @State private var bpDiastolic = ""
@@ -66,10 +62,7 @@ struct HomeView: View {
                                     showingSkipSheet: $showingSkipSheet,
                                     skippedTime: $skippedTime,
                                     skipReaction: $skipReaction,
-                                    skipNotes: $skipNotes,
-                                    showingTakeSheet: $showingTakeSheet,
-                                    takeMedicineName: $takeMedicineName,
-                                    takeDose: $takeDose
+                                    skipNotes: $skipNotes
                                 )
                                 
                                 VitalsCard(
@@ -93,11 +86,6 @@ struct HomeView: View {
             .sheet(isPresented: $showingSkipSheet) {
                 if let log = todayLog {
                     skipSheetContent(for: log)
-                }
-            }
-            .sheet(isPresented: $showingTakeSheet) {
-                if let log = todayLog {
-                    takeSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingBPSheet) {
@@ -253,39 +241,6 @@ struct HomeView: View {
         }
     }
     
-    func takeSheetContent(for log: MedicationLog) -> some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Medication Details")) {
-                    TextField("Medication Name", text: $takeMedicineName)
-                    
-                    TextField("Dose (e.g., 1 pill)", text: $takeDose)
-                }
-                
-                Button(action: {
-                    log.isTaken = true
-                    log.medicineName = takeMedicineName.isEmpty ? nil : takeMedicineName
-                    log.dose = takeDose.isEmpty ? nil : takeDose
-                    
-                    // Clear skip details if they existed
-                    log.skippedTime = nil
-                    log.physicalReaction = nil
-                    log.notes = nil
-                    
-                    showingTakeSheet = false
-                }) {
-                    Text("Save")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .bold()
-                }
-            }
-            .navigationTitle("Take Medication")
-            .navigationBarItems(trailing: Button("Cancel") {
-                showingTakeSheet = false
-            })
-        }
-    }
-    
     func bpSheetContent(for log: MedicationLog) -> some View {
         NavigationView {
             Form {
@@ -324,10 +279,6 @@ struct TodayCard: View {
     @Binding var skippedTime: Date
     @Binding var skipReaction: String
     @Binding var skipNotes: String
-    
-    @Binding var showingTakeSheet: Bool
-    @Binding var takeMedicineName: String
-    @Binding var takeDose: String
     
     var body: some View {
         VStack(spacing: 24) {
@@ -434,9 +385,15 @@ struct TodayCard: View {
             } else {
                 HStack(spacing: 16) {
                     Button(action: {
-                        takeMedicineName = profile.medicationName
-                        takeDose = ""
-                        showingTakeSheet = true
+                        withAnimation {
+                            log.isTaken = true
+                            log.medicineName = profile.medicationName.isEmpty ? nil : profile.medicationName
+                            log.dose = profile.dose.isEmpty ? nil : profile.dose
+                            
+                            log.skippedTime = nil
+                            log.physicalReaction = nil
+                            log.notes = nil
+                        }
                     }) {
                         Text("Take Now")
                             .font(.system(.headline, design: .rounded, weight: .bold))
