@@ -12,7 +12,10 @@ class MedicationLog {
     var medicineName: String?
     var dose: String?
     
-    init(id: UUID = UUID(), date: Date, isTaken: Bool = false, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil) {
+    var systolic: Int?
+    var diastolic: Int?
+    
+    init(id: UUID = UUID(), date: Date, isTaken: Bool = false, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, systolic: Int? = nil, diastolic: Int? = nil) {
         self.id = id
         self.date = date
         self.isTaken = isTaken
@@ -21,5 +24,7 @@ class MedicationLog {
         self.notes = notes
         self.medicineName = medicineName
         self.dose = dose
+        self.systolic = systolic
+        self.diastolic = diastolic
     }
 }

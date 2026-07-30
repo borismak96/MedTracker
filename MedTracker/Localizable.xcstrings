@@ -688,6 +688,116 @@
           }
         }
       }
+    },
+    "Vitals": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生命體徵"
+          }
+        }
+      }
+    },
+    "Blood Pressure": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "血壓"
+          }
+        }
+      }
+    },
+    "Log Blood Pressure": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記錄血壓"
+          }
+        }
+      }
+    },
+    "Blood Pressure (mmHg)": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "血壓 (mmHg)"
+          }
+        }
+      }
+    },
+    "Systolic (High)": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收縮壓 (高壓)"
+          }
+        }
+      }
+    },
+    "Diastolic (Low)": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "舒張壓 (低壓)"
+          }
+        }
+      }
+    },
+    "Systolic (High) BP": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收縮壓 (高壓)"
+          }
+        }
+      }
+    },
+    "Diastolic (Low) BP": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "舒張壓 (低壓)"
+          }
+        }
+      }
+    },
+    "Vitals (Optional)": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生命體徵 (選填)"
+          }
+        }
+      }
+    },
+    "Blood Pressure: %lld / %lld mmHg": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "血壓：%lld / %lld mmHg"
+          }
+        }
+      }
+    },
+    "%lld / %lld mmHg": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld mmHg"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
