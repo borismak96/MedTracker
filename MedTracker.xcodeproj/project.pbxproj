@@ -99,6 +99,7 @@
 		VIEWGROUPC41D8DF006BEED /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				BP0000000000000000000001 /* BloodPressureChartView.swift */,
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
 				VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */,
 				VIEWREF32C41D8E0006BEED4 /* ProfileView.swift */,
