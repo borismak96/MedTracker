@@ -288,14 +288,20 @@ struct TodayCard: View {
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
                     
-                    if profile.medicationName.isEmpty {
+                    if profile.medications.isEmpty {
                         Text("Your Medication")
                             .font(.system(.title2, design: .rounded, weight: .bold))
                             .foregroundColor(.primary)
                     } else {
-                        Text(profile.medicationName)
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                            .foregroundColor(.primary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(profile.medications) { med in
+                                if !med.name.isEmpty {
+                                    Text("\(med.name)\(med.dose.isEmpty ? "" : " - \(med.dose)")")
+                                        .font(.system(.title3, design: .rounded, weight: .bold))
+                                        .foregroundColor(.primary)
+                                }
+                            }
+                        }
                     }
                     
                     HStack {
@@ -328,14 +334,24 @@ struct TodayCard: View {
                     }
                     
                     if let medName = log.medicineName, !medName.isEmpty {
-                        Text("Medicine: \(medName)")
-                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Medicine:")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text(medName)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
                     }
                     if let dose = log.dose, !dose.isEmpty {
-                        Text("Dose: \(dose)")
-                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Dose:")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text(dose)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -387,8 +403,12 @@ struct TodayCard: View {
                     Button(action: {
                         withAnimation {
                             log.isTaken = true
-                            log.medicineName = profile.medicationName.isEmpty ? nil : profile.medicationName
-                            log.dose = profile.dose.isEmpty ? nil : profile.dose
+                            
+                            let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+                            let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+                            
+                            log.medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
+                            log.dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
                             
                             log.skippedTime = nil
                             log.physicalReaction = nil
@@ -465,22 +485,13 @@ struct VitalsCard: View {
                             .foregroundColor(.red)
                         Text("\(sys) / \(dia) mmHg")
                             .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.red)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .background(Color.red.opacity(0.1))
                 .cornerRadius(16)
-                
-                Button(action: { showingBPChart = true }) {
-                    Text("View BP Trends")
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(20)
-                }
                 
                 HStack(spacing: 16) {
                     Button(action: {
@@ -509,6 +520,16 @@ struct VitalsCard: View {
                             .background(Color.red.opacity(0.1))
                             .cornerRadius(20)
                     }
+                }
+                
+                Button(action: { showingBPChart = true }) {
+                    Text("View BP Trends")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(20)
                 }
             } else {
                 Button(action: {

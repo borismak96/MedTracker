@@ -161,14 +161,24 @@ struct HistoryView: View {
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                         }
                         if let med = log.medicineName, !med.isEmpty {
-                            Text("Medicine: \(med)")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Medicine:")
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
+                                Text(med)
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
                         }
                         if let dose = log.dose, !dose.isEmpty {
-                            Text("Dose: \(dose)")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Dose:")
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
+                                Text(dose)
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -321,8 +331,8 @@ struct DailyRecordSheet: View {
                 
                 if status == .taken {
                     Section(header: Text("Medication Details")) {
-                        TextField("Medication Name", text: $medicineName)
-                        TextField("Dose (e.g., 1 pill)", text: $dose)
+                        TextField("Medication Name", text: $medicineName, axis: .vertical)
+                        TextField("Dose (e.g., 1 pill)", text: $dose, axis: .vertical)
                     }
                 } else if status == .missed {
                     Section(header: Text("Missed Details")) {
@@ -357,8 +367,12 @@ struct DailyRecordSheet: View {
         if let log = log {
             if log.isTaken {
                 status = .taken
-                medicineName = log.medicineName ?? profile.medicationName
-                dose = log.dose ?? profile.dose
+                
+                let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+                let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+                
+                medicineName = log.medicineName ?? medNames.joined(separator: "\n")
+                dose = log.dose ?? medDoses.joined(separator: "\n")
             } else if log.skippedTime != nil {
                 status = .missed
                 skippedTime = log.skippedTime ?? date
@@ -371,8 +385,11 @@ struct DailyRecordSheet: View {
             diastolic = log.diastolic.map { "\($0)" } ?? ""
         } else {
             status = .none
-            medicineName = profile.medicationName
-            dose = profile.dose
+            let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+            let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+            
+            medicineName = medNames.joined(separator: "\n")
+            dose = medDoses.joined(separator: "\n")
             systolic = ""
             diastolic = ""
         }

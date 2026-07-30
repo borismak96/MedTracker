@@ -106,12 +106,34 @@ struct ProfileForm: View {
                 TextField("Name", text: $profile.name)
             }
             
-            Section(header: Text("Medication Details")) {
-                TextField("Medication Name", text: $profile.medicationName)
-                    .onChange(of: profile.medicationName) { _, _ in updateNotificationIfNeeded() }
-                
-                TextField("Dose (e.g., 1 pill)", text: $profile.dose)
-                
+            Section(header: Text("Medications")) {
+                List {
+                    ForEach($profile.medications) { $med in
+                        VStack(spacing: 8) {
+                            TextField("Medication Name", text: $med.name)
+                            Divider()
+                            TextField("Dose (e.g., 1 pill)", text: $med.dose)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onDelete { indices in
+                        profile.medications.remove(atOffsets: indices)
+                    }
+                    
+                    Button(action: {
+                        profile.medications.append(MedicationItem())
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add Medication")
+                        }
+                        .foregroundColor(.mint)
+                    }
+                }
+            }
+            .onChange(of: profile.medications) { _, _ in updateNotificationIfNeeded() }
+            
+            Section(header: Text("Reminder Time")) {
                 Picker("Target Hour", selection: $profile.targetTimeHour) {
                     ForEach(0..<24) { hour in
                         Text("\(hour):00").tag(hour)
@@ -173,7 +195,8 @@ struct ProfileForm: View {
     }
     
     private func scheduleCurrentNotification() {
-        let medName = profile.medicationName.isEmpty ? String(localized: "your medication") : profile.medicationName
+        let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
+        let medName = medNames.isEmpty ? String(localized: "your medication") : medNames.joined(separator: ", ")
         
         let title = String(localized: "Medication Reminder")
         // Using String format manually or localized string interpolation
