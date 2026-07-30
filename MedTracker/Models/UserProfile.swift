@@ -3,12 +3,12 @@ import SwiftData
 
 @Model
 class UserProfile {
-    var name: String
-    var medicationName: String
-    var dose: String
-    var targetTimeHour: Int
-    var targetTimeMinute: Int
-    var profileImageData: Data?
+    var name: String = ""
+    var medicationName: String = ""
+    var dose: String = ""
+    var targetTimeHour: Int = 10
+    var targetTimeMinute: Int = 0
+    var profileImageData: Data? = nil
     
     init(name: String = "", medicationName: String = "", dose: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil) {
         self.name = name
