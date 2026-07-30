@@ -124,10 +124,15 @@ struct ProfileForm: View {
             Section(header: Text("Medications")) {
                 List {
                     ForEach($profile.medications) { $med in
-                        VStack(spacing: 8) {
+                        HStack(spacing: 12) {
                             TextField("Medication Name", text: $med.name)
+                            
                             Divider()
+                                .frame(height: 20)
+                            
                             TextField("Dose (e.g., 1 pill)", text: $med.dose)
+                                .frame(width: 80)
+                                .multilineTextAlignment(.trailing)
                         }
                         .padding(.vertical, 4)
                     }
@@ -136,7 +141,9 @@ struct ProfileForm: View {
                     }
                     
                     Button(action: {
-                        profile.medications.append(MedicationItem())
+                        withAnimation {
+                            profile.medications.append(MedicationItem())
+                        }
                     }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
