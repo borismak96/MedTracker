@@ -214,11 +214,17 @@ struct HomeView: View {
                     Spacer()
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    let takenCount = logs.prefix(30).filter { $0.isTaken }.count
-                    Text("\(takenCount)/30")
+                    let calendar = Calendar.current
+                    let today = Date()
+                    let daysInMonth = calendar.range(of: .day, in: .month, for: today)?.count ?? 30
+                    let takenThisMonthCount = logs.filter { 
+                        calendar.isDate($0.date, equalTo: today, toGranularity: .month) && $0.isTaken 
+                    }.count
+                    
+                    Text("\(takenThisMonthCount)/\(daysInMonth)")
                         .font(.system(.title, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
-                    Text("Last 30 Days")
+                    Text("This Month")
                         .font(.system(.footnote, design: .rounded, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                 }
