@@ -81,8 +81,10 @@ struct ProfileForm: View {
                         
                         if profile.profileImageData != nil {
                             Button(action: {
-                                profile.profileImageData = nil
-                                selectedPhotoItem = nil
+                                withAnimation {
+                                    profile.profileImageData = nil
+                                    selectedPhotoItem = nil
+                                }
                             }) {
                                 Text("Remove")
                                     .font(.system(.subheadline, design: .rounded, weight: .bold))
