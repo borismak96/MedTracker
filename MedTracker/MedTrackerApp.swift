@@ -25,6 +25,6 @@ struct MedTrackerApp: App {
                 }
             }
         }
-        .modelContainer(for: [MedicationLog.self, UserProfile.self])
+        .modelContainer(SharedDatabase.shared.container)
     }
 }

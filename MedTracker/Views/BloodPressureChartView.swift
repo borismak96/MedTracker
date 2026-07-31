@@ -9,7 +9,7 @@ struct BloodPressureChartView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                AppBackground()
                 
                 VStack {
                     let validLogs = logs.filter { $0.systolic != nil && $0.diastolic != nil }.sorted(by: { $0.date < $1.date })

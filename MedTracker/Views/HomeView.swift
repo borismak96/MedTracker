@@ -45,8 +45,7 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
-                    .ignoresSafeArea()
+                AppBackground()
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -73,6 +72,8 @@ struct HomeView: View {
                                     bpSystolic: $bpSystolic,
                                     bpDiastolic: $bpDiastolic
                                 )
+                                
+                                MoodStatsCard(logs: logs)
                             }
                         } else {
                             ProgressView()
@@ -153,8 +154,8 @@ struct HomeView: View {
                     Image(systemName: "person.crop.circle.fill")
                         .resizable()
                         .frame(width: 50, height: 50)
-                        .foregroundColor(.mint)
-                        .background(Circle().fill(Color.mint.opacity(0.2)))
+                        .foregroundStyle(.white, Color.mint)
+                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -306,6 +307,7 @@ struct TodayCard: View {
     @Binding var skipNotes: String
     
     @State private var selectedMood: MoodStatus? = nil
+    @State private var remarkText: String = ""
     
     var body: some View {
         VStack(spacing: 24) {
@@ -398,6 +400,17 @@ struct TodayCard: View {
                             }
                         }
                     }
+                    
+                    if let notes = log.notes, !notes.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Remark:")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text(notes)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
@@ -409,6 +422,8 @@ struct TodayCard: View {
                     log.medicineName = nil
                     log.dose = nil
                     log.mood = nil
+                    log.notes = nil
+                    remarkText = ""
                 }) {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
@@ -472,6 +487,12 @@ struct TodayCard: View {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    TextField(LocalizedStringKey("Add remark (optional)"), text: $remarkText)
+                        .font(.system(.body, design: .rounded))
+                        .padding(12)
+                        .background(Color(UIColor.systemGray6))
+                        .cornerRadius(12)
                 }
                 .padding(.vertical, 8)
                 
@@ -489,7 +510,7 @@ struct TodayCard: View {
                             
                             log.skippedTime = nil
                             log.physicalReaction = nil
-                            log.notes = nil
+                            log.notes = remarkText.isEmpty ? nil : remarkText
                         }
                     }) {
                         Text("Take Now")
@@ -632,6 +653,144 @@ struct VitalsCard: View {
                         .padding(.vertical, 16)
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(20)
+                }
+            }
+        }
+        .padding(24)
+        .background(Color.white)
+        .cornerRadius(30)
+        .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+    }
+}
+
+struct MoodStatsCard: View {
+    let logs: [MedicationLog]
+    
+    private var monthMoodLogs: [MedicationLog] {
+        let calendar = Calendar.current
+        let today = Date()
+        return logs.filter {
+            calendar.isDate($0.date, equalTo: today, toGranularity: .month)
+            && MoodStatus.from(string: $0.mood) != nil
+        }
+    }
+    
+    private var moodCounts: [(mood: MoodStatus, count: Int)] {
+        MoodStatus.allCases.map { mood in
+            let count = monthMoodLogs.filter { MoodStatus.from(string: $0.mood) == mood }.count
+            return (mood, count)
+        }
+    }
+    
+    private var mostCommonMood: MoodStatus? {
+        moodCounts.max(by: { $0.count < $1.count }).flatMap { $0.count > 0 ? $0.mood : nil }
+    }
+    
+    private var maxCount: Int {
+        max(moodCounts.map(\.count).max() ?? 1, 1)
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Mood Trends")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundColor(.secondary)
+                    
+                    Text("This Month")
+                        .font(.system(.title2, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                }
+                
+                Spacer()
+                
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 70, height: 70)
+                    Image(systemName: "face.smiling.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(.orange)
+                }
+            }
+            
+            if monthMoodLogs.isEmpty {
+                Text("No mood data yet this month.")
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(UIColor.systemGray6))
+                    .cornerRadius(16)
+            } else {
+                if let topMood = mostCommonMood {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(topMood.color.opacity(0.2))
+                                .frame(width: 44, height: 44)
+                            Image(systemName: topMood.icon)
+                                .foregroundColor(topMood.color)
+                                .font(.system(size: 20))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Most Common")
+                                .font(.system(.caption, design: .rounded, weight: .semibold))
+                                .foregroundColor(.secondary)
+                            Text(LocalizedStringKey(topMood.rawValue))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(topMood.color)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("\(monthMoodLogs.count)")
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                        Text("Days")
+                            .font(.system(.caption, design: .rounded, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(topMood.color.opacity(0.1))
+                    .cornerRadius(16)
+                }
+                
+                VStack(spacing: 12) {
+                    ForEach(moodCounts, id: \.mood) { item in
+                        HStack(spacing: 12) {
+                            Image(systemName: item.mood.icon)
+                                .font(.system(size: 16))
+                                .foregroundColor(item.mood.color)
+                                .frame(width: 24)
+                            
+                            Text(LocalizedStringKey(item.mood.rawValue))
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .frame(width: 72, alignment: .leading)
+                            
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Capsule()
+                                        .fill(Color(UIColor.systemGray6))
+                                        .frame(height: 10)
+                                    
+                                    Capsule()
+                                        .fill(item.mood.color.opacity(0.8))
+                                        .frame(
+                                            width: item.count == 0 ? 0 : max(geo.size.width * CGFloat(item.count) / CGFloat(maxCount), 8),
+                                            height: 10
+                                        )
+                                }
+                            }
+                            .frame(height: 10)
+                            
+                            Text("\(item.count)")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.primary)
+                                .frame(width: 24, alignment: .trailing)
+                        }
+                    }
                 }
             }
         }

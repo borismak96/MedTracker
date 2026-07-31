@@ -39,7 +39,7 @@ struct MedicalCardView: View {
                                     Image(systemName: "person.crop.circle.fill")
                                         .resizable()
                                         .frame(width: 80, height: 80)
-                                        .foregroundColor(.mint.opacity(0.3))
+                                        .foregroundStyle(.white, Color.mint)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 4) {
