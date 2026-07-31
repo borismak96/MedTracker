@@ -151,7 +151,7 @@ enum MedTrackerExportDocument {
                 let profileLines = [
                     (String(localized: "Name"), nameText),
                     (String(localized: "Age Range"), ageText),
-                    (String(localized: "Reminder Time"), profile.targetTimeDescription),
+                    (String(localized: "Reminder Times"), profile.targetTimeDescription),
                     (String(localized: "Exported At"), timeFormatter.string(from: Date()))
                 ]
                 let profileCardHeight: CGFloat = 48 + CGFloat(profileLines.count) * 28
@@ -206,6 +206,92 @@ enum MedTrackerExportDocument {
                     }
                 }
                 y += medsHeight + 14
+                
+                // Blood pressure statistics + history
+                let bpLogs = logs.filter { $0.systolic != nil && $0.diastolic != nil }.sorted { $0.date > $1.date }
+                ensureSpace(40)
+                _ = drawText(
+                    String(localized: "Blood Pressure"),
+                    font: .systemFont(ofSize: 18, weight: .heavy),
+                    color: textPrimary,
+                    in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
+                )
+                y += 34
+                
+                if bpLogs.isEmpty {
+                    ensureSpace(70)
+                    drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: 60), fill: cardWhite)
+                    _ = drawText(
+                        String(localized: "No blood pressure data yet."),
+                        font: .systemFont(ofSize: 13, weight: .medium),
+                        color: textSecondary,
+                        in: CGRect(x: margin + 20, y: y + 20, width: contentWidth - 40, height: 22)
+                    )
+                    y += 74
+                } else {
+                    let sysValues = bpLogs.compactMap(\.systolic)
+                    let diaValues = bpLogs.compactMap(\.diastolic)
+                    let avgSys = sysValues.reduce(0, +) / sysValues.count
+                    let avgDia = diaValues.reduce(0, +) / diaValues.count
+                    let minSys = sysValues.min() ?? 0
+                    let maxSys = sysValues.max() ?? 0
+                    let minDia = diaValues.min() ?? 0
+                    let maxDia = diaValues.max() ?? 0
+                    
+                    let statsLines = [
+                        (String(localized: "Readings"), "\(bpLogs.count)"),
+                        (String(localized: "Average"), "\(avgSys) / \(avgDia) mmHg"),
+                        (String(localized: "Systolic Range"), "\(minSys)–\(maxSys)"),
+                        (String(localized: "Diastolic Range"), "\(minDia)–\(maxDia)")
+                    ]
+                    let statsHeight: CGFloat = 48 + CGFloat(statsLines.count) * 28
+                    ensureSpace(statsHeight + 16)
+                    drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: statsHeight), fill: cardWhite)
+                    _ = drawText(
+                        String(localized: "BP Statistics"),
+                        font: .systemFont(ofSize: 16, weight: .bold),
+                        color: mint,
+                        in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
+                    )
+                    rowY = y + 44
+                    for (label, value) in statsLines {
+                        _ = drawText(label, font: .systemFont(ofSize: 12, weight: .semibold), color: textSecondary, in: CGRect(x: margin + 20, y: rowY, width: 140, height: 20))
+                        _ = drawText(value, font: .systemFont(ofSize: 13, weight: .bold), color: textPrimary, in: CGRect(x: margin + 160, y: rowY, width: contentWidth - 180, height: 20))
+                        rowY += 28
+                    }
+                    y += statsHeight + 14
+                    
+                    ensureSpace(30)
+                    _ = drawText(
+                        String(localized: "BP History"),
+                        font: .systemFont(ofSize: 16, weight: .bold),
+                        color: mint,
+                        in: CGRect(x: margin, y: y, width: contentWidth, height: 22)
+                    )
+                    y += 28
+                    
+                    for log in bpLogs {
+                        guard let sys = log.systolic, let dia = log.diastolic else { continue }
+                        let cardH: CGFloat = 52
+                        ensureSpace(cardH + 10)
+                        drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: cardH), fill: cardWhite)
+                        _ = drawText(
+                            dateFormatter.string(from: log.date),
+                            font: .systemFont(ofSize: 13, weight: .semibold),
+                            color: textSecondary,
+                            in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 180, height: 20)
+                        )
+                        _ = drawText(
+                            "\(sys) / \(dia) mmHg",
+                            font: .systemFont(ofSize: 14, weight: .bold),
+                            color: UIColor.systemRed,
+                            in: CGRect(x: margin + contentWidth - 160, y: y + 16, width: 140, height: 20),
+                            alignment: .right
+                        )
+                        y += cardH + 8
+                    }
+                    y += 6
+                }
                 
                 // History section title
                 ensureSpace(40)

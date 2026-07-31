@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "%@%@" : {
       "localizations" : {
         "en" : {
@@ -27,6 +30,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld / %lld mmHg"
+          }
+        }
+      }
+    },
+    "%lld medications" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld medications"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 種藥物"
+          }
+        }
+      }
+    },
+    "%lld medicines at this time" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld medicines at this time"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此時間有 %lld 種藥物"
           }
         }
       }
@@ -190,12 +225,61 @@
         }
       }
     },
+    "Add Reminder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Reminder"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增提醒"
+          }
+        }
+      }
+    },
+    "Add reminder times in Reminder Times settings." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add reminder times in Reminder Times settings."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請先在「提醒時間」設定中新增提醒。"
+          }
+        }
+      }
+    },
     "Additional Notes (Optional)" : {
       "localizations" : {
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "備註（選填）"
+          }
+        }
+      }
+    },
+    "Afternoon" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afternoon"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下午"
           }
         }
       }
@@ -210,12 +294,44 @@
         }
       }
     },
+    "All times" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All times"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有時間"
+          }
+        }
+      }
+    },
     "App Settings" : {
       "localizations" : {
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "應用程式設定"
+          }
+        }
+      }
+    },
+    "Average" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "平均值"
           }
         }
       }
@@ -233,6 +349,12 @@
     },
     "Blood Pressure" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blood Pressure"
+          }
+        },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257,6 +379,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "血壓：%lld / %lld mmHg"
+          }
+        }
+      }
+    },
+    "BP History" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BP History"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "血壓紀錄"
+          }
+        }
+      }
+    },
+    "BP Statistics" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BP Statistics"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "血壓統計"
           }
         }
       }
@@ -314,6 +468,23 @@
         }
       }
     },
+    "Custom" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自訂"
+          }
+        }
+      }
+    },
     "Daily Status" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -361,6 +532,12 @@
     },
     "Diastolic" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastolic"
+          }
+        },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
@@ -385,6 +562,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "舒張壓 (低壓)"
+          }
+        }
+      }
+    },
+    "Diastolic Range" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastolic Range"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "舒張壓範圍"
           }
         }
       }
@@ -587,6 +780,22 @@
         }
       }
     },
+    "Label (e.g. Morning)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Label (e.g. Morning)"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標籤（例如：早上）"
+          }
+        }
+      }
+    },
     "Language" : {
       "localizations" : {
         "zh-Hant" : {
@@ -635,6 +844,32 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "直接從主畫面記錄服藥情況。"
+          }
+        }
+      }
+    },
+    "Manage Medications" : {
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理藥物"
+          }
+        }
+      }
+    },
+    "Manage Reminders" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Reminders"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理提醒"
           }
         }
       }
@@ -799,6 +1034,23 @@
         }
       }
     },
+    "Morning" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morning"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "早上"
+          }
+        }
+      }
+    },
     "Most Common" : {
       "localizations" : {
         "zh-Hant" : {
@@ -850,6 +1102,39 @@
         }
       }
     },
+    "Night" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Night"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "晚上"
+          }
+        }
+      }
+    },
+    "No blood pressure data yet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No blood pressure data yet."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未有血壓資料。"
+          }
+        }
+      }
+    },
     "No BP recorded today." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -889,6 +1174,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "本月尚未有心情記錄。"
+          }
+        }
+      }
+    },
+    "No reminders yet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No reminders yet."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未設定提醒。"
           }
         }
       }
@@ -1020,6 +1321,22 @@
         }
       }
     },
+    "Readings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Readings"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筆數"
+          }
+        }
+      }
+    },
     "Recent Trends" : {
       "localizations" : {
         "zh-Hant" : {
@@ -1040,10 +1357,43 @@
         }
       }
     },
+    "Remind at" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind at"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒於"
+          }
+        }
+      }
+    },
     "Reminder Time" : {
       "comment" : "A section of the profile form that allows the user to set their notification time.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒時間"
+          }
+        }
+      }
+    },
+    "Reminder Times" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder Times"
+          }
+        },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1140,6 +1490,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "請選擇年齡範圍"
+          }
+        }
+      }
+    },
+    "Set one or more daily reminder times. Assign medicines to each time on the Medications page." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set one or more daily reminder times. Assign medicines to each time on the Medications page."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可設定一個或多個每日提醒時間。請在「藥物」頁面將藥品指定到對應時間。"
           }
         }
       }
@@ -1244,6 +1610,12 @@
     },
     "Systolic" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systolic"
+          }
+        },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1268,6 +1640,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收縮壓 (高壓)"
+          }
+        }
+      }
+    },
+    "Systolic Range" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systolic Range"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收縮壓範圍"
           }
         }
       }
@@ -1607,6 +1995,10 @@
           }
         }
       }
+    },
+    "Type" : {
+      "comment" : "The type of the blood pressure measurement.",
+      "isCommentAutoGenerated" : true
     },
     "Under 18" : {
       "extractionState" : "stale",

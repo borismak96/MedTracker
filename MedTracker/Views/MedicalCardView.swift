@@ -75,28 +75,33 @@ struct MedicalCardView: View {
                                         .background(Color(UIColor.secondarySystemBackground))
                                         .cornerRadius(12)
                                 } else {
-                                    ForEach(activeMeds) { med in
-                                        HStack(spacing: 16) {
-                                            Image(systemName: "pills.fill")
-                                                .font(.title2)
-                                                .foregroundColor(.mint)
-                                            
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(med.name)
-                                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                                    .foregroundColor(.primary)
-                                                if !med.dose.isEmpty {
-                                                    Text(med.dose)
-                                                        .font(.system(.caption, design: .rounded, weight: .medium))
-                                                        .foregroundColor(.secondary)
+                                    ScrollView {
+                                        VStack(spacing: 12) {
+                                            ForEach(activeMeds) { med in
+                                                HStack(spacing: 16) {
+                                                    Image(systemName: "pills.fill")
+                                                        .font(.title2)
+                                                        .foregroundColor(.mint)
+                                                    
+                                                    VStack(alignment: .leading, spacing: 4) {
+                                                        Text(med.name)
+                                                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                            .foregroundColor(.primary)
+                                                        if !med.dose.isEmpty {
+                                                            Text(med.dose)
+                                                                .font(.system(.caption, design: .rounded, weight: .medium))
+                                                                .foregroundColor(.secondary)
+                                                        }
+                                                    }
+                                                    Spacer()
                                                 }
+                                                .padding()
+                                                .background(Color(UIColor.secondarySystemBackground))
+                                                .cornerRadius(12)
                                             }
-                                            Spacer()
                                         }
-                                        .padding()
-                                        .background(Color(UIColor.secondarySystemBackground))
-                                        .cornerRadius(12)
                                     }
+                                    .frame(height: min(CGFloat(activeMeds.count) * 76, 4 * 76))
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)

@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    @Binding var selectedTab: AppTab
     @Query private var profiles: [UserProfile]
     @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
     
@@ -113,6 +114,16 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
+            }
+            .onAppear {
+                profile?.ensureRemindersMigrated()
+            }
+            .onChange(of: selectedTab) { _, newTab in
+                if newTab != .today, showingMedicalCard {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showingMedicalCard = false
+                    }
+                }
             }
         }
     }
@@ -240,61 +251,187 @@ struct HomeView: View {
     
     func skipSheetContent(for log: MedicationLog) -> some View {
         NavigationView {
-            Form {
-                Section(header: Text("Missed Details")) {
-                    DatePicker("Time", selection: $skippedTime, displayedComponents: .hourAndMinute)
-                    
-                    TextField("Physical Reaction (Optional)", text: $skipReaction)
-                    
-                    TextField("Additional Notes (Optional)", text: $skipNotes)
-                }
+            ZStack {
+                AppBackground()
                 
-                Button(action: {
-                    log.skippedTime = skippedTime
-                    log.physicalReaction = skipReaction
-                    log.notes = skipNotes
-                    showingSkipSheet = false
-                }) {
-                    Text("Save")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .bold()
+                ScrollView {
+                    VStack(spacing: 20) {
+                        sheetHeader(
+                            icon: "exclamationmark.triangle.fill",
+                            title: String(localized: "Missed Medication"),
+                            subtitle: String(localized: "Missed Details")
+                        )
+                        
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text(LocalizedStringKey("Time"))
+                                    .font(.system(.body, design: .rounded, weight: .semibold))
+                                Spacer()
+                                DatePicker("", selection: $skippedTime, displayedComponents: .hourAndMinute)
+                                    .labelsHidden()
+                                    .tint(.mint)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            
+                            Divider().padding(.leading, 16)
+                            
+                            TextField(LocalizedStringKey("Physical Reaction (Optional)"), text: $skipReaction)
+                                .font(.system(.body, design: .rounded))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                            
+                            Divider().padding(.leading, 16)
+                            
+                            TextField(LocalizedStringKey("Additional Notes (Optional)"), text: $skipNotes)
+                                .font(.system(.body, design: .rounded))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                        }
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+                        
+                        Button {
+                            log.skippedTime = skippedTime
+                            log.physicalReaction = skipReaction
+                            log.notes = skipNotes
+                            showingSkipSheet = false
+                        } label: {
+                            Text(LocalizedStringKey("Save"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.mint)
+                                .cornerRadius(20)
+                                .shadow(color: Color.mint.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 30)
                 }
             }
-            .navigationTitle("Missed Medication")
-            .navigationBarItems(trailing: Button("Cancel") {
-                showingSkipSheet = false
-            })
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(LocalizedStringKey("Cancel")) {
+                        showingSkipSheet = false
+                    }
+                    .font(.system(.body, design: .rounded, weight: .semibold))
+                    .foregroundColor(.mint)
+                }
+            }
         }
     }
     
     func bpSheetContent(for log: MedicationLog) -> some View {
         NavigationView {
-            Form {
-                Section(header: Text("Blood Pressure (mmHg)")) {
-                    TextField("Systolic (High)", text: $bpSystolic)
-                        .keyboardType(.numberPad)
-                    
-                    TextField("Diastolic (Low)", text: $bpDiastolic)
-                        .keyboardType(.numberPad)
-                }
+            ZStack {
+                AppBackground()
                 
-                Button(action: {
-                    if let sys = Int(bpSystolic), let dia = Int(bpDiastolic) {
-                        log.systolic = sys
-                        log.diastolic = dia
+                ScrollView {
+                    VStack(spacing: 20) {
+                        sheetHeader(
+                            icon: "heart.text.square.fill",
+                            title: String(localized: "Log Blood Pressure"),
+                            subtitle: String(localized: "Blood Pressure (mmHg)")
+                        )
+                        
+                        VStack(spacing: 0) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .foregroundColor(.red.opacity(0.85))
+                                TextField(LocalizedStringKey("Systolic (High)"), text: $bpSystolic)
+                                    .font(.system(.body, design: .rounded))
+                                    .keyboardType(.numberPad)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            
+                            Divider().padding(.leading, 16)
+                            
+                            HStack(spacing: 12) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .foregroundColor(.blue.opacity(0.85))
+                                TextField(LocalizedStringKey("Diastolic (Low)"), text: $bpDiastolic)
+                                    .font(.system(.body, design: .rounded))
+                                    .keyboardType(.numberPad)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                        }
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+                        
+                        Button {
+                            if let sys = Int(bpSystolic), let dia = Int(bpDiastolic) {
+                                log.systolic = sys
+                                log.diastolic = dia
+                            }
+                            showingBPSheet = false
+                        } label: {
+                            Text(LocalizedStringKey("Save"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.mint)
+                                .cornerRadius(20)
+                                .shadow(color: Color.mint.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
                     }
-                    showingBPSheet = false
-                }) {
-                    Text("Save")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .bold()
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 30)
                 }
             }
-            .navigationTitle("Log Blood Pressure")
-            .navigationBarItems(trailing: Button("Cancel") {
-                showingBPSheet = false
-            })
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(LocalizedStringKey("Cancel")) {
+                        showingBPSheet = false
+                    }
+                    .font(.system(.body, design: .rounded, weight: .semibold))
+                    .foregroundColor(.mint)
+                }
+            }
         }
+    }
+    
+    private func sheetHeader(icon: String, title: String, subtitle: String) -> some View {
+        VStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.mint.opacity(0.15))
+                    .frame(width: 72, height: 72)
+                Image(systemName: icon)
+                    .font(.system(size: 30))
+                    .foregroundColor(.mint)
+            }
+            
+            VStack(spacing: 6) {
+                Text(title)
+                    .font(.system(.title2, design: .rounded, weight: .heavy))
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+                
+                Text(subtitle)
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(22)
+        .background(Color.white)
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
 }
 
@@ -311,7 +448,7 @@ struct TodayCard: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            HStack {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Today's Medication")
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
@@ -322,25 +459,30 @@ struct TodayCard: View {
                             .font(.system(.title2, design: .rounded, weight: .bold))
                             .foregroundColor(.primary)
                     } else {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(profile.medications) { med in
-                                if !med.name.isEmpty {
+                        let namedMeds = profile.medications.filter { !$0.name.isEmpty }
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(namedMeds) { med in
                                     Text("\(med.name)\(med.dose.isEmpty ? "" : " - \(med.dose)")")
                                         .font(.system(.title3, design: .rounded, weight: .bold))
                                         .foregroundColor(.primary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
                         }
+                        .frame(height: min(CGFloat(max(namedMeds.count, 1)) * 28, 96))
                     }
                     
-                    HStack {
+                    HStack(alignment: .top) {
                         Image(systemName: "clock.fill")
                         Text("Scheduled for \(profile.targetTimeDescription)")
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
                 }
-                Spacer()
+                
+                Spacer(minLength: 12)
                 
                 ZStack {
                     Circle()
@@ -381,23 +523,28 @@ struct TodayCard: View {
                             let names = medName.components(separatedBy: "\n")
                             let doses = log.dose?.components(separatedBy: "\n") ?? []
                             
-                            ForEach(0..<names.count, id: \.self) { index in
-                                HStack {
-                                    Text(names[index])
-                                        .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    if index < doses.count, !doses[index].isEmpty {
-                                        Text(doses[index])
-                                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                            .foregroundColor(.primary.opacity(0.8))
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.mint.opacity(0.2))
-                                            .cornerRadius(6)
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    ForEach(0..<names.count, id: \.self) { index in
+                                        HStack {
+                                            Text(names[index])
+                                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            if index < doses.count, !doses[index].isEmpty {
+                                                Text(doses[index])
+                                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                    .foregroundColor(.primary.opacity(0.8))
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color.mint.opacity(0.2))
+                                                    .cornerRadius(6)
+                                            }
+                                        }
                                     }
                                 }
                             }
+                            .frame(height: min(CGFloat(max(names.count, 1)) * 30, 90))
                         }
                     }
                     
