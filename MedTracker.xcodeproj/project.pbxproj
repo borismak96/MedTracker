@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B8C7D6E5F4039281706A5B4C /* MedicationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */; };
 		F60718293A4B5C6D7E8F9012 /* MedTrackerExportDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F60718293A4B5C6D7E8F90 /* MedTrackerExportDocument.swift */; };
 		D4E5F60718293A4B5C6D7E8F /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */; };
 		B2C3D4E5F60718293A4B5C6D /* AppBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */; };
@@ -62,6 +63,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsSettingsView.swift; sourceTree = "<group>"; };
 		E5F60718293A4B5C6D7E8F90 /* MedTrackerExportDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedTrackerExportDocument.swift; sourceTree = "<group>"; };
 		C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBackground.swift; sourceTree = "<group>"; };
@@ -201,6 +203,7 @@
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
 				VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */,
 				VIEWREF32C41D8E0006BEED4 /* ProfileView.swift */,
+				A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */,
 				F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */,
 				A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */,
 				C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */,
@@ -318,6 +321,7 @@
 				VIEW0012C41D8E0006BEED4 /* HomeView.swift in Sources */,
 				VIEW0022C41D8E0006BEED4 /* HistoryView.swift in Sources */,
 				VIEW0032C41D8E0006BEED4 /* ProfileView.swift in Sources */,
+				B8C7D6E5F4039281706A5B4C /* MedicationsSettingsView.swift in Sources */,
 				9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */,
 				FBF419714E9A58DAC18B824C /* SharedDatabase.swift in Sources */,
 				2ED602DFD191A5DF3AE4149B /* AboutUsView.swift in Sources */,

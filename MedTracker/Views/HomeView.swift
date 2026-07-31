@@ -330,15 +330,18 @@ struct TodayCard: View {
                             .font(.system(.title2, design: .rounded, weight: .bold))
                             .foregroundColor(.primary)
                     } else {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(profile.medications) { med in
-                                if !med.name.isEmpty {
+                        let namedMeds = profile.medications.filter { !$0.name.isEmpty }
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(namedMeds) { med in
                                     Text("\(med.name)\(med.dose.isEmpty ? "" : " - \(med.dose)")")
                                         .font(.system(.title3, design: .rounded, weight: .bold))
                                         .foregroundColor(.primary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
                         }
+                        .frame(height: min(CGFloat(max(namedMeds.count, 1)) * 28, 96))
                     }
                     
                     HStack {
@@ -390,23 +393,28 @@ struct TodayCard: View {
                             let names = medName.components(separatedBy: "\n")
                             let doses = log.dose?.components(separatedBy: "\n") ?? []
                             
-                            ForEach(0..<names.count, id: \.self) { index in
-                                HStack {
-                                    Text(names[index])
-                                        .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    if index < doses.count, !doses[index].isEmpty {
-                                        Text(doses[index])
-                                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                            .foregroundColor(.primary.opacity(0.8))
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.mint.opacity(0.2))
-                                            .cornerRadius(6)
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    ForEach(0..<names.count, id: \.self) { index in
+                                        HStack {
+                                            Text(names[index])
+                                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            if index < doses.count, !doses[index].isEmpty {
+                                                Text(doses[index])
+                                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                    .foregroundColor(.primary.opacity(0.8))
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color.mint.opacity(0.2))
+                                                    .cornerRadius(6)
+                                            }
+                                        }
                                     }
                                 }
                             }
+                            .frame(height: min(CGFloat(max(names.count, 1)) * 30, 90))
                         }
                     }
                     

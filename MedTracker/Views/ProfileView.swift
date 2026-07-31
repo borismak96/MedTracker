@@ -132,43 +132,22 @@ struct ProfileForm: View {
             }
             
             Section(header: Text("Medications")) {
-                List {
-                    ForEach($profile.medications) { $med in
-                        HStack(spacing: 12) {
-                            TextField("Medication Name", text: $med.name)
-                            
-                            Divider()
-                                .frame(height: 20)
-                            
-                            Picker("Dose", selection: $med.dose) {
-                                ForEach(1...20, id: \.self) { num in
-                                    Text("\(num)").tag("\(num)")
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .frame(width: 60)
+                NavigationLink(destination: MedicationsSettingsView(profile: profile)) {
+                    HStack {
+                        Image(systemName: "pills.fill")
+                            .foregroundColor(.mint)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(LocalizedStringKey("Manage Medications"))
+                                .font(.system(.body, design: .rounded, weight: .semibold))
+                            Text(medicationsSummary)
+                                .font(.system(.caption, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
                         }
-                        .padding(.vertical, 4)
                     }
-                    .onDelete { indices in
-                        profile.medications.remove(atOffsets: indices)
-                    }
-                    
-                    Button(action: {
-                        withAnimation {
-                            profile.medications.append(MedicationItem())
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add Medication")
-                        }
-                        .foregroundColor(.mint)
-                    }
+                    .padding(.vertical, 4)
                 }
             }
-            .onChange(of: profile.medications) { _, _ in updateNotificationIfNeeded() }
             
             Section(header: Text("Reminder Time")) {
                 DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
@@ -281,6 +260,17 @@ struct ProfileForm: View {
         withAnimation(.easeInOut(duration: 0.25)) {
             showSaveButton = true
         }
+    }
+    
+    private var medicationsSummary: String {
+        let names = profile.medications.map(\.name).filter { !$0.isEmpty }
+        if names.isEmpty {
+            return String(localized: "No medications added.")
+        }
+        if names.count == 1 {
+            return names[0]
+        }
+        return String(format: String(localized: "%lld medications"), names.count)
     }
     
     private func exportUserData() {
