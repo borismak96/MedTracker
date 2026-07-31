@@ -8,8 +8,7 @@ struct ProfileView: View {
         var body: some View {
             NavigationView {
                 ZStack {
-                    Color(UIColor.systemGroupedBackground)
-                        .ignoresSafeArea()
+                    AppBackground()
                     
                     VStack(spacing: 0) {
                         HStack {
@@ -37,10 +36,12 @@ struct ProfileView: View {
 
 struct ProfileForm: View {
     @Bindable var profile: UserProfile
+    @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
     @AppStorage("appLanguage") private var appLanguage = "system"
     @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var showSaveButton = true
     
     var body: some View {
         let timeBinding = Binding<Date>(
@@ -72,8 +73,8 @@ struct ProfileForm: View {
                         Image(systemName: "person.crop.circle.fill")
                             .resizable()
                             .frame(width: 100, height: 100)
-                            .foregroundColor(.mint)
-                            .background(Circle().fill(Color.mint.opacity(0.2)))
+                            .foregroundStyle(.white, Color.mint)
+                            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                     }
                     
                     HStack(spacing: 20) {
@@ -119,6 +120,15 @@ struct ProfileForm: View {
             
             Section(header: Text("Personal Info")) {
                 TextField("Name", text: $profile.name)
+                
+                Picker(LocalizedStringKey("Age Range"), selection: $profile.ageRange) {
+                    Text(LocalizedStringKey("Select age range"))
+                        .tag("")
+                    ForEach(AgeRange.allCases) { range in
+                        Text(LocalizedStringKey(range.rawValue))
+                            .tag(range.rawValue)
+                    }
+                }
             }
             
             Section(header: Text("Medications")) {
@@ -172,15 +182,6 @@ struct ProfileForm: View {
                 }
             }
             
-            Section(header: Text(LocalizedStringKey("About"))) {
-                NavigationLink(destination: AboutUsView()) {
-                    Label(LocalizedStringKey("About Us"), systemImage: "info.circle")
-                }
-                NavigationLink(destination: TermsView()) {
-                    Label(LocalizedStringKey("Terms & Conditions"), systemImage: "doc.text")
-                }
-            }
-            
             Section(header: Text("Reminders")) {
                 Toggle(isOn: $isNotificationEnabled) {
                     HStack {
@@ -204,26 +205,116 @@ struct ProfileForm: View {
                 }
             }
             
-            Section {
-                Button(action: {
-                    updateNotificationIfNeeded()
-                    // Manually trigger a save to ensure SwiftData persists immediately,
-                    // although it usually auto-saves on changes.
-                    try? profile.modelContext?.save()
-                }) {
-                    Text("Save Settings")
+            Section(header: Text(LocalizedStringKey("My Data"))) {
+                HStack {
+                    Text(LocalizedStringKey("Age Range"))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text(profile.ageRange.isEmpty
+                         ? String(localized: "Not selected")
+                         : String(localized: String.LocalizationValue(profile.ageRange)))
+                        .fontWeight(.semibold)
+                }
+                
+                Button(action: exportUserData) {
+                    Label(LocalizedStringKey("Export Data"), systemImage: "square.and.arrow.up")
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 14)
+                        .background(Color.mint)
+                        .cornerRadius(16)
                 }
-                .listRowBackground(Color.mint)
+                .buttonStyle(.plain)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            }
+            
+            Section(header: Text(LocalizedStringKey("About"))) {
+                NavigationLink(destination: AboutUsView()) {
+                    Label(LocalizedStringKey("About Us"), systemImage: "info.circle")
+                }
+                NavigationLink(destination: TermsView()) {
+                    Label(LocalizedStringKey("Terms & Conditions"), systemImage: "doc.text")
+                }
+            }
+            
+            if showSaveButton {
+                Section {
+                    Button(action: {
+                        updateNotificationIfNeeded()
+                        try? profile.modelContext?.save()
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            showSaveButton = false
+                        }
+                    }) {
+                        Text("Save Settings")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 14)
+                            .background(Color.mint)
+                            .cornerRadius(16)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                }
             }
         }
         .font(.system(.body, design: .rounded))
         .scrollContentBackground(.hidden)
-        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear)
         .navigationBarHidden(true)
+        .onChange(of: profile.name) { _, _ in revealSaveButton() }
+        .onChange(of: profile.ageRange) { _, _ in revealSaveButton() }
+        .onChange(of: profile.medications) { _, _ in revealSaveButton() }
+        .onChange(of: profile.targetTimeHour) { _, _ in revealSaveButton() }
+        .onChange(of: profile.targetTimeMinute) { _, _ in revealSaveButton() }
+        .onChange(of: profile.profileImageData) { _, _ in revealSaveButton() }
+        .onChange(of: appLanguage) { _, _ in revealSaveButton() }
+        .onChange(of: isNotificationEnabled) { _, _ in revealSaveButton() }
+    }
+    
+    private func revealSaveButton() {
+        guard !showSaveButton else { return }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showSaveButton = true
+        }
+    }
+    
+    private func exportUserData() {
+        guard let url = MedTrackerExportDocument.makePDF(profile: profile, logs: logs) else {
+            print("Export failed: could not create PDF")
+            return
+        }
+        
+        // Present the system share sheet directly (avoids a blank SwiftUI sheet).
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
+                ?? scene.windows.first?.rootViewController else {
+            return
+        }
+        
+        var presenter = root
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+        
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = presenter.view
+            popover.sourceRect = CGRect(
+                x: presenter.view.bounds.midX,
+                y: presenter.view.bounds.midY,
+                width: 0,
+                height: 0
+            )
+            popover.permittedArrowDirections = []
+        }
+        
+        presenter.present(activityVC, animated: true)
     }
     
     private func updateNotificationIfNeeded() {

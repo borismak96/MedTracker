@@ -21,8 +21,7 @@ struct HistoryView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
-                    .ignoresSafeArea()
+                AppBackground()
                 
                 VStack(spacing: 0) {
                     HStack {
@@ -188,6 +187,17 @@ struct HistoryView: View {
                                 }
                             }
                         }
+                        
+                        if let notes = log.notes, !notes.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Remark:")
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
+                                Text(notes)
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -207,9 +217,14 @@ struct HistoryView: View {
                                 .foregroundColor(.secondary)
                         }
                         if let notes = log.notes, !notes.isEmpty {
-                            Text("Notes: \(notes)")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Remark:")
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
+                                Text(notes)
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -361,6 +376,7 @@ struct DailyRecordSheet: View {
                     Section(header: Text("Medication Details")) {
                         TextField("Medication Name", text: $medicineName, axis: .vertical)
                         TextField("Dose (e.g., 1 pill)", text: $dose, axis: .vertical)
+                        TextField(LocalizedStringKey("Add remark (optional)"), text: $skipNotes, axis: .vertical)
                     }
                 } else if status == .missed {
                     Section(header: Text("Missed Details")) {
@@ -426,6 +442,7 @@ struct DailyRecordSheet: View {
                 
                 medicineName = log.medicineName ?? medNames.joined(separator: "\n")
                 dose = log.dose ?? medDoses.joined(separator: "\n")
+                skipNotes = log.notes ?? ""
             } else if log.skippedTime != nil {
                 status = .missed
                 skippedTime = log.skippedTime ?? date
@@ -433,6 +450,7 @@ struct DailyRecordSheet: View {
                 skipNotes = log.notes ?? ""
             } else {
                 status = .none
+                skipNotes = ""
             }
             systolic = log.systolic.map { "\($0)" } ?? ""
             diastolic = log.diastolic.map { "\($0)" } ?? ""
@@ -472,7 +490,7 @@ struct DailyRecordSheet: View {
             targetLog.medicineName = medicineName.isEmpty ? nil : medicineName
             targetLog.dose = dose.isEmpty ? nil : dose
             targetLog.physicalReaction = nil
-            targetLog.notes = nil
+            targetLog.notes = skipNotes.isEmpty ? nil : skipNotes
         case .missed:
             targetLog.isTaken = false
             targetLog.skippedTime = skippedTime

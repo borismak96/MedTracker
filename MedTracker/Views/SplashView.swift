@@ -6,12 +6,28 @@ struct SplashView: View {
     
     var body: some View {
         ZStack {
-            // Background Gradient
-            LinearGradient(
-                gradient: Gradient(colors: [Color.mint.opacity(0.6), Color.mint]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            // Soft mint mesh gradient (same family as app background, richer for splash)
+            ZStack {
+                LinearGradient(
+                    colors: [Color.mint.opacity(0.75), Color.mint, Color.mint.opacity(0.9)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                
+                RadialGradient(
+                    colors: [Color.white.opacity(0.45), Color.clear],
+                    center: UnitPoint(x: 0.85, y: 0.15),
+                    startRadius: 10,
+                    endRadius: 320
+                )
+                
+                RadialGradient(
+                    colors: [Color.mint.opacity(0.9), Color.clear],
+                    center: UnitPoint(x: 0.2, y: 0.8),
+                    startRadius: 20,
+                    endRadius: 380
+                )
+            }
             .ignoresSafeArea()
             
             VStack(spacing: 20) {
