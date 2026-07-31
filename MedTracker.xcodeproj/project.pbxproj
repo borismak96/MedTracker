@@ -8,9 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		0C0AB7EDB74422A79C71151D /* MedTrackerWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980BFC9B7EFD7E4C4D02B547 /* MedTrackerWidget.swift */; };
+		2ED602DFD191A5DF3AE4149B /* AboutUsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */; };
 		412BCB2261EDA85512EEEE89 /* MedTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6226F93B9707E7AD3D2DA46C /* MedTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6CB1B24A1E5FBA5726CC0101 /* MedicationLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */; };
 		6E959A76DC0FC9BB4A6C58CD /* SharedDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97FF95AC4323101CF487683 /* SharedDatabase.swift */; };
+		7684D66AB97D81FB7C6952B3 /* TermsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF06C3EC7A9F78004BAB3B9 /* TermsView.swift */; };
 		81DAB988EF10E11EDD17E522 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 870A7C086F9735A09C05FA2E /* SplashView.swift */; };
 		9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B851C802C41D8DF006BEED4 /* MedTrackerApp.swift */; };
 		9B851C832C41D8DF006BEED4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B851C822C41D8DF006BEED4 /* ContentView.swift */; };
@@ -60,6 +62,7 @@
 		011571613D5C57B7060090D3 /* AppIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
 		0E2B8E50C7B9DB48B21BF344 /* MedTrackerWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MedTrackerWidgetBundle.swift; sourceTree = "<group>"; };
 		21F235341DB6499C3450112A /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2CF06C3EC7A9F78004BAB3B9 /* TermsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TermsView.swift; sourceTree = "<group>"; };
 		6226F93B9707E7AD3D2DA46C /* MedTrackerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MedTrackerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		870A7C086F9735A09C05FA2E /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		980BFC9B7EFD7E4C4D02B547 /* MedTrackerWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MedTrackerWidget.swift; sourceTree = "<group>"; };
@@ -71,6 +74,7 @@
 		A97FF95AC4323101CF487683 /* SharedDatabase.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedDatabase.swift; sourceTree = "<group>"; };
 		BP0000000000000000000001 /* BloodPressureChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodPressureChartView.swift; sourceTree = "<group>"; };
 		CB86104A6E0F41CB7B6B161C /* MedTrackerWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MedTrackerWidget.entitlements; sourceTree = "<group>"; };
+		F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AboutUsView.swift; sourceTree = "<group>"; };
 		F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalCardView.swift; sourceTree = "<group>"; };
 		F6B28B383D1C077F6A60E93C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationLog.swift; sourceTree = "<group>"; };
@@ -191,6 +195,8 @@
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
 				VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */,
 				VIEWREF32C41D8E0006BEED4 /* ProfileView.swift */,
+				F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */,
+				2CF06C3EC7A9F78004BAB3B9 /* TermsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -305,6 +311,8 @@
 				VIEW0032C41D8E0006BEED4 /* ProfileView.swift in Sources */,
 				9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */,
 				FBF419714E9A58DAC18B824C /* SharedDatabase.swift in Sources */,
+				2ED602DFD191A5DF3AE4149B /* AboutUsView.swift in Sources */,
+				7684D66AB97D81FB7C6952B3 /* TermsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

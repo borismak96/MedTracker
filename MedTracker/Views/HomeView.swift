@@ -306,6 +306,7 @@ struct TodayCard: View {
     @Binding var skipNotes: String
     
     @State private var selectedMood: MoodStatus? = nil
+    @State private var remarkText: String = ""
     
     var body: some View {
         VStack(spacing: 24) {
@@ -398,6 +399,17 @@ struct TodayCard: View {
                             }
                         }
                     }
+                    
+                    if let notes = log.notes, !notes.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Remark:")
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text(notes)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
@@ -409,6 +421,8 @@ struct TodayCard: View {
                     log.medicineName = nil
                     log.dose = nil
                     log.mood = nil
+                    log.notes = nil
+                    remarkText = ""
                 }) {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
@@ -472,6 +486,12 @@ struct TodayCard: View {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    TextField(LocalizedStringKey("Add remark (optional)"), text: $remarkText)
+                        .font(.system(.body, design: .rounded))
+                        .padding(12)
+                        .background(Color(UIColor.systemGray6))
+                        .cornerRadius(12)
                 }
                 .padding(.vertical, 8)
                 
@@ -489,7 +509,7 @@ struct TodayCard: View {
                             
                             log.skippedTime = nil
                             log.physicalReaction = nil
-                            log.notes = nil
+                            log.notes = remarkText.isEmpty ? nil : remarkText
                         }
                     }) {
                         Text("Take Now")

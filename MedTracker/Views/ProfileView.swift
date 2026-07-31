@@ -172,6 +172,23 @@ struct ProfileForm: View {
                 }
             }
             
+            Section(header: Text(LocalizedStringKey("About"))) {
+                NavigationLink(destination: AboutUsView()) {
+                    Label(LocalizedStringKey("About Us"), systemImage: "info.circle")
+                }
+                NavigationLink(destination: TermsView()) {
+                    Label(LocalizedStringKey("Terms & Conditions"), systemImage: "doc.text")
+                }
+                Button(action: {
+                    if let url = URL(string: "mailto:support@example.com") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label(LocalizedStringKey("Contact Us"), systemImage: "envelope")
+                }
+                .foregroundColor(.primary)
+            }
+            
             Section(header: Text("Reminders")) {
                 Toggle(isOn: $isNotificationEnabled) {
                     HStack {
