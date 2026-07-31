@@ -179,14 +179,6 @@ struct ProfileForm: View {
                 NavigationLink(destination: TermsView()) {
                     Label(LocalizedStringKey("Terms & Conditions"), systemImage: "doc.text")
                 }
-                Button(action: {
-                    if let url = URL(string: "mailto:support@example.com") {
-                        UIApplication.shared.open(url)
-                    }
-                }) {
-                    Label(LocalizedStringKey("Contact Us"), systemImage: "envelope")
-                }
-                .foregroundColor(.primary)
             }
             
             Section(header: Text("Reminders")) {
