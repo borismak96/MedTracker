@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    @Binding var selectedTab: AppTab
     @Query private var profiles: [UserProfile]
     @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
     
@@ -113,6 +114,13 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
+            }
+            .onChange(of: selectedTab) { _, newTab in
+                if newTab != .today, showingMedicalCard {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showingMedicalCard = false
+                    }
+                }
             }
         }
     }
@@ -311,7 +319,7 @@ struct TodayCard: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            HStack {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Today's Medication")
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
@@ -340,7 +348,8 @@ struct TodayCard: View {
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
                 }
-                Spacer()
+                
+                Spacer(minLength: 12)
                 
                 ZStack {
                     Circle()

@@ -1,27 +1,38 @@
 import SwiftUI
 import SwiftData
 
+enum AppTab: Hashable {
+    case today
+    case history
+    case profile
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @Query private var logs: [MedicationLog]
     
+    @State private var selectedTab: AppTab = .today
+    
     var body: some View {
-        TabView {
-            HomeView()
+        TabView(selection: $selectedTab) {
+            HomeView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Today", systemImage: "pill.fill")
                 }
+                .tag(AppTab.today)
             
             HistoryView()
                 .tabItem {
                     Label("History", systemImage: "calendar")
                 }
+                .tag(AppTab.history)
             
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }
+                .tag(AppTab.profile)
         }
         .onAppear {
             initializeData()
