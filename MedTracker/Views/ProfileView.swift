@@ -209,6 +209,9 @@ struct ProfileForm: View {
             }
             
             Section(header: Text(LocalizedStringKey("About"))) {
+                NavigationLink(destination: SetupGuideView()) {
+                    Label(LocalizedStringKey("How to Set Up"), systemImage: "lightbulb.fill")
+                }
                 NavigationLink(destination: AboutUsView()) {
                     Label(LocalizedStringKey("About Us"), systemImage: "info.circle")
                 }

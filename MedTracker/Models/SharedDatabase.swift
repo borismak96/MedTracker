@@ -1,8 +1,9 @@
 import SwiftData
 import Foundation
 
-@MainActor
-class SharedDatabase {
+/// Shared SwiftData container for the app and widget extension.
+/// Not MainActor-isolated so TimelineProvider / AppIntent can read it safely.
+final class SharedDatabase: @unchecked Sendable {
     static let shared = SharedDatabase()
     
     let container: ModelContainer
