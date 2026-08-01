@@ -1,14 +1,70 @@
 import SwiftUI
 
-/// Soft pastel palette inspired by the health-score ring reference.
+/// Soft pastel palette for reminder time cards (Day Streak, Today, History).
 enum StatsRingPalette {
-    static let yellow = Color(red: 0.97, green: 0.86, blue: 0.45)
-    static let green = Color(red: 0.55, green: 0.86, blue: 0.62)
-    static let pink = Color(red: 0.98, green: 0.62, blue: 0.70)
-    static let blue = Color(red: 0.62, green: 0.78, blue: 0.95)
+    /// Morning — #FFDF3E
+    static let yellow = Color(red: 255/255, green: 223/255, blue: 62/255)
+    /// Afternoon — #FC7D1B
+    static let orange = Color(red: 252/255, green: 125/255, blue: 27/255)
+    /// Night — #B771F4
+    static let purple = Color(red: 183/255, green: 113/255, blue: 244/255)
+    
+    /// Deeper accents for ring progress / filled buttons.
+    static let yellowAccent = Color(red: 0.45, green: 0.34, blue: 0.02)
+    static let orangeAccent = Color(red: 0.48, green: 0.20, blue: 0.04)
+    static let purpleAccent = Color(red: 0.42, green: 0.18, blue: 0.68)
+    
+    static let green = Color(red: 0.72, green: 0.91, blue: 0.78)
+    static let pink = Color(red: 0.98, green: 0.78, blue: 0.84)
+    static let blue = Color(red: 0.75, green: 0.86, blue: 0.96)
     static let cream = Color(red: 0.99, green: 0.98, blue: 0.95)
     
-    static let accentColors: [Color] = [yellow, green, pink, blue]
+    static let accentColors: [Color] = [yellow, orange, purple, blue]
+    
+    /// Morning = #FFDF3E, Afternoon = #FC7D1B, Night = #B771F4.
+    static func color(for reminder: ReminderSlot) -> Color {
+        switch period(for: reminder) {
+        case .morning: return yellow
+        case .afternoon: return orange
+        case .night: return purple
+        }
+    }
+    
+    static func accent(for reminder: ReminderSlot) -> Color {
+        switch period(for: reminder) {
+        case .morning: return yellowAccent
+        case .afternoon: return orangeAccent
+        case .night: return purpleAccent
+        }
+    }
+    
+    /// Yellow/orange use dark text; purple uses white text for contrast.
+    static func prefersLightText(for reminder: ReminderSlot) -> Bool {
+        period(for: reminder) == .night
+    }
+    
+    static func primaryText(for reminder: ReminderSlot) -> Color {
+        prefersLightText(for: reminder) ? .white : Color(white: 0.10)
+    }
+    
+    static func secondaryText(for reminder: ReminderSlot) -> Color {
+        prefersLightText(for: reminder) ? Color.white.opacity(0.92) : Color(white: 0.18)
+    }
+    
+    private enum Period { case morning, afternoon, night }
+    
+    private static func period(for reminder: ReminderSlot) -> Period {
+        let label = reminder.label.lowercased()
+        if label.contains("morning") || label.contains("早上") { return .morning }
+        if label.contains("afternoon") || label.contains("下午") { return .afternoon }
+        if label.contains("night") || label.contains("evening") || label.contains("晚上") { return .night }
+        
+        switch reminder.hour {
+        case 5..<12: return .morning
+        case 12..<17: return .afternoon
+        default: return .night
+        }
+    }
 }
 
 struct RingSegmentModel: Identifiable {
@@ -117,6 +173,10 @@ struct StreakGaugeView: View {
     let goal: Int
     let color: Color
     var lineWidth: CGFloat = 14
+    /// Optional deeper stroke colour for progress on pastel card fills.
+    var progressColor: Color? = nil
+    /// When true, ring sits on a solid colored card.
+    var onSolidBackground: Bool = false
     
     private var progress: CGFloat {
         guard goal > 0 else { return 0 }
@@ -131,18 +191,21 @@ struct StreakGaugeView: View {
         GeometryReader { geo in
             let size = min(geo.size.width, geo.size.height)
             let centerSize = size * 0.58
+            let strokeColor = progressColor ?? (onSolidBackground ? color : color)
+            let trackColor = onSolidBackground ? Color.white.opacity(0.65) : Color.white.opacity(0.85)
+            let plateColor = onSolidBackground ? Color.white.opacity(0.35) : color.opacity(0.14)
             
             ZStack {
                 // Soft tinted plate
                 Circle()
-                    .fill(color.opacity(0.14))
+                    .fill(plateColor)
                     .frame(width: size * 0.92, height: size * 0.92)
                 
                 // Background track
                 Circle()
                     .trim(from: trackStart, to: trackStart + trackLength)
                     .stroke(
-                        Color.white.opacity(0.85),
+                        trackColor,
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                     )
                     .rotationEffect(.degrees(90))
@@ -152,7 +215,7 @@ struct StreakGaugeView: View {
                 Circle()
                     .trim(from: trackStart, to: trackStart + trackLength * progress)
                     .stroke(
-                        color,
+                        strokeColor,
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                     )
                     .rotationEffect(.degrees(90))
@@ -289,11 +352,11 @@ struct RingDetailSheet: View {
                         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(LocalizedStringKey("Details"))
+                            Text(AppLocalization.string("Details"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                             
                             if segment.detailLines.isEmpty {
-                                Text(LocalizedStringKey("No details available."))
+                                Text(AppLocalization.string("No details available."))
                                     .font(.system(.subheadline, design: .rounded))
                                     .foregroundColor(.secondary)
                             } else {
@@ -322,7 +385,7 @@ struct RingDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(LocalizedStringKey("Done")) { dismiss() }
+                    Button(AppLocalization.string("Done")) { dismiss() }
                         .font(.system(.body, design: .rounded, weight: .semibold))
                         .foregroundColor(.mint)
                 }

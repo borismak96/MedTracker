@@ -13,7 +13,7 @@ struct RemindersSettingsView: View {
             
             ScrollView {
                 VStack(spacing: 16) {
-                    Text(LocalizedStringKey("Set one or more daily reminder times. Assign medicines to each time on the Medications page."))
+                    Text(AppLocalization.string("Set one or more daily reminder times. Assign medicines to each time on the Medications page."))
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -23,7 +23,7 @@ struct RemindersSettingsView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "lightbulb.fill")
                                 .foregroundColor(.mint)
-                            Text(LocalizedStringKey("How to set reminders & medications"))
+                            Text(AppLocalization.string("How to set reminders & medications"))
                                 .font(.system(.subheadline, design: .rounded, weight: .semibold))
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -48,7 +48,7 @@ struct RemindersSettingsView: View {
                     Button(action: addReminder) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                            Text(LocalizedStringKey("Add Reminder"))
+                            Text(AppLocalization.string("Add Reminder"))
                                 .fontWeight(.bold)
                         }
                         .font(.system(.headline, design: .rounded))
@@ -67,7 +67,7 @@ struct RemindersSettingsView: View {
                 .padding(.bottom, 30)
             }
         }
-        .navigationTitle(LocalizedStringKey("Reminder Times"))
+        .navigationTitle(AppLocalization.string("Reminder Times"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             profile.ensureRemindersMigrated()
@@ -88,7 +88,7 @@ struct RemindersSettingsView: View {
                     .font(.system(size: 30))
                     .foregroundColor(.mint)
             }
-            Text(LocalizedStringKey("No reminders yet."))
+            Text(AppLocalization.string("No reminders yet."))
                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                 .foregroundColor(.secondary)
         }
@@ -136,9 +136,9 @@ struct RemindersSettingsView: View {
         
         return VStack(alignment: .leading, spacing: 14) {
             HStack {
-                TextField(LocalizedStringKey("Label (e.g. Morning)"), text: Binding(
-                    get: { binding.wrappedValue.label },
-                    set: { binding.wrappedValue.label = $0 }
+                TextField(AppLocalization.string("Label (e.g. Morning)"), text: Binding(
+                    get: { ReminderSlot.localizedLabel(for: binding.wrappedValue.label) },
+                    set: { binding.wrappedValue.label = ReminderSlot.storageLabel(from: $0) }
                 ))
                 .font(.system(.headline, design: .rounded, weight: .bold))
                 
@@ -169,7 +169,7 @@ struct RemindersSettingsView: View {
                         Button {
                             binding.wrappedValue.label = label == "Custom" ? "" : label
                         } label: {
-                            Text(LocalizedStringKey(label))
+                            Text(AppLocalization.string(label))
                                 .font(.system(.caption, design: .rounded, weight: .bold))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
@@ -182,10 +182,10 @@ struct RemindersSettingsView: View {
                 }
             }
             
-            DatePicker(LocalizedStringKey("Time"), selection: timeBinding, displayedComponents: .hourAndMinute)
+            DatePicker(AppLocalization.string("Time"), selection: timeBinding, displayedComponents: .hourAndMinute)
                 .font(.system(.body, design: .rounded))
             
-            Text(String(format: String(localized: "%lld medicines at this time"), medCount))
+            Text(AppLocalization.format("%lld medicines at this time", medCount))
                 .font(.system(.caption, design: .rounded, weight: .medium))
                 .foregroundColor(.secondary)
         }

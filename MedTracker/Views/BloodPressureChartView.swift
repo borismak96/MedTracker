@@ -6,12 +6,14 @@ struct BloodPressureChartView: View {
     @Environment(\.dismiss) private var dismiss
     var logs: [MedicationLog]
     
-    private var validLogs: [MedicationLog] {
-        logs.filter { $0.systolic != nil && $0.diastolic != nil }.sorted(by: { $0.date < $1.date })
+    private var allReadings: [BloodPressureReading] {
+        logs
+            .flatMap { $0.allBPReadingsForExport() }
+            .sorted { $0.recordedAt < $1.recordedAt }
     }
     
-    private var recentLogs: [MedicationLog] {
-        Array(validLogs.suffix(14))
+    private var recentReadings: [BloodPressureReading] {
+        Array(allReadings.suffix(40))
     }
     
     var body: some View {
@@ -21,12 +23,12 @@ struct BloodPressureChartView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        if validLogs.isEmpty {
+                        if allReadings.isEmpty {
                             VStack(spacing: 16) {
                                 Image(systemName: "chart.xyaxis.line")
                                     .font(.system(size: 50))
                                     .foregroundColor(.secondary)
-                                Text("No data to display yet.")
+                                Text(AppLocalization.string("No data to display yet."))
                                     .font(.system(.headline, design: .rounded))
                                     .foregroundColor(.secondary)
                             }
@@ -34,40 +36,38 @@ struct BloodPressureChartView: View {
                             .padding(.top, 80)
                         } else {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Recent Trends")
+                                Text(AppLocalization.string("Recent Trends"))
                                     .font(.system(.title3, design: .rounded, weight: .bold))
                                 
                                 Chart {
-                                    ForEach(recentLogs, id: \.id) { log in
-                                        if let sys = log.systolic, let dia = log.diastolic {
-                                            LineMark(
-                                                x: .value("Date", log.date, unit: .day),
-                                                y: .value("Value", sys)
-                                            )
-                                            .foregroundStyle(by: .value("Type", String(localized: "Systolic")))
-                                            .symbol(Circle())
-                                            
-                                            LineMark(
-                                                x: .value("Date", log.date, unit: .day),
-                                                y: .value("Value", dia)
-                                            )
-                                            .foregroundStyle(by: .value("Type", String(localized: "Diastolic")))
-                                            .symbol(Circle())
-                                        }
+                                    ForEach(recentReadings) { reading in
+                                        LineMark(
+                                            x: .value("Date", reading.recordedAt),
+                                            y: .value("Value", reading.systolic)
+                                        )
+                                        .foregroundStyle(by: .value("Type", AppLocalization.string("Systolic")))
+                                        .symbol(Circle())
+                                        
+                                        LineMark(
+                                            x: .value("Date", reading.recordedAt),
+                                            y: .value("Value", reading.diastolic)
+                                        )
+                                        .foregroundStyle(by: .value("Type", AppLocalization.string("Diastolic")))
+                                        .symbol(Circle())
                                     }
                                 }
                                 .chartForegroundStyleScale([
-                                    String(localized: "Systolic"): Color.red,
-                                    String(localized: "Diastolic"): Color.blue
+                                    AppLocalization.string("Systolic"): Color.red,
+                                    AppLocalization.string("Diastolic"): Color.blue
                                 ])
                                 .chartYScale(domain: 40...200)
                                 .chartXAxis {
-                                    AxisMarks(values: .automatic(desiredCount: min(recentLogs.count, 6))) { value in
+                                    AxisMarks(values: .automatic(desiredCount: min(max(recentReadings.count, 1), 6))) { value in
                                         AxisGridLine()
                                         AxisTick()
                                         AxisValueLabel {
                                             if let date = value.as(Date.self) {
-                                                Text(date, format: .dateTime.month(.abbreviated).day())
+                                                Text(date, format: Date.FormatStyle().month(.abbreviated).day().locale(AppLocalization.locale))
                                                     .font(.system(.caption2, design: .rounded))
                                             }
                                         }
@@ -85,24 +85,30 @@ struct BloodPressureChartView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 12) {
-                                Text(LocalizedStringKey("History"))
+                                Text(AppLocalization.string("History"))
                                     .font(.system(.title3, design: .rounded, weight: .bold))
                                 
-                                ForEach(validLogs.reversed().prefix(30), id: \.id) { log in
-                                    if let sys = log.systolic, let dia = log.diastolic {
+                                ForEach(Array(allReadings.reversed().prefix(40))) { reading in
+                                    VStack(alignment: .leading, spacing: 8) {
                                         HStack {
-                                            Text(log.date, format: .dateTime.year().month().day())
-                                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(reading.recordedAt, format: Date.FormatStyle().year().month().day().locale(AppLocalization.locale))
+                                                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                                Text(reading.timeDescription)
+                                                    .font(.system(.caption, design: .rounded))
+                                                    .foregroundColor(.secondary)
+                                            }
                                             Spacer()
-                                            Text("\(sys) / \(dia) mmHg")
+                                            Text(reading.valueDescription)
                                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                                .foregroundColor(.red)
+                                                .foregroundColor(reading.category.color)
                                         }
-                                        .padding(14)
-                                        .background(Color.white)
-                                        .cornerRadius(14)
-                                        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
+                                        BloodPressureCategoryBadge(category: reading.category, compact: true)
                                     }
+                                    .padding(14)
+                                    .background(Color.white)
+                                    .cornerRadius(14)
+                                    .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
                                 }
                             }
                         }
@@ -110,9 +116,9 @@ struct BloodPressureChartView: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("BP Trends")
+            .navigationTitle(AppLocalization.string("BP Trends"))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") { dismiss() }.font(.system(.body, design: .rounded, weight: .bold)))
+            .navigationBarItems(trailing: Button(AppLocalization.string("Done")) { dismiss() }.font(.system(.body, design: .rounded, weight: .bold)))
         }
     }
 }

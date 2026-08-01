@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
+		G1E2N3E4R5A6T7E8D9L0C1 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
+		G1E2N3E4R5A6T7E8D9L0C2 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F3 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
+		B7A9D1C2E3F405162738495A /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
+		B7A9D1C2E3F405162738495B /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
+		B7A9D1C2E3F405162738495C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F405162738495D /* InfoPlist.strings */; };
+		M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */; };
+		B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */; };
 		B8C7D6E5F4039281706A5B4C /* MedicationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */; };
 		R8E7M6I5N4D3E2R1S0E9T8I7 /* RemindersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */; };
 		S3T4U5P6G7U8I9D0E1V2W3X4 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */; };
@@ -36,6 +45,7 @@
 		MODEL0022C41D8E0006BEED4 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF22C41D8E0006BEED4 /* UserProfile.swift */; };
 		NM0000000000000000000002 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0000000000000000000001 /* NotificationManager.swift */; };
 		STRING0012C41D8E0006BEED4 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */; };
+		STRING0012C41D8E0006BEED5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */; };
 		VIEW0012C41D8E0006BEED4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWREF12C41D8E0006BEED4 /* HomeView.swift */; };
 		VIEW0022C41D8E0006BEED4 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */; };
 		VIEW0032C41D8E0006BEED4 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWREF32C41D8E0006BEED4 /* ProfileView.swift */; };
@@ -66,6 +76,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocalization.swift; sourceTree = "<group>"; };
+		B7A9D1C2E3F4051627384959 /* AppBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBrand.swift; sourceTree = "<group>"; };
+		M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodFaceView.swift; sourceTree = "<group>"; };
+		B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodPressureCategoryBadge.swift; sourceTree = "<group>"; };
+		B7A9D1C2E3F405162738495E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		B7A9D1C2E3F405162738495F /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedLocalizations.swift; sourceTree = "<group>"; };
 		A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsSettingsView.swift; sourceTree = "<group>"; };
 		R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersSettingsView.swift; sourceTree = "<group>"; };
 		S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
@@ -170,8 +187,12 @@
 		9B851C7F2C41D8DF006BEED4 /* MedTracker */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */,
+				B7A9D1C2E3F4051627384959 /* AppBrand.swift */,
+				G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */,
 				NM0000000000000000000001 /* NotificationManager.swift */,
 				STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */,
+				B7A9D1C2E3F405162738495D /* InfoPlist.strings */,
 				9B851C802C41D8DF006BEED4 /* MedTrackerApp.swift */,
 				9B851C822C41D8DF006BEED4 /* ContentView.swift */,
 				9B851C842C41D8E0006BEED4 /* Assets.xcassets */,
@@ -213,6 +234,8 @@
 				R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */,
 				S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */,
 				S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */,
+				M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */,
+				B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */,
 				F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */,
 				A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */,
 				C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */,
@@ -283,6 +306,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hant",
 			);
 			mainGroup = 9B851C742C41D8DF006BEED4;
 			productRefGroup = 9B851C7E2C41D8DF006BEED4 /* Products */;
@@ -300,6 +324,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				STRING0012C41D8E0006BEED5 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -308,6 +333,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				STRING0012C41D8E0006BEED4 /* Localizable.xcstrings in Resources */,
+				B7A9D1C2E3F405162738495C /* InfoPlist.strings in Resources */,
 				9B851C882C41D8E0006BEED4 /* Preview Assets.xcassets in Resources */,
 				9B851C852C41D8E0006BEED4 /* Assets.xcassets in Resources */,
 			);
@@ -334,7 +360,12 @@
 				R8E7M6I5N4D3E2R1S0E9T8I7 /* RemindersSettingsView.swift in Sources */,
 				S3T4U5P6G7U8I9D0E1V2W3X4 /* SetupGuideView.swift in Sources */,
 				S3T4U5R6I7N8G9V0I1E2W3X5 /* StatsRingViews.swift in Sources */,
+				M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */,
+				B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */,
 				9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* AppLocalization.swift in Sources */,
+				B7A9D1C2E3F405162738495A /* AppBrand.swift in Sources */,
+				G1E2N3E4R5A6T7E8D9L0C1 /* GeneratedLocalizations.swift in Sources */,
 				FBF419714E9A58DAC18B824C /* SharedDatabase.swift in Sources */,
 				2ED602DFD191A5DF3AE4149B /* AboutUsView.swift in Sources */,
 				B2C3D4E5F60718293A4B5C6D /* AppBackground.swift in Sources */,
@@ -351,6 +382,9 @@
 				CA75DDF73D2C4C511F9DB857 /* MedTrackerWidgetBundle.swift in Sources */,
 				0C0AB7EDB74422A79C71151D /* MedTrackerWidget.swift in Sources */,
 				E4EB6D0920D3208D9AC5119B /* AppIntent.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F3 /* AppLocalization.swift in Sources */,
+				B7A9D1C2E3F405162738495B /* AppBrand.swift in Sources */,
+				G1E2N3E4R5A6T7E8D9L0C2 /* GeneratedLocalizations.swift in Sources */,
 				6CB1B24A1E5FBA5726CC0101 /* MedicationLog.swift in Sources */,
 				CEFB41C1302E4A56AF536BA7 /* UserProfile.swift in Sources */,
 				6E959A76DC0FC9BB4A6C58CD /* SharedDatabase.swift in Sources */,
@@ -358,6 +392,18 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		B7A9D1C2E3F405162738495D /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B7A9D1C2E3F405162738495E /* en */,
+				B7A9D1C2E3F405162738495F /* zh-Hant */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXTargetDependency section */
 		A46522F6E305548BFD46A681 /* PBXTargetDependency */ = {
@@ -537,6 +583,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -566,6 +613,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -42,13 +42,15 @@ enum MedTrackerExportDocument {
         let splashIcon = splashIconImage(size: 100)
         
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = AppLocalization.locale
         dateFormatter.dateFormat = "yyyy-MM-dd"
         
         let timeFormatter = DateFormatter()
+        timeFormatter.locale = AppLocalization.locale
         timeFormatter.dateStyle = .medium
         timeFormatter.timeStyle = .short
         
-        let fileName = "MedTracker_Export_\(dateFormatter.string(from: Date())).pdf"
+        let fileName = "PillPal_Export_\(dateFormatter.string(from: Date())).pdf"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
@@ -132,13 +134,13 @@ enum MedTrackerExportDocument {
                 }
                 
                 _ = drawText(
-                    "MedTracker",
+                    AppBrand.displayName,
                     font: .systemFont(ofSize: 26, weight: .heavy),
                     color: .white,
                     in: CGRect(x: margin + 90, y: y + 28, width: contentWidth - 110, height: 34)
                 )
                 _ = drawText(
-                    String(localized: "Data Export Report"),
+                    AppLocalization.string("Data Export Report"),
                     font: .systemFont(ofSize: 14, weight: .semibold),
                     color: UIColor.white.withAlphaComponent(0.9),
                     in: CGRect(x: margin + 90, y: y + 62, width: contentWidth - 110, height: 22)
@@ -146,19 +148,23 @@ enum MedTrackerExportDocument {
                 y += headerHeight + 18
                 
                 // Profile card
-                let ageText = profile.ageRange.isEmpty ? String(localized: "Not selected") : profile.ageRange
-                let nameText = profile.name.isEmpty ? String(localized: "Name Not Set") : profile.name
+                let ageText: String = {
+                    if profile.ageRange.isEmpty { return AppLocalization.string("Not selected") }
+                    if let range = AgeRange(rawValue: profile.ageRange) { return range.localizedName }
+                    return profile.ageRange
+                }()
+                let nameText = profile.name.isEmpty ? AppLocalization.string("Name Not Set") : profile.name
                 let profileLines = [
-                    (String(localized: "Name"), nameText),
-                    (String(localized: "Age Range"), ageText),
-                    (String(localized: "Reminder Times"), profile.targetTimeDescription),
-                    (String(localized: "Exported At"), timeFormatter.string(from: Date()))
+                    (AppLocalization.string("Name"), nameText),
+                    (AppLocalization.string("Age Range"), ageText),
+                    (AppLocalization.string("Reminder Times"), profile.targetTimeDescription),
+                    (AppLocalization.string("Exported At"), timeFormatter.string(from: Date()))
                 ]
                 let profileCardHeight: CGFloat = 48 + CGFloat(profileLines.count) * 28
                 ensureSpace(profileCardHeight + 16)
                 drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: profileCardHeight), fill: cardWhite)
                 _ = drawText(
-                    String(localized: "Personal Info"),
+                    AppLocalization.string("Personal Info"),
                     font: .systemFont(ofSize: 16, weight: .bold),
                     color: mint,
                     in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
@@ -177,7 +183,7 @@ enum MedTrackerExportDocument {
                 ensureSpace(medsHeight + 16)
                 drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: medsHeight), fill: cardWhite)
                 _ = drawText(
-                    String(localized: "Medications"),
+                    AppLocalization.string("Medications"),
                     font: .systemFont(ofSize: 16, weight: .bold),
                     color: mint,
                     in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
@@ -185,7 +191,7 @@ enum MedTrackerExportDocument {
                 rowY = y + 44
                 if meds.isEmpty {
                     _ = drawText(
-                        String(localized: "No medications added."),
+                        AppLocalization.string("No medications added."),
                         font: .systemFont(ofSize: 13, weight: .medium),
                         color: textSecondary,
                         in: CGRect(x: margin + 20, y: rowY, width: contentWidth - 40, height: 20)
@@ -207,30 +213,32 @@ enum MedTrackerExportDocument {
                 }
                 y += medsHeight + 14
                 
-                // Blood pressure statistics + history
-                let bpLogs = logs.filter { $0.systolic != nil && $0.diastolic != nil }.sorted { $0.date > $1.date }
+                // Blood pressure statistics + history (all readings)
+                let bpReadings = logs
+                    .flatMap { $0.allBPReadingsForExport() }
+                    .sorted { $0.recordedAt > $1.recordedAt }
                 ensureSpace(40)
                 _ = drawText(
-                    String(localized: "Blood Pressure"),
+                    AppLocalization.string("Blood Pressure"),
                     font: .systemFont(ofSize: 18, weight: .heavy),
                     color: textPrimary,
                     in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
                 )
                 y += 34
                 
-                if bpLogs.isEmpty {
+                if bpReadings.isEmpty {
                     ensureSpace(70)
                     drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: 60), fill: cardWhite)
                     _ = drawText(
-                        String(localized: "No blood pressure data yet."),
+                        AppLocalization.string("No blood pressure data yet."),
                         font: .systemFont(ofSize: 13, weight: .medium),
                         color: textSecondary,
                         in: CGRect(x: margin + 20, y: y + 20, width: contentWidth - 40, height: 22)
                     )
                     y += 74
                 } else {
-                    let sysValues = bpLogs.compactMap(\.systolic)
-                    let diaValues = bpLogs.compactMap(\.diastolic)
+                    let sysValues = bpReadings.map(\.systolic)
+                    let diaValues = bpReadings.map(\.diastolic)
                     let avgSys = sysValues.reduce(0, +) / sysValues.count
                     let avgDia = diaValues.reduce(0, +) / diaValues.count
                     let minSys = sysValues.min() ?? 0
@@ -239,16 +247,16 @@ enum MedTrackerExportDocument {
                     let maxDia = diaValues.max() ?? 0
                     
                     let statsLines = [
-                        (String(localized: "Readings"), "\(bpLogs.count)"),
-                        (String(localized: "Average"), "\(avgSys) / \(avgDia) mmHg"),
-                        (String(localized: "Systolic Range"), "\(minSys)–\(maxSys)"),
-                        (String(localized: "Diastolic Range"), "\(minDia)–\(maxDia)")
+                        (AppLocalization.string("Readings"), "\(bpReadings.count)"),
+                        (AppLocalization.string("Average"), "\(avgSys) / \(avgDia) mmHg"),
+                        (AppLocalization.string("Systolic Range"), "\(minSys)–\(maxSys)"),
+                        (AppLocalization.string("Diastolic Range"), "\(minDia)–\(maxDia)")
                     ]
                     let statsHeight: CGFloat = 48 + CGFloat(statsLines.count) * 28
                     ensureSpace(statsHeight + 16)
                     drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: statsHeight), fill: cardWhite)
                     _ = drawText(
-                        String(localized: "BP Statistics"),
+                        AppLocalization.string("BP Statistics"),
                         font: .systemFont(ofSize: 16, weight: .bold),
                         color: mint,
                         in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
@@ -263,29 +271,41 @@ enum MedTrackerExportDocument {
                     
                     ensureSpace(30)
                     _ = drawText(
-                        String(localized: "BP History"),
+                        AppLocalization.string("BP History"),
                         font: .systemFont(ofSize: 16, weight: .bold),
                         color: mint,
                         in: CGRect(x: margin, y: y, width: contentWidth, height: 22)
                     )
                     y += 28
                     
-                    for log in bpLogs {
-                        guard let sys = log.systolic, let dia = log.diastolic else { continue }
+                    let bpTimeFormatter = DateFormatter()
+                    bpTimeFormatter.locale = AppLocalization.locale
+                    bpTimeFormatter.dateStyle = .medium
+                    bpTimeFormatter.timeStyle = .short
+                    
+                    for reading in bpReadings {
                         let cardH: CGFloat = 52
                         ensureSpace(cardH + 10)
                         drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: cardH), fill: cardWhite)
                         _ = drawText(
-                            dateFormatter.string(from: log.date),
+                            bpTimeFormatter.string(from: reading.recordedAt),
                             font: .systemFont(ofSize: 13, weight: .semibold),
                             color: textSecondary,
                             in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 180, height: 20)
                         )
+                        let category = reading.category
                         _ = drawText(
-                            "\(sys) / \(dia) mmHg",
-                            font: .systemFont(ofSize: 14, weight: .bold),
+                            "\(reading.valueDescription) · \(category.localizedTitle)",
+                            font: .systemFont(ofSize: 13, weight: .bold),
                             color: UIColor.systemRed,
-                            in: CGRect(x: margin + contentWidth - 160, y: y + 16, width: 140, height: 20),
+                            in: CGRect(x: margin + contentWidth - 200, y: y + 10, width: 180, height: 18),
+                            alignment: .right
+                        )
+                        _ = drawText(
+                            category.localizedAdvice,
+                            font: .systemFont(ofSize: 11, weight: .medium),
+                            color: textSecondary,
+                            in: CGRect(x: margin + contentWidth - 200, y: y + 28, width: 180, height: 16),
                             alignment: .right
                         )
                         y += cardH + 8
@@ -296,7 +316,7 @@ enum MedTrackerExportDocument {
                 // History section title
                 ensureSpace(40)
                 _ = drawText(
-                    String(localized: "History"),
+                    AppLocalization.string("History"),
                     font: .systemFont(ofSize: 18, weight: .heavy),
                     color: textPrimary,
                     in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
@@ -307,7 +327,7 @@ enum MedTrackerExportDocument {
                     ensureSpace(70)
                     drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: 60), fill: cardWhite)
                     _ = drawText(
-                        String(localized: "No data to display yet."),
+                        AppLocalization.string("No data to display yet."),
                         font: .systemFont(ofSize: 13, weight: .medium),
                         color: textSecondary,
                         in: CGRect(x: margin + 20, y: y + 20, width: contentWidth - 40, height: 22)
@@ -319,24 +339,26 @@ enum MedTrackerExportDocument {
                         let status: String
                         let statusColor: UIColor
                         if log.isTaken {
-                            status = String(localized: "Taken")
+                            status = AppLocalization.string("Taken")
                             statusColor = UIColor.systemGreen
                         } else if log.skippedTime != nil {
-                            status = String(localized: "Skipped")
+                            status = AppLocalization.string("Skipped")
                             statusColor = UIColor.systemRed
                         } else {
-                            status = String(localized: "Not Recorded")
+                            status = AppLocalization.string("Not Recorded")
                             statusColor = textSecondary
                         }
                         
                         var details: [String] = []
-                        if let mood = log.mood, !mood.isEmpty { details.append("\(String(localized: "Mood: "))\(mood)") }
+                        if let mood = log.mood, !mood.isEmpty { details.append("\(AppLocalization.string("Mood: "))\(mood)") }
                         if !medicine.isEmpty { details.append("\(medicine)\(dose.isEmpty ? "" : " · \(dose)")") }
-                        if let sys = log.systolic, let dia = log.diastolic {
-                            details.append("\(sys) / \(dia) mmHg")
+                        let dayBP = log.allBPReadingsForExport()
+                        if !dayBP.isEmpty {
+                            let bpText = dayBP.map { "\($0.timeDescription) \($0.valueDescription)" }.joined(separator: " · ")
+                            details.append(bpText)
                         }
                         if let notes = log.notes, !notes.isEmpty {
-                            details.append("\(String(localized: "Remark:")) \(notes)")
+                            details.append("\(AppLocalization.string("Remark:")) \(notes)")
                         }
                         
                         let detailText = details.joined(separator: "\n")
@@ -386,7 +408,7 @@ enum MedTrackerExportDocument {
                 // Footer
                 ensureSpace(40)
                 _ = drawText(
-                    "MedTracker · \(String(localized: "Information for Reference Only"))",
+                    "\(AppBrand.displayName) · \(AppLocalization.string("Information for Reference Only"))",
                     font: .systemFont(ofSize: 10, weight: .medium),
                     color: textSecondary,
                     in: CGRect(x: margin, y: pageHeight - margin - 16, width: contentWidth, height: 16),

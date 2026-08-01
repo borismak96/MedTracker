@@ -73,19 +73,19 @@ struct MedTrackerWidgetEntryView : View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.green)
-                Text(LocalizedStringKey("Taken Today"))
+                Text(AppLocalization.string("Taken Today"))
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
             } else if let log = entry.log, log.skippedTime != nil {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.red)
-                Text(LocalizedStringKey("Skipped"))
+                Text(AppLocalization.string("Skipped"))
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
             } else {
                 Image(systemName: "pill.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.mint)
-                Text(LocalizedStringKey("Not Taken"))
+                Text(AppLocalization.string("Not Taken"))
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
                     .foregroundColor(.secondary)
             }
@@ -93,7 +93,7 @@ struct MedTrackerWidgetEntryView : View {
             HStack {
                 Image(systemName: "flame.fill")
                     .foregroundColor(.orange)
-                Text("\(entry.dayStreak) \(String(localized: "Days"))")
+                Text("\(entry.dayStreak) \(AppLocalization.string("Days"))")
                     .font(.system(.caption, design: .rounded, weight: .bold))
             }
             .padding(.horizontal, 10)
@@ -114,8 +114,8 @@ struct MedTrackerWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             MedTrackerWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName(LocalizedStringKey("Daily Status"))
-        .description(LocalizedStringKey("Shows your medication status and day streak."))
+        .configurationDisplayName(AppLocalization.string("Daily Status"))
+        .description(AppLocalization.string("Shows your medication status and day streak."))
         .supportedFamilies([.systemSmall])
     }
 }
@@ -128,7 +128,7 @@ struct MedTrackerMediumWidgetEntryView : View {
         HStack(alignment: .top, spacing: 16) {
             // Left: Medications
             VStack(alignment: .leading, spacing: 8) {
-                Text(LocalizedStringKey("Medications"))
+                Text(AppLocalization.string("Medications"))
                     .font(.system(.headline, design: .rounded, weight: .bold))
                     .foregroundColor(.mint)
                 
@@ -154,7 +154,7 @@ struct MedTrackerMediumWidgetEntryView : View {
                         }
                     }
                 } else {
-                    Text(LocalizedStringKey("No medications added."))
+                    Text(AppLocalization.string("No medications added."))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -166,13 +166,13 @@ struct MedTrackerMediumWidgetEntryView : View {
             
             // Right: Blood Pressure / Status
             VStack(alignment: .leading, spacing: 8) {
-                Text(LocalizedStringKey("Status"))
+                Text(AppLocalization.string("Status"))
                     .font(.system(.headline, design: .rounded, weight: .bold))
                     .foregroundColor(.blue)
                 
                 if let log = entry.log, let sys = log.systolic, let dia = log.diastolic {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(LocalizedStringKey("Blood Pressure"))
+                        Text(AppLocalization.string("Blood Pressure"))
                             .font(.system(.caption2, design: .rounded, weight: .bold))
                             .foregroundColor(.secondary)
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
@@ -187,7 +187,7 @@ struct MedTrackerMediumWidgetEntryView : View {
                         }
                     }
                 } else {
-                    Text(LocalizedStringKey("No BP recorded today."))
+                    Text(AppLocalization.string("No BP recorded today."))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -197,7 +197,7 @@ struct MedTrackerMediumWidgetEntryView : View {
                 if let log = entry.log, log.isTaken {
                     HStack {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
-                        Text(LocalizedStringKey("Taken")).font(.caption.bold())
+                        Text(AppLocalization.string("Taken")).font(.caption.bold())
                     }
                 }
             }
@@ -217,8 +217,8 @@ struct MedTrackerMediumWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             MedTrackerMediumWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName(LocalizedStringKey("Overview"))
-        .description(LocalizedStringKey("Shows medications and recent health data."))
+        .configurationDisplayName(AppLocalization.string("Overview"))
+        .description(AppLocalization.string("Shows medications and recent health data."))
         .supportedFamilies([.systemMedium])
     }
 }
@@ -229,7 +229,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
 
     var body: some View {
         VStack(spacing: 10) {
-            Text(LocalizedStringKey("Today's Medication"))
+            Text(AppLocalization.string("Today's Medication"))
                 .font(.system(.caption, design: .rounded, weight: .bold))
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -239,7 +239,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 32))
                         .foregroundColor(.green)
-                    Text(LocalizedStringKey("Taken Today"))
+                    Text(AppLocalization.string("Taken Today"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                 }
             } else if let log = entry.log, log.skippedTime != nil {
@@ -247,7 +247,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 32))
                         .foregroundColor(.red)
-                    Text(LocalizedStringKey("Skipped"))
+                    Text(AppLocalization.string("Skipped"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                 }
             } else {
@@ -256,7 +256,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                         VStack(spacing: 6) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 24))
-                            Text(LocalizedStringKey("Take"))
+                            Text(AppLocalization.string("Take"))
                                 .font(.system(.caption, design: .rounded, weight: .bold))
                         }
                         .foregroundColor(.white)
@@ -270,7 +270,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                         VStack(spacing: 6) {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 24))
-                            Text(LocalizedStringKey("Skip"))
+                            Text(AppLocalization.string("Skip"))
                                 .font(.system(.caption, design: .rounded, weight: .bold))
                         }
                         .foregroundColor(.white)
@@ -296,8 +296,8 @@ struct MedTrackerInteractiveWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             MedTrackerInteractiveWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName(LocalizedStringKey("Quick Action"))
-        .description(LocalizedStringKey("Log your medication directly from the Home Screen."))
+        .configurationDisplayName(AppLocalization.string("Quick Action"))
+        .description(AppLocalization.string("Log your medication directly from the Home Screen."))
         .supportedFamilies([.systemSmall])
     }
 }
