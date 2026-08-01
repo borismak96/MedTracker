@@ -46,10 +46,14 @@ enum AppLocalization {
     }
     
     static func string(_ key: String) -> String {
-        if prefersTraditionalChinese, let translated = GeneratedLocalizations.zhHant[key] {
-            return translated
+        if prefersTraditionalChinese {
+            return GeneratedLocalizations.zhHant[key]
+                ?? GeneratedLocalizations.en[key]
+                ?? key
         }
-        return key
+        // Opaque keys (e.g. About_Us_Content) need the catalog English value;
+        // natural-language keys can fall back to the key itself.
+        return GeneratedLocalizations.en[key] ?? key
     }
     
     static func format(_ key: String, _ arguments: CVarArg...) -> String {
