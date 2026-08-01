@@ -132,7 +132,10 @@ struct HistoryView: View {
     }
     
     var selectedDateSummary: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        let log = logForDate(selectedDate)
+        let doseRecords = historyDoseRecords(for: log)
+        
+        return VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text(selectedDate, format: .dateTime.month().day().weekday(.wide))
                     .font(.system(.title3, design: .rounded, weight: .bold))
@@ -149,98 +152,11 @@ struct HistoryView: View {
                 }
             }
             
-            let log = logForDate(selectedDate)
-            if let log = log {
-                if log.isTaken {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Taken")
-                                .font(.system(.headline, design: .rounded, weight: .bold))
-                        }
-                        if let med = log.medicineName, !med.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Medications:")
-                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                    .foregroundColor(.primary)
-                                
-                                let names = med.components(separatedBy: "\n")
-                                let doses = log.dose?.components(separatedBy: "\n") ?? []
-                                
-                                ForEach(0..<names.count, id: \.self) { index in
-                                    HStack {
-                                        Text(names[index])
-                                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                            .foregroundColor(.secondary)
-                                        Spacer()
-                                        if index < doses.count, !doses[index].isEmpty {
-                                            Text(doses[index])
-                                                .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                                .foregroundColor(.primary.opacity(0.8))
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(Color.mint.opacity(0.2))
-                                                .cornerRadius(6)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        if let notes = log.notes, !notes.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Remark:")
-                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                    .foregroundColor(.primary)
-                                Text(notes)
-                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color.green.opacity(0.1))
-                    .cornerRadius(12)
-                } else if log.skippedTime != nil {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.red)
-                            Text("Missed at \(log.skippedTime ?? selectedDate, format: .dateTime.hour().minute())")
-                                .font(.system(.headline, design: .rounded, weight: .bold))
-                        }
-                        if let reaction = log.physicalReaction, !reaction.isEmpty {
-                            Text("Reaction: \(reaction)")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        if let notes = log.notes, !notes.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Remark:")
-                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                    .foregroundColor(.primary)
-                                Text(notes)
-                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color.red.opacity(0.1))
-                    .cornerRadius(12)
-                } else {
-                    Text("Not Recorded")
-                        .font(.system(.subheadline, design: .rounded, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(12)
-                }
-            } else {
+            Text(LocalizedStringKey("Reminder History"))
+                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                .foregroundColor(.secondary)
+            
+            if doseRecords.isEmpty {
                 Text("Not Recorded")
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.secondary)
@@ -248,6 +164,22 @@ struct HistoryView: View {
                     .padding()
                     .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(12)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(Array(doseRecords.enumerated()), id: \.element.id) { index, record in
+                        historyDoseCard(
+                            record: record,
+                            color: HistoryDosePalette.colors[index % HistoryDosePalette.colors.count]
+                        )
+                    }
+                }
+                
+                Text(String(format: String(localized: "%lld taken · %lld skipped · %lld pending"),
+                              doseRecords.filter(\.isTaken).count,
+                              doseRecords.filter(\.isSkipped).count,
+                              doseRecords.filter(\.isPending).count))
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundColor(.secondary)
             }
             
             if let log = log, let sys = log.systolic, let dia = log.diastolic {
@@ -287,6 +219,154 @@ struct HistoryView: View {
         }
     }
     
+    private func historyDoseRecords(for log: MedicationLog?) -> [ReminderDoseRecord] {
+        if let log, !log.doseRecords.isEmpty {
+            return log.sortedDoseRecords
+        }
+        if let profile {
+            profile.ensureRemindersMigrated()
+            if let log {
+                // Show reminder slots with legacy day status mapped for older logs.
+                return profile.sortedReminders.map { reminder in
+                    if log.isTaken {
+                        return ReminderDoseRecord(
+                            id: reminder.id,
+                            label: reminder.label,
+                            hour: reminder.hour,
+                            minute: reminder.minute,
+                            status: DoseRecordStatus.taken.rawValue,
+                            notes: log.notes,
+                            medicineName: log.medicineName,
+                            dose: log.dose,
+                            mood: log.mood
+                        )
+                    } else if log.skippedTime != nil {
+                        return ReminderDoseRecord(
+                            id: reminder.id,
+                            label: reminder.label,
+                            hour: reminder.hour,
+                            minute: reminder.minute,
+                            status: DoseRecordStatus.skipped.rawValue,
+                            skippedTime: log.skippedTime,
+                            physicalReaction: log.physicalReaction,
+                            notes: log.notes
+                        )
+                    } else {
+                        return ReminderDoseRecord(
+                            id: reminder.id,
+                            label: reminder.label,
+                            hour: reminder.hour,
+                            minute: reminder.minute
+                        )
+                    }
+                }
+            }
+            return profile.sortedReminders.map {
+                ReminderDoseRecord(id: $0.id, label: $0.label, hour: $0.hour, minute: $0.minute)
+            }
+        }
+        return []
+    }
+    
+    private func historyDoseCard(record: ReminderDoseRecord, color: Color) -> some View {
+        let statusTitle: String
+        let statusColor: Color
+        let statusIcon: String
+        
+        if record.isTaken {
+            statusTitle = String(localized: "Taken")
+            statusColor = .green
+            statusIcon = "checkmark.circle.fill"
+        } else if record.isSkipped {
+            statusTitle = String(localized: "Skipped")
+            statusColor = .red
+            statusIcon = "xmark.circle.fill"
+        } else {
+            statusTitle = String(localized: "Pending")
+            statusColor = .orange
+            statusIcon = "clock.fill"
+        }
+        
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 10, height: 10)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(record.label.isEmpty ? record.timeDescription : record.label)
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                    Text(record.timeDescription)
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Image(systemName: statusIcon)
+                    Text(statusTitle)
+                }
+                .font(.system(.caption, design: .rounded, weight: .bold))
+                .foregroundColor(statusColor)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(statusColor.opacity(0.15))
+                .cornerRadius(10)
+            }
+            
+            if let medName = record.medicineName, !medName.isEmpty {
+                let names = medName.components(separatedBy: "\n")
+                let doses = record.dose?.components(separatedBy: "\n") ?? []
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(0..<names.count, id: \.self) { index in
+                        HStack {
+                            Text(names[index])
+                                .font(.system(.caption, design: .rounded, weight: .medium))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            if index < doses.count, !doses[index].isEmpty {
+                                Text(doses[index])
+                                    .font(.system(.caption2, design: .rounded, weight: .bold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.mint.opacity(0.2))
+                                    .cornerRadius(6)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if record.isSkipped, let skipped = record.skippedTime {
+                Text(String(format: String(localized: "Missed at %@"),
+                              skipped.formatted(date: .omitted, time: .shortened)))
+                    .font(.system(.caption, design: .rounded, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            
+            if let reaction = record.physicalReaction, !reaction.isEmpty {
+                Text(String(format: String(localized: "Reaction: %@"), reaction))
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundColor(.secondary)
+            }
+            
+            if let notes = record.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(color.opacity(0.4), lineWidth: 1)
+        )
+        .cornerRadius(16)
+    }
+    
     func logForDate(_ date: Date) -> MedicationLog? {
         logs.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
@@ -298,6 +378,15 @@ struct HistoryView: View {
     }
 }
 
+enum HistoryDosePalette {
+    static let colors: [Color] = [
+        StatsRingPalette.yellow,
+        StatsRingPalette.green,
+        StatsRingPalette.pink,
+        StatsRingPalette.blue
+    ]
+}
+
 struct DayCell: View {
     let date: Date
     let log: MedicationLog?
@@ -306,6 +395,7 @@ struct DayCell: View {
     var body: some View {
         let calendar = Calendar.current
         let isToday = calendar.isDateInToday(date)
+        let dots = doseDotColors
         
         VStack(spacing: 4) {
             Text("\(calendar.component(.day, from: date))")
@@ -313,9 +403,20 @@ struct DayCell: View {
                 .foregroundColor(isSelected ? .white : (isToday ? .mint : .primary))
                 .bold(isToday || isSelected)
             
-            Circle()
-                .fill(statusColor)
-                .frame(width: 6, height: 6)
+            if dots.isEmpty {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 6, height: 6)
+            } else {
+                HStack(spacing: 2) {
+                    ForEach(0..<dots.count, id: \.self) { index in
+                        Circle()
+                            .fill(dots[index])
+                            .frame(width: 5, height: 5)
+                    }
+                }
+                .frame(height: 6)
+            }
         }
         .frame(height: 44)
         .frame(maxWidth: .infinity)
@@ -326,11 +427,18 @@ struct DayCell: View {
         .contentShape(Rectangle())
     }
     
-    var statusColor: Color {
-        guard let log = log else { return .clear }
-        if log.isTaken { return .green }
-        if log.skippedTime != nil { return .red }
-        return .clear
+    private var doseDotColors: [Color] {
+        guard let log = log else { return [] }
+        if !log.doseRecords.isEmpty {
+            return log.sortedDoseRecords.prefix(3).map { record in
+                if record.isTaken { return .green }
+                if record.isSkipped { return .red }
+                return .orange.opacity(0.35)
+            }
+        }
+        if log.isTaken { return [.green] }
+        if log.skippedTime != nil { return [.red] }
+        return []
     }
 }
 
@@ -346,122 +454,220 @@ struct DailyRecordSheet: View {
         allLogs.first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })
     }
     
-    enum RecordStatus { case none, taken, missed }
-    @State private var status: RecordStatus = .none
+    enum SlotStatus: String, CaseIterable, Identifiable {
+        case pending
+        case taken
+        case missed
+        
+        var id: String { rawValue }
+        
+        var labelKey: LocalizedStringKey {
+            switch self {
+            case .pending: return "Pending"
+            case .taken: return "Taken"
+            case .missed: return "Missed"
+            }
+        }
+    }
     
-    @State private var medicineName = ""
-    @State private var dose = ""
-    
-    @State private var skippedTime = Date()
-    @State private var skipReaction = ""
-    @State private var skipNotes = ""
-    
+    @State private var doseDrafts: [ReminderDoseRecord] = []
     @State private var systolic = ""
     @State private var diastolic = ""
     @State private var mood: MoodStatus? = nil
     
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Status")) {
-                    Picker("Status", selection: $status) {
-                        Text("Not Recorded").tag(RecordStatus.none)
-                        Text("Taken").tag(RecordStatus.taken)
-                        Text("Missed").tag(RecordStatus.missed)
-                    }
-                    .pickerStyle(.segmented)
-                }
+            ZStack {
+                AppBackground()
                 
-                if status == .taken {
-                    Section(header: Text("Medication Details")) {
-                        TextField("Medication Name", text: $medicineName, axis: .vertical)
-                        TextField("Dose (e.g., 1 pill)", text: $dose, axis: .vertical)
-                        TextField(LocalizedStringKey("Add remark (optional)"), text: $skipNotes, axis: .vertical)
-                    }
-                } else if status == .missed {
-                    Section(header: Text("Missed Details")) {
-                        DatePicker("Time", selection: $skippedTime, displayedComponents: .hourAndMinute)
-                        TextField("Physical Reaction (Optional)", text: $skipReaction)
-                        TextField("Additional Notes (Optional)", text: $skipNotes)
-                    }
-                }
-                
-                Section(header: Text("Vitals (Optional)")) {
-                    TextField("Systolic (High) BP", text: $systolic)
-                        .keyboardType(.numberPad)
-                    TextField("Diastolic (Low) BP", text: $diastolic)
-                        .keyboardType(.numberPad)
-                }
-                
-                Section(header: Text("Mood (Optional)")) {
-                    HStack(spacing: 15) {
-                        ForEach(MoodStatus.allCases, id: \.self) { m in
-                            Button(action: {
-                                withAnimation {
-                                    mood = mood == m ? nil : m
-                                }
-                            }) {
-                                ZStack {
-                                    Circle()
-                                        .fill(mood == m ? m.color.opacity(0.2) : Color(UIColor.systemGray6))
-                                        .frame(width: 45, height: 45)
-                                    
-                                    Image(systemName: m.icon)
-                                        .font(.system(size: 20))
-                                        .foregroundColor(mood == m ? m.color : .gray)
-                                }
-                                .scaleEffect(mood == m ? 1.1 : 1.0)
-                            }
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Text(LocalizedStringKey("Edit each reminder time for this day."))
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        ForEach($doseDrafts) { $draft in
+                            doseEditCard(draft: $draft)
                         }
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(LocalizedStringKey("Vitals (Optional)"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                            
+                            TextField("Systolic (High) BP", text: $systolic)
+                                .keyboardType(.numberPad)
+                                .padding(12)
+                                .background(Color(UIColor.systemGray6))
+                                .cornerRadius(12)
+                            
+                            TextField("Diastolic (Low) BP", text: $diastolic)
+                                .keyboardType(.numberPad)
+                                .padding(12)
+                                .background(Color(UIColor.systemGray6))
+                                .cornerRadius(12)
+                        }
+                        .padding(16)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(LocalizedStringKey("Mood (Optional)"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                            
+                            HStack(spacing: 12) {
+                                ForEach(MoodStatus.allCases, id: \.self) { m in
+                                    Button {
+                                        withAnimation { mood = mood == m ? nil : m }
+                                    } label: {
+                                        ZStack {
+                                            Circle()
+                                                .fill(mood == m ? m.color.opacity(0.2) : Color(UIColor.systemGray6))
+                                                .frame(width: 44, height: 44)
+                                            Image(systemName: m.icon)
+                                                .font(.system(size: 18))
+                                                .foregroundColor(mood == m ? m.color : .gray)
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(16)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+                        
+                        Button(action: saveRecord) {
+                            Text("Save Record")
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.mint)
+                                .cornerRadius(20)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .buttonStyle(.borderless)
-                }
-                
-                Button(action: saveRecord) {
-                    Text("Save Record")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .bold()
+                    .padding(20)
                 }
             }
             .navigationTitle(Text(date, format: .dateTime.month().day().year()))
-            .navigationBarItems(trailing: Button("Cancel") { dismiss() })
-            .onAppear {
-                loadData()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .font(.system(.body, design: .rounded, weight: .semibold))
+                        .foregroundColor(.mint)
+                }
             }
+            .onAppear { loadData() }
         }
     }
     
-    func loadData() {
-        if let log = log {
-            if log.isTaken {
-                status = .taken
-                
-                let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
-                let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
-                
-                medicineName = log.medicineName ?? medNames.joined(separator: "\n")
-                dose = log.dose ?? medDoses.joined(separator: "\n")
-                skipNotes = log.notes ?? ""
-            } else if log.skippedTime != nil {
-                status = .missed
-                skippedTime = log.skippedTime ?? date
-                skipReaction = log.physicalReaction ?? ""
-                skipNotes = log.notes ?? ""
-            } else {
-                status = .none
-                skipNotes = ""
+    private func doseEditCard(draft: Binding<ReminderDoseRecord>) -> some View {
+        let statusBinding = Binding<SlotStatus>(
+            get: {
+                switch draft.wrappedValue.doseStatus {
+                case .taken: return .taken
+                case .skipped: return .missed
+                case .pending: return .pending
+                }
+            },
+            set: { newValue in
+                switch newValue {
+                case .pending:
+                    draft.wrappedValue.status = DoseRecordStatus.pending.rawValue
+                    draft.wrappedValue.takenAt = nil
+                    draft.wrappedValue.skippedTime = nil
+                case .taken:
+                    draft.wrappedValue.status = DoseRecordStatus.taken.rawValue
+                    draft.wrappedValue.takenAt = draft.wrappedValue.takenAt ?? date
+                    draft.wrappedValue.skippedTime = nil
+                    draft.wrappedValue.physicalReaction = nil
+                case .missed:
+                    draft.wrappedValue.status = DoseRecordStatus.skipped.rawValue
+                    draft.wrappedValue.takenAt = nil
+                    draft.wrappedValue.skippedTime = draft.wrappedValue.skippedTime ?? date
+                }
             }
-            systolic = log.systolic.map { "\($0)" } ?? ""
-            diastolic = log.diastolic.map { "\($0)" } ?? ""
-            mood = MoodStatus.from(string: log.mood)
-        } else {
-            status = .none
-            let medNames = profile.medications.map { $0.name }.filter { !$0.isEmpty }
-            let medDoses = profile.medications.map { $0.dose }.filter { !$0.isEmpty }
+        )
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(draft.wrappedValue.displayTitle)
+                .font(.system(.headline, design: .rounded, weight: .bold))
             
-            medicineName = medNames.joined(separator: "\n")
-            dose = medDoses.joined(separator: "\n")
+            Picker(LocalizedStringKey("Status"), selection: statusBinding) {
+                ForEach(SlotStatus.allCases) { status in
+                    Text(status.labelKey).tag(status)
+                }
+            }
+            .pickerStyle(.segmented)
+            
+            if draft.wrappedValue.isTaken {
+                TextField(LocalizedStringKey("Add remark (optional)"), text: Binding(
+                    get: { draft.wrappedValue.notes ?? "" },
+                    set: { draft.wrappedValue.notes = $0.isEmpty ? nil : $0 }
+                ), axis: .vertical)
+                .padding(10)
+                .background(Color(UIColor.systemGray6))
+                .cornerRadius(10)
+            } else if draft.wrappedValue.isSkipped {
+                DatePicker(
+                    LocalizedStringKey("Time"),
+                    selection: Binding(
+                        get: { draft.wrappedValue.skippedTime ?? date },
+                        set: { draft.wrappedValue.skippedTime = $0 }
+                    ),
+                    displayedComponents: .hourAndMinute
+                )
+                
+                TextField(LocalizedStringKey("Physical Reaction (Optional)"), text: Binding(
+                    get: { draft.wrappedValue.physicalReaction ?? "" },
+                    set: { draft.wrappedValue.physicalReaction = $0.isEmpty ? nil : $0 }
+                ))
+                .padding(10)
+                .background(Color(UIColor.systemGray6))
+                .cornerRadius(10)
+                
+                TextField(LocalizedStringKey("Additional Notes (Optional)"), text: Binding(
+                    get: { draft.wrappedValue.notes ?? "" },
+                    set: { draft.wrappedValue.notes = $0.isEmpty ? nil : $0 }
+                ))
+                .padding(10)
+                .background(Color(UIColor.systemGray6))
+                .cornerRadius(10)
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+    }
+    
+    func loadData() {
+        profile.ensureRemindersMigrated()
+        
+        if let existing = log {
+            existing.syncDoseRecords(with: profile)
+            doseDrafts = existing.sortedDoseRecords
+            systolic = existing.systolic.map { "\($0)" } ?? ""
+            diastolic = existing.diastolic.map { "\($0)" } ?? ""
+            mood = MoodStatus.from(string: existing.mood)
+        } else {
+            doseDrafts = profile.sortedReminders.map { reminder in
+                let meds = profile.medications(for: reminder)
+                return ReminderDoseRecord(
+                    id: reminder.id,
+                    label: reminder.label,
+                    hour: reminder.hour,
+                    minute: reminder.minute,
+                    medicineName: meds.map(\.name).filter { !$0.isEmpty }.joined(separator: "\n"),
+                    dose: meds.map(\.dose).filter { !$0.isEmpty }.joined(separator: "\n")
+                )
+            }
             systolic = ""
             diastolic = ""
             mood = nil
@@ -471,35 +677,26 @@ struct DailyRecordSheet: View {
     func saveRecord() {
         let targetLog = log ?? MedicationLog(date: date)
         let hasVitals = !systolic.isEmpty && !diastolic.isEmpty
+        let hasDoseActivity = doseDrafts.contains { !$0.isPending }
         
-        if log == nil && (status != .none || hasVitals) {
+        if log == nil && (hasDoseActivity || hasVitals || mood != nil) {
             modelContext.insert(targetLog)
         }
         
-        switch status {
-        case .none:
-            targetLog.isTaken = false
-            targetLog.skippedTime = nil
-            targetLog.medicineName = nil
-            targetLog.dose = nil
-            targetLog.physicalReaction = nil
-            targetLog.notes = nil
-        case .taken:
-            targetLog.isTaken = true
-            targetLog.skippedTime = nil
-            targetLog.medicineName = medicineName.isEmpty ? nil : medicineName
-            targetLog.dose = dose.isEmpty ? nil : dose
-            targetLog.physicalReaction = nil
-            targetLog.notes = skipNotes.isEmpty ? nil : skipNotes
-        case .missed:
-            targetLog.isTaken = false
-            targetLog.skippedTime = skippedTime
-            targetLog.medicineName = nil
-            targetLog.dose = nil
-            targetLog.physicalReaction = skipReaction.isEmpty ? nil : skipReaction
-            targetLog.notes = skipNotes.isEmpty ? nil : skipNotes
+        // Refresh medicine lists for taken slots from current profile assignment.
+        var updated = doseDrafts
+        for i in updated.indices {
+            if let reminder = profile.sortedReminders.first(where: { $0.id == updated[i].id }) {
+                let meds = profile.medications(for: reminder)
+                if updated[i].isTaken || updated[i].isPending {
+                    updated[i].medicineName = meds.map(\.name).filter { !$0.isEmpty }.joined(separator: "\n")
+                    updated[i].dose = meds.map(\.dose).filter { !$0.isEmpty }.joined(separator: "\n")
+                }
+            }
         }
         
+        targetLog.doseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
+        targetLog.refreshAggregateFlags()
         targetLog.systolic = Int(systolic)
         targetLog.diastolic = Int(diastolic)
         targetLog.mood = mood?.rawValue

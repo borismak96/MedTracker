@@ -19,6 +19,24 @@ struct RemindersSettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 4)
                     
+                    NavigationLink(destination: SetupGuideView()) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundColor(.mint)
+                            Text(LocalizedStringKey("How to set reminders & medications"))
+                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(14)
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+                    }
+                    .buttonStyle(.plain)
+                    
                     if profile.sortedReminders.isEmpty {
                         emptyState
                     } else {
@@ -88,7 +106,9 @@ struct RemindersSettingsView: View {
             },
             set: { updated in
                 if let index = profile.reminders.firstIndex(where: { $0.id == reminder.id }) {
-                    profile.reminders[index] = updated
+                    var next = profile.reminders
+                    next[index] = updated
+                    profile.reminders = next
                     // keep legacy fields in sync with first reminder
                     if let first = profile.sortedReminders.first {
                         profile.targetTimeHour = first.hour
@@ -125,10 +145,14 @@ struct RemindersSettingsView: View {
                 if profile.reminders.count > 1 {
                     Button {
                         withAnimation {
-                            profile.reminders.removeAll { $0.id == reminder.id }
-                            for i in profile.medications.indices {
-                                profile.medications[i].reminderIds.removeAll { $0 == reminder.id }
+                            // Reassign arrays so SwiftData / SwiftUI reliably observe the change.
+                            profile.reminders = profile.reminders.filter { $0.id != reminder.id }
+                            profile.medications = profile.medications.map { med in
+                                var updated = med
+                                updated.reminderIds.removeAll { $0 == reminder.id }
+                                return updated
                             }
+                            try? profile.modelContext?.save()
                         }
                     } label: {
                         Image(systemName: "trash.circle.fill")
@@ -183,7 +207,10 @@ struct RemindersSettingsView: View {
                 !profile.reminders.contains { $0.label == candidate.0 }
             } ?? ("Reminder", 12, 0)
             
-            profile.reminders.append(ReminderSlot(hour: next.1, minute: next.2, label: next.0))
+            profile.reminders = profile.reminders + [
+                ReminderSlot(hour: next.1, minute: next.2, label: next.0)
+            ]
+            try? profile.modelContext?.save()
         }
     }
     

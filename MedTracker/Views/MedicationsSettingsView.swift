@@ -12,6 +12,24 @@ struct MedicationsSettingsView: View {
             
             ScrollView {
                 VStack(spacing: 16) {
+                    NavigationLink(destination: SetupGuideView()) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundColor(.mint)
+                            Text(LocalizedStringKey("How to set reminders & medications"))
+                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(14)
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+                    }
+                    .buttonStyle(.plain)
+                    
                     if profile.medications.isEmpty {
                         VStack(spacing: 12) {
                             ZStack {
