@@ -44,6 +44,19 @@ enum AgeRange: String, CaseIterable, Identifiable {
     case age65Plus = "65+"
     
     var id: String { rawValue }
+    
+    /// Literal localization keys so String Catalog sync can extract them.
+    var localizedName: String {
+        switch self {
+        case .under18: String(localized: "Under 18")
+        case .age18to24: String(localized: "18–24")
+        case .age25to34: String(localized: "25–34")
+        case .age35to44: String(localized: "35–44")
+        case .age45to54: String(localized: "45–54")
+        case .age55to64: String(localized: "55–64")
+        case .age65Plus: String(localized: "65+")
+        }
+    }
 }
 
 @Model

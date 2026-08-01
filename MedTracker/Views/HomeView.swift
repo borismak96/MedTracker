@@ -176,13 +176,14 @@ struct HomeView: View {
         }
     }
     
-    private let streakGoal = 30
-    
     func statsSection(profile: UserProfile) -> some View {
         let reminders = reminderSlots(for: profile)
-        let colors = StatsRingPalette.accentColors
+        let calendar = Calendar.current
+        let today = Date()
+        let dayOfMonth = calendar.component(.day, from: today)
+        let daysInMonth = calendar.range(of: .day, in: .month, for: today)?.count ?? 30
         
-        return VStack(alignment: .leading, spacing: 14) {
+        return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(LocalizedStringKey("Day Streak"))
                     .font(.system(.title3, design: .rounded, weight: .bold))
@@ -191,22 +192,36 @@ struct HomeView: View {
                     .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundColor(.secondary)
             }
+            .padding(.horizontal, 4)
             
-            // Stack full-width gauges so each ring stays large and readable.
-            VStack(spacing: 14) {
-                ForEach(Array(reminders.enumerated()), id: \.element.id) { index, reminder in
-                    streakGaugeCard(
-                        reminder: reminder,
-                        color: colors[index % colors.count],
-                        profile: profile
-                    )
+            if reminders.count == 1, let reminder = reminders.first {
+                streakGaugeCard(
+                    reminder: reminder,
+                    color: StatsRingPalette.color(for: reminder),
+                    profile: profile,
+                    dayOfMonth: dayOfMonth,
+                    daysInMonth: daysInMonth,
+                    cardWidth: nil
+                )
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(reminders) { reminder in
+                            streakGaugeCard(
+                                reminder: reminder,
+                                color: StatsRingPalette.color(for: reminder),
+                                profile: profile,
+                                dayOfMonth: dayOfMonth,
+                                daysInMonth: daysInMonth,
+                                cardWidth: 200
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 2)
                 }
             }
         }
-        .padding(18)
-        .background(Color.white)
-        .cornerRadius(24)
-        .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
     
     private func reminderSlots(for profile: UserProfile) -> [ReminderSlot] {
@@ -220,105 +235,136 @@ struct HomeView: View {
     private func streakGaugeCard(
         reminder: ReminderSlot,
         color: Color,
-        profile: UserProfile
+        profile: UserProfile,
+        dayOfMonth: Int,
+        daysInMonth: Int,
+        cardWidth: CGFloat?
     ) -> some View {
-        let streak = streakCount(for: reminder.id)
+        let streak = streakCount(for: reminder.id, lookingBack: daysInMonth)
+        let takenThisMonth = takenCountThisMonth(for: reminder.id)
         let meds = profile.medications(for: reminder)
         let medLines = meds.isEmpty
             ? [String(localized: "No medicines assigned yet.")]
             : meds.map { "\($0.name) · \($0.dose)" }
+        let todayLabel = Date.now.formatted(.dateTime.month(.abbreviated).day())
         let details = [
             String(format: String(localized: "Reminder time: %@"), reminder.timeDescription),
-            String(format: String(localized: "Current streak: %lld days"), streak),
-            String(format: String(localized: "Goal: %lld days"), streakGoal)
+            String(format: String(localized: "Today: %@"), todayLabel),
+            String(format: String(localized: "Calendar day: %lld / %lld"), dayOfMonth, daysInMonth),
+            String(format: String(localized: "Taken this month: %lld"), takenThisMonth),
+            String(format: String(localized: "Current streak: %lld days"), streak)
         ] + medLines
+        
+        let titleText: String = {
+            if reminder.label.isEmpty {
+                return String(format: String(localized: "%@ dose"), reminder.timeDescription)
+            }
+            return String(format: String(localized: "%@ dose"), reminder.label)
+        }()
         
         return Button {
             selectedRingSegment = RingSegmentModel(
                 id: reminder.id,
-                title: reminder.label.isEmpty ? reminder.timeDescription : reminder.label,
+                title: titleText,
                 subtitle: reminder.displayTitle,
                 detailLines: details,
-                color: color,
+                color: StatsRingPalette.accent(for: reminder),
                 icon: StatsRingLayout.icon(for: reminder),
                 startDegrees: 0,
                 endDegrees: 0
             )
         } label: {
-            HStack(spacing: 18) {
+            let titleColor = StatsRingPalette.primaryText(for: reminder)
+            let secondaryColor = StatsRingPalette.secondaryText(for: reminder)
+            let accent = StatsRingPalette.accent(for: reminder)
+            
+            VStack(spacing: 12) {
                 StreakGaugeView(
-                    current: streak,
-                    goal: streakGoal,
+                    current: dayOfMonth,
+                    goal: daysInMonth,
                     color: color,
-                    lineWidth: 18
+                    lineWidth: 18,
+                    progressColor: StatsRingPalette.prefersLightText(for: reminder) ? .white : accent,
+                    onSolidBackground: true
                 )
-                .frame(width: 150, height: 150)
+                .frame(width: 140, height: 140)
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(reminder.label.isEmpty ? reminder.timeDescription : reminder.label)
-                        .font(.system(.title3, design: .rounded, weight: .bold))
-                        .foregroundColor(.primary)
+                VStack(spacing: 4) {
+                    Text(titleText)
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(titleColor)
+                        .multilineTextAlignment(.center)
                         .lineLimit(2)
                     
-                    Text(reminder.timeDescription)
-                        .font(.system(.body, design: .rounded, weight: .semibold))
-                        .foregroundColor(.secondary)
+                    Text(String(format: String(localized: "Scheduled · %@"), reminder.timeDescription))
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundColor(secondaryColor)
+                        .multilineTextAlignment(.center)
+                    
+                    Text(String(format: String(localized: "Today · %@"), todayLabel))
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
                     
                     Text(String(format: String(localized: "%lld day streak"), streak))
-                        .font(.system(.subheadline, design: .rounded, weight: .bold))
-                        .foregroundColor(color)
-                        .padding(.top, 2)
+                        .font(.system(.caption, design: .rounded, weight: .bold))
+                        .foregroundColor(secondaryColor)
                     
                     if !meds.isEmpty {
                         Text(meds.map(\.name).filter { !$0.isEmpty }.joined(separator: ", "))
-                            .font(.system(.caption, design: .rounded, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .font(.system(.caption2, design: .rounded, weight: .medium))
+                            .foregroundColor(secondaryColor)
+                            .multilineTextAlignment(.center)
                             .lineLimit(2)
                     }
                 }
-                
-                Spacer(minLength: 0)
             }
             .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(color.opacity(0.14))
+            .frame(width: cardWidth)
+            .frame(maxWidth: cardWidth == nil ? .infinity : nil)
+            .background(color)
             .cornerRadius(22)
+            .shadow(color: color.opacity(0.35), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
     }
     
     /// Consecutive days this reminder dose was taken (today counts if taken).
-    private func streakCount(for reminderId: UUID) -> Int {
+    private func streakCount(for reminderId: UUID, lookingBack: Int = 31) -> Int {
         var streak = 0
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         
-        for i in 0..<streakGoal {
+        for i in 0..<max(lookingBack, 1) {
             guard let date = calendar.date(byAdding: .day, value: -i, to: today) else { break }
-            let log = logs.first(where: { calendar.isDate($0.date, inSameDayAs: date) })
             
-            let taken: Bool
-            if let log {
-                if let record = log.doseRecords.first(where: { $0.id == reminderId }) {
-                    taken = record.isTaken
-                } else {
-                    // Legacy day-level taken counts for all reminder slots.
-                    taken = log.isTaken
-                }
-            } else {
-                taken = false
-            }
-            
-            if taken {
+            if isReminderTaken(reminderId, on: date) {
                 streak += 1
             } else if i > 0 {
                 break
-            } else {
-                // Today not taken yet — keep looking from yesterday.
-                continue
             }
         }
         return streak
+    }
+    
+    private func takenCountThisMonth(for reminderId: UUID) -> Int {
+        let calendar = Calendar.current
+        let today = Date()
+        return logs.filter { log in
+            calendar.isDate(log.date, equalTo: today, toGranularity: .month)
+            && isReminderTaken(reminderId, on: log.date)
+        }.count
+    }
+    
+    private func isReminderTaken(_ reminderId: UUID, on date: Date) -> Bool {
+        let calendar = Calendar.current
+        guard let log = logs.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) else {
+            return false
+        }
+        if let record = log.doseRecords.first(where: { $0.id == reminderId }) {
+            return record.isTaken
+        }
+        // Legacy day-level taken counts for all reminder slots.
+        return log.isTaken
     }
     
     func skipSheetContent(for log: MedicationLog) -> some View {
@@ -531,13 +577,6 @@ struct TodayCard: View {
     @State private var selectedMood: MoodStatus? = nil
     @State private var remarkText: String = ""
     
-    private let slotColors: [Color] = [
-        StatsRingPalette.yellow,
-        StatsRingPalette.green,
-        StatsRingPalette.pink,
-        StatsRingPalette.blue
-    ]
-    
     var body: some View {
         VStack(spacing: 20) {
             HStack(alignment: .top) {
@@ -607,8 +646,14 @@ struct TodayCard: View {
             }
             
             VStack(spacing: 12) {
-                ForEach(Array(log.sortedDoseRecords.enumerated()), id: \.element.id) { index, record in
-                    doseSlotCard(record: record, color: slotColors[index % slotColors.count])
+                ForEach(log.sortedDoseRecords) { record in
+                    let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
+                        ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
+                    doseSlotCard(
+                        record: record,
+                        color: StatsRingPalette.color(for: reminder),
+                        prefersLightText: StatsRingPalette.prefersLightText(for: reminder)
+                    )
                 }
             }
             
@@ -642,39 +687,44 @@ struct TodayCard: View {
     }
     
     @ViewBuilder
-    private func doseSlotCard(record: ReminderDoseRecord, color: Color) -> some View {
+    private func doseSlotCard(record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
         let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
-        let meds = reminder.map { profile.medications(for: $0) } ?? []
+            ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
+        let meds = profile.medications(for: reminder)
+        let accent = StatsRingPalette.accent(for: reminder)
+        let titleColor = StatsRingPalette.primaryText(for: reminder)
+        let secondaryColor = StatsRingPalette.secondaryText(for: reminder)
         
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
                 Circle()
-                    .fill(color)
+                    .fill(prefersLightText ? Color.white : Color(white: 0.15))
                     .frame(width: 12, height: 12)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(record.label.isEmpty ? record.timeDescription : record.label)
                         .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(titleColor)
                     Text(record.timeDescription)
                         .font(.system(.caption, design: .rounded, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryColor)
                 }
                 
                 Spacer()
                 
-                statusChip(for: record)
+                statusChip(for: record, onSolid: true)
             }
             
             if meds.isEmpty {
                 Text(LocalizedStringKey("No medicines assigned yet."))
                     .font(.system(.caption, design: .rounded))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryColor)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(meds) { med in
                         Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
                             .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(.primary.opacity(0.85))
+                            .foregroundColor(titleColor.opacity(0.9))
                     }
                 }
             }
@@ -683,28 +733,28 @@ struct TodayCard: View {
                 if let notes = record.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.system(.caption, design: .rounded))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryColor)
                 }
                 Button {
                     withAnimation { log.undoDose(reminderId: record.id) }
                 } label: {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryColor)
                 }
                 .buttonStyle(.plain)
             } else if record.isSkipped {
                 if let reaction = record.physicalReaction, !reaction.isEmpty {
                     Text(String(format: String(localized: "Reaction: %@"), reaction))
                         .font(.system(.caption, design: .rounded))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryColor)
                 }
                 Button {
                     withAnimation { log.undoDose(reminderId: record.id) }
                 } label: {
                     Text("Undo")
                         .font(.system(.footnote, design: .rounded, weight: .bold))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryColor)
                 }
                 .buttonStyle(.plain)
             } else {
@@ -724,7 +774,7 @@ struct TodayCard: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.mint)
+                            .background(accent)
                             .cornerRadius(14)
                     }
                     .buttonStyle(.plain)
@@ -738,10 +788,10 @@ struct TodayCard: View {
                     } label: {
                         Text("Skip / Missed")
                             .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(titleColor)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color(UIColor.systemGray6))
+                            .background(Color.white.opacity(0.55))
                             .cornerRadius(14)
                     }
                     .buttonStyle(.plain)
@@ -749,15 +799,12 @@ struct TodayCard: View {
             }
         }
         .padding(14)
-        .background(color.opacity(0.12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(color.opacity(0.45), lineWidth: 1)
-        )
+        .background(color)
         .cornerRadius(18)
+        .shadow(color: color.opacity(0.25), radius: 6, x: 0, y: 3)
     }
     
-    private func statusChip(for record: ReminderDoseRecord) -> some View {
+    private func statusChip(for record: ReminderDoseRecord, onSolid: Bool = false) -> some View {
         let title: String
         let tint: Color
         if record.isTaken {
@@ -773,10 +820,10 @@ struct TodayCard: View {
         
         return Text(title)
             .font(.system(.caption2, design: .rounded, weight: .bold))
-            .foregroundColor(tint)
+            .foregroundColor(onSolid ? tint : tint)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(tint.opacity(0.15))
+            .background(onSolid ? Color.white.opacity(0.92) : tint.opacity(0.15))
             .cornerRadius(10)
     }
 }

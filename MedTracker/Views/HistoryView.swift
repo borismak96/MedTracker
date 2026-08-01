@@ -166,10 +166,17 @@ struct HistoryView: View {
                     .cornerRadius(12)
             } else {
                 VStack(spacing: 10) {
-                    ForEach(Array(doseRecords.enumerated()), id: \.element.id) { index, record in
+                    ForEach(doseRecords) { record in
+                        let slot = ReminderSlot(
+                            id: record.id,
+                            hour: record.hour,
+                            minute: record.minute,
+                            label: record.label
+                        )
                         historyDoseCard(
                             record: record,
-                            color: HistoryDosePalette.colors[index % HistoryDosePalette.colors.count]
+                            color: StatsRingPalette.color(for: slot),
+                            prefersLightText: StatsRingPalette.prefersLightText(for: slot)
                         )
                     }
                 }
@@ -268,10 +275,13 @@ struct HistoryView: View {
         return []
     }
     
-    private func historyDoseCard(record: ReminderDoseRecord, color: Color) -> some View {
+    private func historyDoseCard(record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
         let statusTitle: String
         let statusColor: Color
         let statusIcon: String
+        let slot = ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
+        let titleColor = StatsRingPalette.primaryText(for: slot)
+        let secondaryColor = StatsRingPalette.secondaryText(for: slot)
         
         if record.isTaken {
             statusTitle = String(localized: "Taken")
@@ -290,15 +300,16 @@ struct HistoryView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Circle()
-                    .fill(color)
+                    .fill(prefersLightText ? Color.white : Color(white: 0.15))
                     .frame(width: 10, height: 10)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(record.label.isEmpty ? record.timeDescription : record.label)
                         .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(titleColor)
                     Text(record.timeDescription)
                         .font(.system(.caption, design: .rounded, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryColor)
                 }
                 
                 Spacer()
@@ -311,7 +322,7 @@ struct HistoryView: View {
                 .foregroundColor(statusColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(statusColor.opacity(0.15))
+                .background(Color.white.opacity(0.92))
                 .cornerRadius(10)
             }
             
@@ -323,14 +334,15 @@ struct HistoryView: View {
                         HStack {
                             Text(names[index])
                                 .font(.system(.caption, design: .rounded, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(secondaryColor)
                             Spacer()
                             if index < doses.count, !doses[index].isEmpty {
                                 Text(doses[index])
                                     .font(.system(.caption2, design: .rounded, weight: .bold))
+                                    .foregroundColor(titleColor)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.mint.opacity(0.2))
+                                    .background(Color.white.opacity(0.35))
                                     .cornerRadius(6)
                             }
                         }
@@ -342,29 +354,26 @@ struct HistoryView: View {
                 Text(String(format: String(localized: "Missed at %@"),
                               skipped.formatted(date: .omitted, time: .shortened)))
                     .font(.system(.caption, design: .rounded, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryColor)
             }
             
             if let reaction = record.physicalReaction, !reaction.isEmpty {
                 Text(String(format: String(localized: "Reaction: %@"), reaction))
                     .font(.system(.caption, design: .rounded))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryColor)
             }
             
             if let notes = record.notes, !notes.isEmpty {
                 Text(notes)
                     .font(.system(.caption, design: .rounded))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryColor)
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(color.opacity(0.12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(color.opacity(0.4), lineWidth: 1)
-        )
+        .background(color)
         .cornerRadius(16)
+        .shadow(color: color.opacity(0.3), radius: 6, x: 0, y: 3)
     }
     
     func logForDate(_ date: Date) -> MedicationLog? {
@@ -376,15 +385,6 @@ struct HistoryView: View {
             currentMonth = newMonth
         }
     }
-}
-
-enum HistoryDosePalette {
-    static let colors: [Color] = [
-        StatsRingPalette.yellow,
-        StatsRingPalette.green,
-        StatsRingPalette.pink,
-        StatsRingPalette.blue
-    ]
 }
 
 struct DayCell: View {

@@ -110,7 +110,7 @@ struct ProfileForm: View {
                     Text(LocalizedStringKey("Select age range"))
                         .tag("")
                     ForEach(AgeRange.allCases) { range in
-                        Text(LocalizedStringKey(range.rawValue))
+                        Text(range.localizedName)
                             .tag(range.rawValue)
                     }
                 }
@@ -188,9 +188,7 @@ struct ProfileForm: View {
                     Text(LocalizedStringKey("Age Range"))
                         .foregroundColor(.secondary)
                     Spacer()
-                    Text(profile.ageRange.isEmpty
-                         ? String(localized: "Not selected")
-                         : String(localized: String.LocalizationValue(profile.ageRange)))
+                    Text(localizedAgeRangeLabel)
                         .fontWeight(.semibold)
                 }
                 
@@ -264,6 +262,16 @@ struct ProfileForm: View {
         withAnimation(.easeInOut(duration: 0.25)) {
             showSaveButton = true
         }
+    }
+    
+    private var localizedAgeRangeLabel: String {
+        if profile.ageRange.isEmpty {
+            return String(localized: "Not selected")
+        }
+        if let range = AgeRange(rawValue: profile.ageRange) {
+            return range.localizedName
+        }
+        return profile.ageRange
     }
     
     private var medicationsSummary: String {
