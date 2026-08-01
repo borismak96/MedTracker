@@ -9,7 +9,7 @@ struct MedicalCardView: View {
         VStack(spacing: 0) {
             // Card Header
             HStack {
-                Text("Medical Card")
+                Text(AppLocalization.string("Medical Card"))
                     .font(.system(.title2, design: .rounded, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
@@ -46,7 +46,7 @@ struct MedicalCardView: View {
                                     Text(profile.name.isEmpty ? "Name Not Set" : profile.name)
                                         .font(.system(.title2, design: .rounded, weight: .bold))
                                         .foregroundColor(.primary)
-                                    Text("Patient")
+                                    Text(AppLocalization.string("Patient"))
                                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                                         .foregroundColor(.secondary)
                                 }
@@ -59,7 +59,7 @@ struct MedicalCardView: View {
                             
                             // Medications List
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Current Medications")
+                                Text(AppLocalization.string("Current Medications"))
                                     .font(.system(.headline, design: .rounded, weight: .bold))
                                     .foregroundColor(.primary)
                                     .padding(.bottom, 4)
@@ -67,7 +67,7 @@ struct MedicalCardView: View {
                                 let activeMeds = profile.medications.filter { !$0.name.isEmpty }
                                 
                                 if activeMeds.isEmpty {
-                                    Text("No medications added.")
+                                    Text(AppLocalization.string("No medications added."))
                                         .font(.system(.subheadline, design: .rounded))
                                         .foregroundColor(.secondary)
                                         .frame(maxWidth: .infinity, alignment: .leading)

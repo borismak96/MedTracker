@@ -15,10 +15,12 @@ struct HomeView: View {
     @State private var showingBPSheet = false
     @State private var bpSystolic = ""
     @State private var bpDiastolic = ""
+    @State private var bpRecordedAt = Date()
+    @State private var editingBPReadingId: UUID?
+    @State private var bpAlertCategory: BloodPressureCategory?
     
     @State private var showingBPChart = false
     @State private var showingMedicalCard = false
-    @State private var selectedRingSegment: RingSegmentModel?
     
     var profile: UserProfile? { profiles.first }
     
@@ -38,8 +40,6 @@ struct HomeView: View {
                             headerSection(profile: profile)
                                 .padding(.top, 10)
                             
-                            statsSection(profile: profile)
-                            
                             if let log = todayLog {
                                 TodayCard(
                                     log: log,
@@ -56,7 +56,9 @@ struct HomeView: View {
                                     showingBPSheet: $showingBPSheet,
                                     showingBPChart: $showingBPChart,
                                     bpSystolic: $bpSystolic,
-                                    bpDiastolic: $bpDiastolic
+                                    bpDiastolic: $bpDiastolic,
+                                    bpRecordedAt: $bpRecordedAt,
+                                    editingBPReadingId: $editingBPReadingId
                                 )
                                 
                                 MoodStatsCard(logs: logs)
@@ -92,7 +94,9 @@ struct HomeView: View {
                     skipSheetContent(for: log)
                 }
             }
-            .sheet(isPresented: $showingBPSheet) {
+            .sheet(isPresented: $showingBPSheet, onDismiss: {
+                editingBPReadingId = nil
+            }) {
                 if let log = todayLog {
                     bpSheetContent(for: log)
                 }
@@ -100,8 +104,18 @@ struct HomeView: View {
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
             }
-            .sheet(item: $selectedRingSegment) { segment in
-                RingDetailSheet(segment: segment)
+            .alert(
+                bpAlertCategory?.localizedTitle ?? AppLocalization.string("Blood Pressure"),
+                isPresented: Binding(
+                    get: { bpAlertCategory != nil },
+                    set: { if !$0 { bpAlertCategory = nil } }
+                )
+            ) {
+                Button(AppLocalization.string("OK"), role: .cancel) {
+                    bpAlertCategory = nil
+                }
+            } message: {
+                Text(bpAlertCategory?.localizedAdvice ?? "")
             }
             .onAppear {
                 profile?.ensureRemindersMigrated()
@@ -120,7 +134,7 @@ struct HomeView: View {
         VStack(spacing: 20) {
             // App Title and Notification Bell
             HStack {
-                Text("MedTracker")
+                Text(AppBrand.displayName)
                     .font(.system(.title, design: .rounded, weight: .heavy))
                     .foregroundColor(.primary)
                 
@@ -159,13 +173,13 @@ struct HomeView: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     if profile.name.isEmpty {
-                        Text("Hello, Friend!")
+                        Text(AppLocalization.string("Hello, Friend!"))
                             .font(.system(.title2, design: .rounded, weight: .bold))
                     } else {
-                        Text("Hello, \(profile.name)!")
+                        Text(AppLocalization.format("Hello, %@!", profile.name))
                             .font(.system(.title2, design: .rounded, weight: .bold))
                     }
-                    Text("Let's stay on track today.")
+                    Text(AppLocalization.string("Let's stay on track today."))
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundColor(.secondary)
                 }
@@ -176,200 +190,9 @@ struct HomeView: View {
         }
     }
     
-    func statsSection(profile: UserProfile) -> some View {
-        let reminders = reminderSlots(for: profile)
-        let calendar = Calendar.current
-        let today = Date()
-        let dayOfMonth = calendar.component(.day, from: today)
-        let daysInMonth = calendar.range(of: .day, in: .month, for: today)?.count ?? 30
-        
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(LocalizedStringKey("Day Streak"))
-                    .font(.system(.title3, design: .rounded, weight: .bold))
-                Spacer()
-                Text(LocalizedStringKey("Tap a ring for details"))
-                    .font(.system(.caption, design: .rounded, weight: .medium))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 4)
-            
-            if reminders.count == 1, let reminder = reminders.first {
-                streakGaugeCard(
-                    reminder: reminder,
-                    color: StatsRingPalette.color(for: reminder),
-                    profile: profile,
-                    dayOfMonth: dayOfMonth,
-                    daysInMonth: daysInMonth,
-                    cardWidth: nil
-                )
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
-                        ForEach(reminders) { reminder in
-                            streakGaugeCard(
-                                reminder: reminder,
-                                color: StatsRingPalette.color(for: reminder),
-                                profile: profile,
-                                dayOfMonth: dayOfMonth,
-                                daysInMonth: daysInMonth,
-                                cardWidth: 200
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 2)
-                    .padding(.vertical, 2)
-                }
-            }
-        }
-    }
-    
-    private func reminderSlots(for profile: UserProfile) -> [ReminderSlot] {
-        let reminders = profile.sortedReminders
-        if reminders.isEmpty {
-            return [ReminderSlot(hour: profile.targetTimeHour, minute: profile.targetTimeMinute, label: "Morning")]
-        }
-        return reminders
-    }
-    
-    private func streakGaugeCard(
-        reminder: ReminderSlot,
-        color: Color,
-        profile: UserProfile,
-        dayOfMonth: Int,
-        daysInMonth: Int,
-        cardWidth: CGFloat?
-    ) -> some View {
-        let streak = streakCount(for: reminder.id, lookingBack: daysInMonth)
-        let takenThisMonth = takenCountThisMonth(for: reminder.id)
-        let meds = profile.medications(for: reminder)
-        let medLines = meds.isEmpty
-            ? [String(localized: "No medicines assigned yet.")]
-            : meds.map { "\($0.name) · \($0.dose)" }
-        let todayLabel = Date.now.formatted(.dateTime.month(.abbreviated).day())
-        let details = [
-            String(format: String(localized: "Reminder time: %@"), reminder.timeDescription),
-            String(format: String(localized: "Today: %@"), todayLabel),
-            String(format: String(localized: "Calendar day: %lld / %lld"), dayOfMonth, daysInMonth),
-            String(format: String(localized: "Taken this month: %lld"), takenThisMonth),
-            String(format: String(localized: "Current streak: %lld days"), streak)
-        ] + medLines
-        
-        let titleText: String = {
-            if reminder.label.isEmpty {
-                return String(format: String(localized: "%@ dose"), reminder.timeDescription)
-            }
-            return String(format: String(localized: "%@ dose"), reminder.label)
-        }()
-        
-        return Button {
-            selectedRingSegment = RingSegmentModel(
-                id: reminder.id,
-                title: titleText,
-                subtitle: reminder.displayTitle,
-                detailLines: details,
-                color: StatsRingPalette.accent(for: reminder),
-                icon: StatsRingLayout.icon(for: reminder),
-                startDegrees: 0,
-                endDegrees: 0
-            )
-        } label: {
-            let titleColor = StatsRingPalette.primaryText(for: reminder)
-            let secondaryColor = StatsRingPalette.secondaryText(for: reminder)
-            let accent = StatsRingPalette.accent(for: reminder)
-            
-            VStack(spacing: 12) {
-                StreakGaugeView(
-                    current: dayOfMonth,
-                    goal: daysInMonth,
-                    color: color,
-                    lineWidth: 18,
-                    progressColor: StatsRingPalette.prefersLightText(for: reminder) ? .white : accent,
-                    onSolidBackground: true
-                )
-                .frame(width: 140, height: 140)
-                
-                VStack(spacing: 4) {
-                    Text(titleText)
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundColor(titleColor)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                    
-                    Text(String(format: String(localized: "Scheduled · %@"), reminder.timeDescription))
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundColor(secondaryColor)
-                        .multilineTextAlignment(.center)
-                    
-                    Text(String(format: String(localized: "Today · %@"), todayLabel))
-                        .font(.system(.subheadline, design: .rounded, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text(String(format: String(localized: "%lld day streak"), streak))
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundColor(secondaryColor)
-                    
-                    if !meds.isEmpty {
-                        Text(meds.map(\.name).filter { !$0.isEmpty }.joined(separator: ", "))
-                            .font(.system(.caption2, design: .rounded, weight: .medium))
-                            .foregroundColor(secondaryColor)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                    }
-                }
-            }
-            .padding(16)
-            .frame(width: cardWidth)
-            .frame(maxWidth: cardWidth == nil ? .infinity : nil)
-            .background(color)
-            .cornerRadius(22)
-            .shadow(color: color.opacity(0.35), radius: 8, x: 0, y: 4)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    /// Consecutive days this reminder dose was taken (today counts if taken).
-    private func streakCount(for reminderId: UUID, lookingBack: Int = 31) -> Int {
-        var streak = 0
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        for i in 0..<max(lookingBack, 1) {
-            guard let date = calendar.date(byAdding: .day, value: -i, to: today) else { break }
-            
-            if isReminderTaken(reminderId, on: date) {
-                streak += 1
-            } else if i > 0 {
-                break
-            }
-        }
-        return streak
-    }
-    
-    private func takenCountThisMonth(for reminderId: UUID) -> Int {
-        let calendar = Calendar.current
-        let today = Date()
-        return logs.filter { log in
-            calendar.isDate(log.date, equalTo: today, toGranularity: .month)
-            && isReminderTaken(reminderId, on: log.date)
-        }.count
-    }
-    
-    private func isReminderTaken(_ reminderId: UUID, on date: Date) -> Bool {
-        let calendar = Calendar.current
-        guard let log = logs.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) else {
-            return false
-        }
-        if let record = log.doseRecords.first(where: { $0.id == reminderId }) {
-            return record.isTaken
-        }
-        // Legacy day-level taken counts for all reminder slots.
-        return log.isTaken
-    }
-    
     func skipSheetContent(for log: MedicationLog) -> some View {
-        let reminderTitle = log.doseRecords.first(where: { $0.id == activeSkipReminderId })?.displayTitle
-            ?? String(localized: "Missed Details")
+        let reminderTitle = log.doseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
+            ?? AppLocalization.string("Missed Details")
         
         return NavigationView {
             ZStack {
@@ -379,13 +202,13 @@ struct HomeView: View {
                     VStack(spacing: 20) {
                         sheetHeader(
                             icon: "exclamationmark.triangle.fill",
-                            title: String(localized: "Missed Medication"),
+                            title: AppLocalization.string("Missed Medication"),
                             subtitle: reminderTitle
                         )
                         
                         VStack(spacing: 0) {
                             HStack {
-                                Text(LocalizedStringKey("Time"))
+                                Text(AppLocalization.string("Time"))
                                     .font(.system(.body, design: .rounded, weight: .semibold))
                                 Spacer()
                                 DatePicker("", selection: $skippedTime, displayedComponents: .hourAndMinute)
@@ -397,14 +220,14 @@ struct HomeView: View {
                             
                             Divider().padding(.leading, 16)
                             
-                            TextField(LocalizedStringKey("Physical Reaction (Optional)"), text: $skipReaction)
+                            TextField(AppLocalization.string("Physical Reaction (Optional)"), text: $skipReaction)
                                 .font(.system(.body, design: .rounded))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 14)
                             
                             Divider().padding(.leading, 16)
                             
-                            TextField(LocalizedStringKey("Additional Notes (Optional)"), text: $skipNotes)
+                            TextField(AppLocalization.string("Additional Notes (Optional)"), text: $skipNotes)
                                 .font(.system(.body, design: .rounded))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 14)
@@ -427,7 +250,7 @@ struct HomeView: View {
                             skipReaction = ""
                             skipNotes = ""
                         } label: {
-                            Text(LocalizedStringKey("Save"))
+                            Text(AppLocalization.string("Save"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -447,7 +270,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(LocalizedStringKey("Cancel")) {
+                    Button(AppLocalization.string("Cancel")) {
                         showingSkipSheet = false
                         activeSkipReminderId = nil
                     }
@@ -459,7 +282,9 @@ struct HomeView: View {
     }
     
     func bpSheetContent(for log: MedicationLog) -> some View {
-        NavigationView {
+        let isEditing = editingBPReadingId != nil
+        
+        return NavigationView {
             ZStack {
                 AppBackground()
                 
@@ -467,15 +292,15 @@ struct HomeView: View {
                     VStack(spacing: 20) {
                         sheetHeader(
                             icon: "heart.text.square.fill",
-                            title: String(localized: "Log Blood Pressure"),
-                            subtitle: String(localized: "Blood Pressure (mmHg)")
+                            title: AppLocalization.string(isEditing ? "Edit Blood Pressure" : "Log Blood Pressure"),
+                            subtitle: AppLocalization.string("Blood Pressure (mmHg)")
                         )
                         
                         VStack(spacing: 0) {
                             HStack(spacing: 12) {
                                 Image(systemName: "arrow.up.circle.fill")
                                     .foregroundColor(.red.opacity(0.85))
-                                TextField(LocalizedStringKey("Systolic (High)"), text: $bpSystolic)
+                                TextField(AppLocalization.string("Systolic (High)"), text: $bpSystolic)
                                     .font(.system(.body, design: .rounded))
                                     .keyboardType(.numberPad)
                             }
@@ -487,25 +312,52 @@ struct HomeView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "arrow.down.circle.fill")
                                     .foregroundColor(.blue.opacity(0.85))
-                                TextField(LocalizedStringKey("Diastolic (Low)"), text: $bpDiastolic)
+                                TextField(AppLocalization.string("Diastolic (Low)"), text: $bpDiastolic)
                                     .font(.system(.body, design: .rounded))
                                     .keyboardType(.numberPad)
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
+                            
+                            Divider().padding(.leading, 16)
+                            
+                            DatePicker(
+                                AppLocalization.string("Time"),
+                                selection: $bpRecordedAt,
+                                displayedComponents: .hourAndMinute
+                            )
+                            .font(.system(.body, design: .rounded))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
                         }
                         .background(Color.white)
                         .cornerRadius(20)
                         .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
                         
                         Button {
-                            if let sys = Int(bpSystolic), let dia = Int(bpDiastolic) {
-                                log.systolic = sys
-                                log.diastolic = dia
+                            guard let sys = Int(bpSystolic), let dia = Int(bpDiastolic) else { return }
+                            // Keep reading on the selected log’s calendar day.
+                            let calendar = Calendar.current
+                            let day = calendar.startOfDay(for: log.date)
+                            let time = calendar.dateComponents([.hour, .minute], from: bpRecordedAt)
+                            var parts = calendar.dateComponents([.year, .month, .day], from: day)
+                            parts.hour = time.hour
+                            parts.minute = time.minute
+                            let recordedAt = calendar.date(from: parts) ?? Date()
+                            
+                            if let editId = editingBPReadingId {
+                                log.updateBP(id: editId, systolic: sys, diastolic: dia, recordedAt: recordedAt)
+                            } else {
+                                log.addBP(systolic: sys, diastolic: dia, recordedAt: recordedAt)
                             }
+                            let category = BloodPressureCategory.classify(systolic: sys, diastolic: dia)
+                            editingBPReadingId = nil
                             showingBPSheet = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                bpAlertCategory = category
+                            }
                         } label: {
-                            Text(LocalizedStringKey("Save"))
+                            Text(AppLocalization.string("Save"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -525,7 +377,8 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(LocalizedStringKey("Cancel")) {
+                    Button(AppLocalization.string("Cancel")) {
+                        editingBPReadingId = nil
                         showingBPSheet = false
                     }
                     .font(.system(.body, design: .rounded, weight: .semibold))
@@ -581,17 +434,17 @@ struct TodayCard: View {
         VStack(spacing: 20) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Today's Medication")
+                    Text(AppLocalization.string("Today's Medication"))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
                     
-                    Text(LocalizedStringKey("Log each reminder time"))
+                    Text(AppLocalization.string("Log each reminder time"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
                     
                     HStack(spacing: 6) {
                         Image(systemName: "clock.fill")
-                        Text(String(format: String(localized: "%lld of %lld doses done"), log.takenDoseCount, max(log.doseRecords.count, 1)))
+                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.doseRecords.count, 1)))
                     }
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
@@ -611,7 +464,7 @@ struct TodayCard: View {
             
             if log.sortedDoseRecords.contains(where: \.isPending) {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("How are you feeling today?")
+                    Text(AppLocalization.string("How are you feeling today?"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                         .foregroundColor(.secondary)
                     
@@ -622,22 +475,14 @@ struct TodayCard: View {
                                     selectedMood = mood
                                 }
                             } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(selectedMood == mood ? mood.color.opacity(0.2) : Color(UIColor.systemGray6))
-                                        .frame(width: 44, height: 44)
-                                    Image(systemName: mood.icon)
-                                        .font(.system(size: 20))
-                                        .foregroundColor(selectedMood == mood ? mood.color : .gray)
-                                }
-                                .scaleEffect(selectedMood == mood ? 1.08 : 1.0)
+                                MoodFaceChip(mood: mood, isSelected: selectedMood == mood)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .frame(maxWidth: .infinity)
                     
-                    TextField(LocalizedStringKey("Add remark (optional)"), text: $remarkText)
+                    TextField(AppLocalization.string("Add remark (optional)"), text: $remarkText)
                         .font(.system(.body, design: .rounded))
                         .padding(12)
                         .background(Color(UIColor.systemGray6))
@@ -661,7 +506,7 @@ struct TodayCard: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundColor(.green)
-                    Text(LocalizedStringKey("All reminder times taken today"))
+                    Text(AppLocalization.string("All reminder times taken today"))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.green)
                 }
@@ -702,7 +547,7 @@ struct TodayCard: View {
                     .frame(width: 12, height: 12)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(record.label.isEmpty ? record.timeDescription : record.label)
+                    Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(titleColor)
                     Text(record.timeDescription)
@@ -716,7 +561,7 @@ struct TodayCard: View {
             }
             
             if meds.isEmpty {
-                Text(LocalizedStringKey("No medicines assigned yet."))
+                Text(AppLocalization.string("No medicines assigned yet."))
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(secondaryColor)
             } else {
@@ -735,28 +580,14 @@ struct TodayCard: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-                Button {
-                    withAnimation { log.undoDose(reminderId: record.id) }
-                } label: {
-                    Text("Undo")
-                        .font(.system(.footnote, design: .rounded, weight: .bold))
-                        .foregroundColor(secondaryColor)
-                }
-                .buttonStyle(.plain)
+                undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else if record.isSkipped {
                 if let reaction = record.physicalReaction, !reaction.isEmpty {
-                    Text(String(format: String(localized: "Reaction: %@"), reaction))
+                    Text(AppLocalization.format("Reaction: %@", reaction))
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-                Button {
-                    withAnimation { log.undoDose(reminderId: record.id) }
-                } label: {
-                    Text("Undo")
-                        .font(.system(.footnote, design: .rounded, weight: .bold))
-                        .foregroundColor(secondaryColor)
-                }
-                .buttonStyle(.plain)
+                undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else {
                 HStack(spacing: 10) {
                     Button {
@@ -769,7 +600,7 @@ struct TodayCard: View {
                             )
                         }
                     } label: {
-                        Text("Take Now")
+                        Text(AppLocalization.string("Take Now"))
                             .font(.system(.subheadline, design: .rounded, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -786,7 +617,7 @@ struct TodayCard: View {
                         skipNotes = ""
                         showingSkipSheet = true
                     } label: {
-                        Text("Skip / Missed")
+                        Text(AppLocalization.string("Skip / Missed"))
                             .font(.system(.subheadline, design: .rounded, weight: .bold))
                             .foregroundColor(titleColor)
                             .frame(maxWidth: .infinity)
@@ -808,23 +639,46 @@ struct TodayCard: View {
         let title: String
         let tint: Color
         if record.isTaken {
-            title = String(localized: "Taken")
+            title = AppLocalization.string("Taken")
             tint = .green
         } else if record.isSkipped {
-            title = String(localized: "Skipped")
+            title = AppLocalization.string("Skipped")
             tint = .red
         } else {
-            title = String(localized: "Pending")
+            title = AppLocalization.string("Pending")
             tint = .orange
         }
         
         return Text(title)
             .font(.system(.caption2, design: .rounded, weight: .bold))
-            .foregroundColor(onSolid ? tint : tint)
+            .foregroundColor(tint)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(onSolid ? Color.white.opacity(0.92) : tint.opacity(0.15))
             .cornerRadius(10)
+    }
+    
+    private func undoButton(reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
+        Button {
+            withAnimation { log.undoDose(reminderId: reminderId) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.uturn.backward")
+                    .font(.system(size: 12, weight: .bold))
+                Text(AppLocalization.string("Undo"))
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+            }
+            .foregroundColor(titleColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(prefersLightText ? Color.white.opacity(0.28) : Color.white.opacity(0.7))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(titleColor.opacity(prefersLightText ? 0.45 : 0.2), lineWidth: 1)
+            )
+            .cornerRadius(14)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -834,18 +688,30 @@ struct VitalsCard: View {
     @Binding var showingBPChart: Bool
     @Binding var bpSystolic: String
     @Binding var bpDiastolic: String
+    @Binding var bpRecordedAt: Date
+    @Binding var editingBPReadingId: UUID?
+    
+    private var readings: [BloodPressureReading] {
+        log.sortedBPReadings
+    }
     
     var body: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Vitals")
+                    Text(AppLocalization.string("Vitals"))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
                     
-                    Text("Blood Pressure")
+                    Text(AppLocalization.string("Blood Pressure"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
+                    
+                    if !readings.isEmpty {
+                        Text(AppLocalization.format("%lld readings today", readings.count))
+                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
                 }
                 Spacer()
                 
@@ -859,90 +725,107 @@ struct VitalsCard: View {
                 }
             }
             
-            if let sys = log.systolic, let dia = log.diastolic {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "waveform.path.ecg")
-                            .font(.title3)
-                            .foregroundColor(.red)
-                        Text("\(sys) / \(dia) mmHg")
-                            .font(.system(.headline, design: .rounded, weight: .bold))
-                            .foregroundColor(.red)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color.red.opacity(0.1))
-                .cornerRadius(16)
-                
-                HStack(spacing: 16) {
-                    Button(action: {
-                        bpSystolic = "\(sys)"
-                        bpDiastolic = "\(dia)"
-                        showingBPSheet = true
-                    }) {
-                        Text("Edit")
-                            .font(.system(.headline, design: .rounded, weight: .bold))
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color(UIColor.systemGray6))
-                            .cornerRadius(20)
-                    }
-                    
-                    Button(action: {
-                        log.systolic = nil
-                        log.diastolic = nil
-                    }) {
-                        Text("Remove")
-                            .font(.system(.headline, design: .rounded, weight: .bold))
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(20)
-                    }
-                }
-                
-                Button(action: { showingBPChart = true }) {
-                    Text("View BP Trends")
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(20)
-                }
+            if readings.isEmpty {
+                Text(AppLocalization.string("No BP recorded today."))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(UIColor.systemGray6))
+                    .cornerRadius(16)
             } else {
-                Button(action: {
-                    bpSystolic = ""
-                    bpDiastolic = ""
-                    showingBPSheet = true
-                }) {
-                    Text("Log Blood Pressure")
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.red.opacity(0.8))
-                        .cornerRadius(20)
-                        .shadow(color: Color.red.opacity(0.3), radius: 8, x: 0, y: 4)
-                }
-                
-                Button(action: { showingBPChart = true }) {
-                    Text("View BP Trends")
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(20)
+                VStack(spacing: 10) {
+                    ForEach(Array(readings.reversed())) { reading in
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "waveform.path.ecg")
+                                    .font(.title3)
+                                    .foregroundColor(reading.category.color)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(reading.valueDescription)
+                                        .font(.system(.headline, design: .rounded, weight: .bold))
+                                        .foregroundColor(reading.category.color)
+                                    Text(reading.timeDescription)
+                                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Button {
+                                    editingBPReadingId = reading.id
+                                    bpSystolic = "\(reading.systolic)"
+                                    bpDiastolic = "\(reading.diastolic)"
+                                    bpRecordedAt = reading.recordedAt
+                                    showingBPSheet = true
+                                } label: {
+                                    Text(AppLocalization.string("Edit"))
+                                        .font(.system(.caption, design: .rounded, weight: .bold))
+                                        .foregroundColor(.secondary)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(Color(UIColor.systemGray6))
+                                        .cornerRadius(12)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button {
+                                    withAnimation {
+                                        log.removeBP(id: reading.id)
+                                    }
+                                } label: {
+                                    Image(systemName: "trash.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.red.opacity(0.8))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                            BloodPressureCategoryBadge(category: reading.category)
+                        }
+                        .padding(14)
+                        .background(reading.category.color.opacity(0.08))
+                        .cornerRadius(16)
+                    }
                 }
             }
+            
+            Button {
+                editingBPReadingId = nil
+                bpSystolic = ""
+                bpDiastolic = ""
+                bpRecordedAt = Date()
+                showingBPSheet = true
+            } label: {
+                Text(AppLocalization.string(readings.isEmpty ? "Log Blood Pressure" : "Add Reading"))
+                    .font(.system(.headline, design: .rounded, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.red.opacity(0.8))
+                    .cornerRadius(20)
+                    .shadow(color: Color.red.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .buttonStyle(.plain)
+            
+            Button(action: { showingBPChart = true }) {
+                Text(AppLocalization.string("View BP Trends"))
+                    .font(.system(.headline, design: .rounded, weight: .bold))
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(20)
+            }
+            .buttonStyle(.plain)
         }
         .padding(24)
         .background(Color.white)
         .cornerRadius(30)
+        .onAppear {
+            log.ensureBPReadingsMigrated()
+        }
         .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
     }
 }
@@ -978,11 +861,11 @@ struct MoodStatsCard: View {
         VStack(spacing: 20) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Mood Trends")
+                    Text(AppLocalization.string("Mood Trends"))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
                     
-                    Text("This Month")
+                    Text(AppLocalization.string("This Month"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
                 }
@@ -1000,7 +883,7 @@ struct MoodStatsCard: View {
             }
             
             if monthMoodLogs.isEmpty {
-                Text("No mood data yet this month.")
+                Text(AppLocalization.string("No mood data yet this month."))
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1010,20 +893,13 @@ struct MoodStatsCard: View {
             } else {
                 if let topMood = mostCommonMood {
                     HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(topMood.color.opacity(0.2))
-                                .frame(width: 44, height: 44)
-                            Image(systemName: topMood.icon)
-                                .foregroundColor(topMood.color)
-                                .font(.system(size: 20))
-                        }
+                        MoodFaceChip(mood: topMood, isSelected: true, diameter: 44)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Most Common")
+                            Text(AppLocalization.string("Most Common"))
                                 .font(.system(.caption, design: .rounded, weight: .semibold))
                                 .foregroundColor(.secondary)
-                            Text(LocalizedStringKey(topMood.rawValue))
+                            Text(AppLocalization.string(topMood.rawValue))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                                 .foregroundColor(topMood.color)
                         }
@@ -1032,7 +908,7 @@ struct MoodStatsCard: View {
                         
                         Text("\(monthMoodLogs.count)")
                             .font(.system(.title2, design: .rounded, weight: .bold))
-                        Text("Days")
+                        Text(AppLocalization.string("Days"))
                             .font(.system(.caption, design: .rounded, weight: .medium))
                             .foregroundColor(.secondary)
                     }
@@ -1044,12 +920,10 @@ struct MoodStatsCard: View {
                 VStack(spacing: 12) {
                     ForEach(moodCounts, id: \.mood) { item in
                         HStack(spacing: 12) {
-                            Image(systemName: item.mood.icon)
-                                .font(.system(size: 16))
-                                .foregroundColor(item.mood.color)
-                                .frame(width: 24)
+                            MoodFaceView(mood: item.mood, size: 26)
+                                .frame(width: 28)
                             
-                            Text(LocalizedStringKey(item.mood.rawValue))
+                            Text(AppLocalization.string(item.mood.rawValue))
                                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .frame(width: 72, alignment: .leading)
                             

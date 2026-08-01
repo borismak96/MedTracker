@@ -12,29 +12,29 @@ struct SetupGuideView: View {
                     stepCard(
                         number: 1,
                         icon: "bell.badge.fill",
-                        title: String(localized: "Set reminder times"),
-                        body: String(localized: "Open Profile → Reminder Times. Add one or more daily alarms (for example Morning, Afternoon, and Night), and pick a custom time for each.")
+                        title: AppLocalization.string("Set reminder times"),
+                        body: AppLocalization.string("Open Profile → Reminder Times. Add one or more daily alarms (for example Morning, Afternoon, and Night), and pick a custom time for each.")
                     )
                     
                     stepCard(
                         number: 2,
                         icon: "pills.fill",
-                        title: String(localized: "Add your medications"),
-                        body: String(localized: "Open Profile → Manage Medications. Add each medicine and dose, then choose which reminder times it should use — or keep All times.")
+                        title: AppLocalization.string("Add your medications"),
+                        body: AppLocalization.string("Open Profile → Manage Medications. Add each medicine and dose, then choose which reminder times it should use — or keep All times.")
                     )
                     
                     stepCard(
                         number: 3,
                         icon: "bell.fill",
-                        title: String(localized: "Turn on notifications"),
-                        body: String(localized: "In Profile, enable Daily Reminders so MedTracker can notify you at each scheduled time with the medicines for that slot.")
+                        title: AppLocalization.string("Turn on notifications"),
+                        body: AppLocalization.string("In Profile, enable Daily Reminders so PillPal can notify you at each scheduled time with the medicines for that slot.")
                     )
                     
                     stepCard(
                         number: 4,
                         icon: "house.fill",
-                        title: String(localized: "Track on Home"),
-                        body: String(localized: "On Home, check your day streak and this month rings, then use Take Now or Missed when you finish or skip a dose. Tap a streak colour to see that reminder’s details.")
+                        title: AppLocalization.string("Track on Home"),
+                        body: AppLocalization.string("On Home, check your day streak and this month rings, then use Take Now or Missed when you finish or skip a dose. Tap a streak colour to see that reminder’s details.")
                     )
                 }
                 .padding(.horizontal, 20)
@@ -42,7 +42,7 @@ struct SetupGuideView: View {
                 .padding(.bottom, 30)
             }
         }
-        .navigationTitle(LocalizedStringKey("How to Set Up"))
+        .navigationTitle(AppLocalization.string("How to Set Up"))
         .navigationBarTitleDisplayMode(.inline)
     }
     
@@ -57,11 +57,11 @@ struct SetupGuideView: View {
                     .foregroundColor(.mint)
             }
             
-            Text(LocalizedStringKey("Reminder & Medication Guide"))
+            Text(AppLocalization.string("Reminder & Medication Guide"))
                 .font(.system(.title3, design: .rounded, weight: .heavy))
                 .multilineTextAlignment(.center)
             
-            Text(LocalizedStringKey("Follow these steps to schedule multiple reminder times and assign medicines to each one."))
+            Text(AppLocalization.string("Follow these steps to schedule multiple reminder times and assign medicines to each one."))
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

@@ -8,21 +8,59 @@ struct ReminderSlot: Codable, Identifiable, Hashable {
     var label: String = "Morning"
     
     var timeDescription: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        
-        var components = DateComponents()
-        components.hour = hour
-        components.minute = minute
-        
-        if let date = Calendar.current.date(from: components) {
-            return formatter.string(from: date)
-        }
-        return "\(hour):\(String(format: "%02d", minute))"
+        AppLocalization.shortTime(hour: hour, minute: minute)
     }
     
     var displayTitle: String {
         label.isEmpty ? timeDescription : "\(label) · \(timeDescription)"
+    }
+    
+    /// Localized label for UI (Morning / Afternoon / Night / Custom).
+    var localizedLabel: String {
+        Self.localizedLabel(for: label)
+    }
+    
+    var localizedDisplayTitle: String {
+        localizedLabel.isEmpty ? timeDescription : "\(localizedLabel) · \(timeDescription)"
+    }
+    
+    static func localizedLabel(for label: String) -> String {
+        let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "" }
+        
+        switch trimmed.lowercased() {
+        case "morning", "早上":
+            return AppLocalization.string("Morning")
+        case "afternoon", "下午":
+            return AppLocalization.string("Afternoon")
+        case "night", "晚上", "evening":
+            return AppLocalization.string("Night")
+        case "custom", "自訂", "自定义":
+            return AppLocalization.string("Custom")
+        case "reminder", "提醒":
+            return AppLocalization.string("Reminder")
+        default:
+            return trimmed
+        }
+    }
+    
+    /// Map a displayed/edited label back to the stored English key when possible.
+    static func storageLabel(from displayed: String) -> String {
+        let trimmed = displayed.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch trimmed.lowercased() {
+        case "morning", "早上":
+            return "Morning"
+        case "afternoon", "下午":
+            return "Afternoon"
+        case "night", "晚上", "evening":
+            return "Night"
+        case "custom", "自訂", "自定义", "":
+            return ""
+        case "reminder", "提醒":
+            return "Reminder"
+        default:
+            return trimmed
+        }
     }
 }
 
@@ -48,13 +86,13 @@ enum AgeRange: String, CaseIterable, Identifiable {
     /// Literal localization keys so String Catalog sync can extract them.
     var localizedName: String {
         switch self {
-        case .under18: String(localized: "Under 18")
-        case .age18to24: String(localized: "18–24")
-        case .age25to34: String(localized: "25–34")
-        case .age35to44: String(localized: "35–44")
-        case .age45to54: String(localized: "45–54")
-        case .age55to64: String(localized: "55–64")
-        case .age65Plus: String(localized: "65+")
+        case .under18: AppLocalization.string("Under 18")
+        case .age18to24: AppLocalization.string("18–24")
+        case .age25to34: AppLocalization.string("25–34")
+        case .age35to44: AppLocalization.string("35–44")
+        case .age45to54: AppLocalization.string("45–54")
+        case .age55to64: AppLocalization.string("55–64")
+        case .age65Plus: AppLocalization.string("65+")
         }
     }
 }

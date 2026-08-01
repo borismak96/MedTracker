@@ -22,17 +22,17 @@ class NotificationManager {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
         
-        let title = String(localized: "Medication Reminder")
+        let title = AppLocalization.string("Medication Reminder")
         
         for reminder in reminders {
             let meds = medicationsForReminder(reminder)
             let medNames = meds.map(\.name).filter { !$0.isEmpty }
             let medName = medNames.isEmpty
-                ? String(localized: "your medication")
+                ? AppLocalization.string("your medication")
                 : medNames.joined(separator: ", ")
             
-            let labelPrefix = reminder.label.isEmpty ? "" : "\(reminder.label): "
-            let body = labelPrefix + String(format: String(localized: "It's time to take %@"), medName)
+            let labelPrefix = reminder.localizedLabel.isEmpty ? "" : "\(reminder.localizedLabel): "
+            let body = labelPrefix + AppLocalization.format("It's time to take %@", medName)
             
             let content = UNMutableNotificationContent()
             content.title = title

@@ -54,12 +54,12 @@ struct SplashView: View {
                 .padding(.bottom, 10)
                 
                 // App Title
-                Text("MedTracker")
+                Text(AppBrand.displayName)
                     .font(.system(size: 40, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
                     .opacity(textOpacity)
                 
-                Text("Stay on track with your health")
+                Text(AppLocalization.string("Stay on track with your health"))
                     .font(.system(.headline, design: .rounded))
                     .fontWeight(.medium)
                     .foregroundColor(.white.opacity(0.8))

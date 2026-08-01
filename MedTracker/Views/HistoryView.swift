@@ -25,7 +25,7 @@ struct HistoryView: View {
                 
                 VStack(spacing: 0) {
                     HStack {
-                        Text("History")
+                        Text(AppLocalization.string("History"))
                             .font(.system(.title, design: .rounded, weight: .heavy))
                             .foregroundColor(.primary)
                         Spacer()
@@ -66,7 +66,22 @@ struct HistoryView: View {
                     DailyRecordSheet(date: dateWrapper.date, profile: profile)
                 }
             }
+            .onAppear {
+                syncSelectedDateDoseRecords()
+            }
+            .onChange(of: selectedDate) { _, _ in
+                syncSelectedDateDoseRecords()
+            }
+            .onChange(of: logs.count) { _, _ in
+                syncSelectedDateDoseRecords()
+            }
         }
+    }
+    
+    private func syncSelectedDateDoseRecords() {
+        guard let profile, let log = logForDate(selectedDate) else { return }
+        log.syncDoseRecords(with: profile)
+        try? log.modelContext?.save()
     }
     
     var monthHeader: some View {
@@ -82,7 +97,7 @@ struct HistoryView: View {
             
             Spacer()
             
-            Text(currentMonth, format: .dateTime.year().month())
+            Text(currentMonth, format: Date.FormatStyle().year().month().locale(AppLocalization.locale))
                 .font(.system(.title3, design: .rounded, weight: .bold))
             
             Spacer()
@@ -101,7 +116,7 @@ struct HistoryView: View {
     var weekdayHeader: some View {
         HStack {
             ForEach(weekdays, id: \.self) { day in
-                Text(LocalizedStringKey(day))
+                Text(AppLocalization.string(day))
                     .font(.caption)
                     .bold()
                     .foregroundColor(.secondary)
@@ -137,13 +152,13 @@ struct HistoryView: View {
         
         return VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text(selectedDate, format: .dateTime.month().day().weekday(.wide))
+                Text(selectedDate, format: Date.FormatStyle().month().day().weekday(.wide).locale(AppLocalization.locale))
                     .font(.system(.title3, design: .rounded, weight: .bold))
                 Spacer()
                 Button(action: {
                     editingDateWrapper = DateWrapper(date: selectedDate)
                 }) {
-                    Text("Edit")
+                    Text(AppLocalization.string("Edit"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -152,12 +167,12 @@ struct HistoryView: View {
                 }
             }
             
-            Text(LocalizedStringKey("Reminder History"))
+            Text(AppLocalization.string("Reminder History"))
                 .font(.system(.subheadline, design: .rounded, weight: .bold))
                 .foregroundColor(.secondary)
             
             if doseRecords.isEmpty {
-                Text("Not Recorded")
+                Text(AppLocalization.string("Not Recorded"))
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,39 +196,59 @@ struct HistoryView: View {
                     }
                 }
                 
-                Text(String(format: String(localized: "%lld taken · %lld skipped · %lld pending"),
-                              doseRecords.filter(\.isTaken).count,
+                Text(AppLocalization.format("%lld taken · %lld skipped · %lld pending", doseRecords.filter(\.isTaken).count,
                               doseRecords.filter(\.isSkipped).count,
                               doseRecords.filter(\.isPending).count))
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .foregroundColor(.secondary)
             }
             
-            if let log = log, let sys = log.systolic, let dia = log.diastolic {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "waveform.path.ecg")
-                            .foregroundColor(.red)
-                        Text("Blood Pressure: \(sys) / \(dia) mmHg")
-                            .font(.system(.headline, design: .rounded, weight: .bold))
-                            .foregroundColor(.red)
+            if let log = log {
+                let readings = log.sortedBPReadings
+                if !readings.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: "waveform.path.ecg")
+                                .foregroundColor(.red)
+                            Text(AppLocalization.string("Blood Pressure"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text(AppLocalization.format("%lld readings", readings.count))
+                                .font(.system(.caption, design: .rounded, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        ForEach(Array(readings.reversed())) { reading in
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(reading.timeDescription)
+                                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text(reading.valueDescription)
+                                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                        .foregroundColor(reading.category.color)
+                                }
+                                BloodPressureCategoryBadge(category: reading.category, compact: true)
+                            }
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(UIColor.systemGray6))
+                    .cornerRadius(12)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color.red.opacity(0.1))
-                .cornerRadius(12)
             }
             
             if let log = log, let moodStr = log.mood, let mood = MoodStatus.from(string: moodStr) {
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: mood.icon)
-                            .foregroundColor(mood.color)
-                        Text("Mood: ")
+                    HStack(spacing: 10) {
+                        MoodFaceChip(mood: mood, isSelected: true, diameter: 36)
+                        Text(AppLocalization.string("Mood: "))
                             .font(.system(.headline, design: .rounded, weight: .bold))
                             .foregroundColor(mood.color)
-                        Text(LocalizedStringKey(mood.rawValue))
+                        Text(AppLocalization.string(mood.rawValue))
                             .font(.system(.subheadline, design: .rounded, weight: .bold))
                             .foregroundColor(mood.color)
                     }
@@ -227,52 +262,55 @@ struct HistoryView: View {
     }
     
     private func historyDoseRecords(for log: MedicationLog?) -> [ReminderDoseRecord] {
+        // Prefer persisted per-reminder records (same source as Home).
         if let log, !log.doseRecords.isEmpty {
             return log.sortedDoseRecords
         }
-        if let profile {
-            profile.ensureRemindersMigrated()
-            if let log {
-                // Show reminder slots with legacy day status mapped for older logs.
-                return profile.sortedReminders.map { reminder in
-                    if log.isTaken {
-                        return ReminderDoseRecord(
-                            id: reminder.id,
-                            label: reminder.label,
-                            hour: reminder.hour,
-                            minute: reminder.minute,
-                            status: DoseRecordStatus.taken.rawValue,
-                            notes: log.notes,
-                            medicineName: log.medicineName,
-                            dose: log.dose,
-                            mood: log.mood
-                        )
-                    } else if log.skippedTime != nil {
-                        return ReminderDoseRecord(
-                            id: reminder.id,
-                            label: reminder.label,
-                            hour: reminder.hour,
-                            minute: reminder.minute,
-                            status: DoseRecordStatus.skipped.rawValue,
-                            skippedTime: log.skippedTime,
-                            physicalReaction: log.physicalReaction,
-                            notes: log.notes
-                        )
-                    } else {
-                        return ReminderDoseRecord(
-                            id: reminder.id,
-                            label: reminder.label,
-                            hour: reminder.hour,
-                            minute: reminder.minute
-                        )
-                    }
-                }
-            }
+        
+        guard let profile else { return [] }
+        profile.ensureRemindersMigrated()
+        
+        // No day log yet — show reminder slots as pending placeholders.
+        guard let log else {
             return profile.sortedReminders.map {
                 ReminderDoseRecord(id: $0.id, label: $0.label, hour: $0.hour, minute: $0.minute)
             }
         }
-        return []
+        
+        // Legacy day-level log without doseRecords yet.
+        return profile.sortedReminders.map { reminder in
+            if log.isTaken {
+                return ReminderDoseRecord(
+                    id: reminder.id,
+                    label: reminder.label,
+                    hour: reminder.hour,
+                    minute: reminder.minute,
+                    status: DoseRecordStatus.taken.rawValue,
+                    notes: log.notes,
+                    medicineName: log.medicineName,
+                    dose: log.dose,
+                    mood: log.mood
+                )
+            } else if log.skippedTime != nil {
+                return ReminderDoseRecord(
+                    id: reminder.id,
+                    label: reminder.label,
+                    hour: reminder.hour,
+                    minute: reminder.minute,
+                    status: DoseRecordStatus.skipped.rawValue,
+                    skippedTime: log.skippedTime,
+                    physicalReaction: log.physicalReaction,
+                    notes: log.notes
+                )
+            } else {
+                return ReminderDoseRecord(
+                    id: reminder.id,
+                    label: reminder.label,
+                    hour: reminder.hour,
+                    minute: reminder.minute
+                )
+            }
+        }
     }
     
     private func historyDoseCard(record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
@@ -284,15 +322,15 @@ struct HistoryView: View {
         let secondaryColor = StatsRingPalette.secondaryText(for: slot)
         
         if record.isTaken {
-            statusTitle = String(localized: "Taken")
+            statusTitle = AppLocalization.string("Taken")
             statusColor = .green
             statusIcon = "checkmark.circle.fill"
         } else if record.isSkipped {
-            statusTitle = String(localized: "Skipped")
+            statusTitle = AppLocalization.string("Skipped")
             statusColor = .red
             statusIcon = "xmark.circle.fill"
         } else {
-            statusTitle = String(localized: "Pending")
+            statusTitle = AppLocalization.string("Pending")
             statusColor = .orange
             statusIcon = "clock.fill"
         }
@@ -304,7 +342,7 @@ struct HistoryView: View {
                     .frame(width: 10, height: 10)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(record.label.isEmpty ? record.timeDescription : record.label)
+                    Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(titleColor)
                     Text(record.timeDescription)
@@ -351,14 +389,13 @@ struct HistoryView: View {
             }
             
             if record.isSkipped, let skipped = record.skippedTime {
-                Text(String(format: String(localized: "Missed at %@"),
-                              skipped.formatted(date: .omitted, time: .shortened)))
+                Text(AppLocalization.format("Missed at %@", skipped.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
                     .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundColor(secondaryColor)
             }
             
             if let reaction = record.physicalReaction, !reaction.isEmpty {
-                Text(String(format: String(localized: "Reaction: %@"), reaction))
+                Text(AppLocalization.format("Reaction: %@", reaction))
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(secondaryColor)
             }
@@ -461,18 +498,20 @@ struct DailyRecordSheet: View {
         
         var id: String { rawValue }
         
-        var labelKey: LocalizedStringKey {
+        var localizedLabel: String {
             switch self {
-            case .pending: return "Pending"
-            case .taken: return "Taken"
-            case .missed: return "Missed"
+            case .pending: return AppLocalization.string("Pending")
+            case .taken: return AppLocalization.string("Taken")
+            case .missed: return AppLocalization.string("Missed")
             }
         }
     }
     
     @State private var doseDrafts: [ReminderDoseRecord] = []
-    @State private var systolic = ""
-    @State private var diastolic = ""
+    @State private var bpDrafts: [BloodPressureReading] = []
+    @State private var newSystolic = ""
+    @State private var newDiastolic = ""
+    @State private var newBPTime = Date()
     @State private var mood: MoodStatus? = nil
     
     var body: some View {
@@ -482,7 +521,7 @@ struct DailyRecordSheet: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        Text(LocalizedStringKey("Edit each reminder time for this day."))
+                        Text(AppLocalization.string("Edit each reminder time for this day."))
                             .font(.system(.subheadline, design: .rounded))
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -492,20 +531,92 @@ struct DailyRecordSheet: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(LocalizedStringKey("Vitals (Optional)"))
+                            Text(AppLocalization.string("Vitals (Optional)"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                             
-                            TextField("Systolic (High) BP", text: $systolic)
+                            if bpDrafts.isEmpty {
+                                Text(AppLocalization.string("No BP recorded for this day."))
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            } else {
+                                ForEach(bpDrafts) { reading in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(reading.valueDescription)
+                                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                    .foregroundColor(reading.category.color)
+                                                Text(reading.timeDescription)
+                                                    .font(.system(.caption, design: .rounded))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            Spacer()
+                                            Button {
+                                                bpDrafts.removeAll { $0.id == reading.id }
+                                            } label: {
+                                                Image(systemName: "trash.circle.fill")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(.red.opacity(0.8))
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                        BloodPressureCategoryBadge(category: reading.category, compact: true)
+                                    }
+                                    .padding(10)
+                                    .background(reading.category.color.opacity(0.08))
+                                    .cornerRadius(12)
+                                }
+                            }
+                            
+                            Text(AppLocalization.string("Add Reading"))
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.secondary)
+                                .padding(.top, 4)
+                            
+                            TextField(AppLocalization.string("Systolic (High) BP"), text: $newSystolic)
                                 .keyboardType(.numberPad)
                                 .padding(12)
                                 .background(Color(UIColor.systemGray6))
                                 .cornerRadius(12)
                             
-                            TextField("Diastolic (Low) BP", text: $diastolic)
+                            TextField(AppLocalization.string("Diastolic (Low) BP"), text: $newDiastolic)
                                 .keyboardType(.numberPad)
                                 .padding(12)
                                 .background(Color(UIColor.systemGray6))
                                 .cornerRadius(12)
+                            
+                            DatePicker(
+                                AppLocalization.string("Time"),
+                                selection: $newBPTime,
+                                displayedComponents: .hourAndMinute
+                            )
+                            
+                            Button {
+                                guard let sys = Int(newSystolic), let dia = Int(newDiastolic) else { return }
+                                let calendar = Calendar.current
+                                let day = calendar.startOfDay(for: date)
+                                let time = calendar.dateComponents([.hour, .minute], from: newBPTime)
+                                var parts = calendar.dateComponents([.year, .month, .day], from: day)
+                                parts.hour = time.hour
+                                parts.minute = time.minute
+                                let recordedAt = calendar.date(from: parts) ?? date
+                                bpDrafts.append(
+                                    BloodPressureReading(recordedAt: recordedAt, systolic: sys, diastolic: dia)
+                                )
+                                bpDrafts.sort { $0.recordedAt < $1.recordedAt }
+                                newSystolic = ""
+                                newDiastolic = ""
+                                newBPTime = date
+                            } label: {
+                                Text(AppLocalization.string("Add Reading"))
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.red.opacity(0.8))
+                                    .cornerRadius(14)
+                            }
+                            .buttonStyle(.plain)
                         }
                         .padding(16)
                         .background(Color.white)
@@ -513,7 +624,7 @@ struct DailyRecordSheet: View {
                         .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(LocalizedStringKey("Mood (Optional)"))
+                            Text(AppLocalization.string("Mood (Optional)"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                             
                             HStack(spacing: 12) {
@@ -521,14 +632,7 @@ struct DailyRecordSheet: View {
                                     Button {
                                         withAnimation { mood = mood == m ? nil : m }
                                     } label: {
-                                        ZStack {
-                                            Circle()
-                                                .fill(mood == m ? m.color.opacity(0.2) : Color(UIColor.systemGray6))
-                                                .frame(width: 44, height: 44)
-                                            Image(systemName: m.icon)
-                                                .font(.system(size: 18))
-                                                .foregroundColor(mood == m ? m.color : .gray)
-                                        }
+                                        MoodFaceChip(mood: m, isSelected: mood == m)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -541,7 +645,7 @@ struct DailyRecordSheet: View {
                         .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
                         
                         Button(action: saveRecord) {
-                            Text("Save Record")
+                            Text(AppLocalization.string("Save Record"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -558,7 +662,7 @@ struct DailyRecordSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(AppLocalization.string("Cancel")) { dismiss() }
                         .font(.system(.body, design: .rounded, weight: .semibold))
                         .foregroundColor(.mint)
                 }
@@ -596,18 +700,18 @@ struct DailyRecordSheet: View {
         )
         
         return VStack(alignment: .leading, spacing: 12) {
-            Text(draft.wrappedValue.displayTitle)
+            Text(draft.wrappedValue.localizedDisplayTitle)
                 .font(.system(.headline, design: .rounded, weight: .bold))
             
-            Picker(LocalizedStringKey("Status"), selection: statusBinding) {
-                ForEach(SlotStatus.allCases) { status in
-                    Text(status.labelKey).tag(status)
+            Picker(AppLocalization.string("Status"), selection: statusBinding) {
+                    ForEach(SlotStatus.allCases) { status in
+                        Text(status.localizedLabel).tag(status)
+                    }
                 }
-            }
             .pickerStyle(.segmented)
             
             if draft.wrappedValue.isTaken {
-                TextField(LocalizedStringKey("Add remark (optional)"), text: Binding(
+                TextField(AppLocalization.string("Add remark (optional)"), text: Binding(
                     get: { draft.wrappedValue.notes ?? "" },
                     set: { draft.wrappedValue.notes = $0.isEmpty ? nil : $0 }
                 ), axis: .vertical)
@@ -615,8 +719,7 @@ struct DailyRecordSheet: View {
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(10)
             } else if draft.wrappedValue.isSkipped {
-                DatePicker(
-                    LocalizedStringKey("Time"),
+                DatePicker(AppLocalization.string("Time"),
                     selection: Binding(
                         get: { draft.wrappedValue.skippedTime ?? date },
                         set: { draft.wrappedValue.skippedTime = $0 }
@@ -624,7 +727,7 @@ struct DailyRecordSheet: View {
                     displayedComponents: .hourAndMinute
                 )
                 
-                TextField(LocalizedStringKey("Physical Reaction (Optional)"), text: Binding(
+                TextField(AppLocalization.string("Physical Reaction (Optional)"), text: Binding(
                     get: { draft.wrappedValue.physicalReaction ?? "" },
                     set: { draft.wrappedValue.physicalReaction = $0.isEmpty ? nil : $0 }
                 ))
@@ -632,7 +735,7 @@ struct DailyRecordSheet: View {
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(10)
                 
-                TextField(LocalizedStringKey("Additional Notes (Optional)"), text: Binding(
+                TextField(AppLocalization.string("Additional Notes (Optional)"), text: Binding(
                     get: { draft.wrappedValue.notes ?? "" },
                     set: { draft.wrappedValue.notes = $0.isEmpty ? nil : $0 }
                 ))
@@ -649,12 +752,13 @@ struct DailyRecordSheet: View {
     
     func loadData() {
         profile.ensureRemindersMigrated()
+        newBPTime = date
         
         if let existing = log {
             existing.syncDoseRecords(with: profile)
+            existing.ensureBPReadingsMigrated()
             doseDrafts = existing.sortedDoseRecords
-            systolic = existing.systolic.map { "\($0)" } ?? ""
-            diastolic = existing.diastolic.map { "\($0)" } ?? ""
+            bpDrafts = existing.sortedBPReadings
             mood = MoodStatus.from(string: existing.mood)
         } else {
             doseDrafts = profile.sortedReminders.map { reminder in
@@ -668,15 +772,14 @@ struct DailyRecordSheet: View {
                     dose: meds.map(\.dose).filter { !$0.isEmpty }.joined(separator: "\n")
                 )
             }
-            systolic = ""
-            diastolic = ""
+            bpDrafts = []
             mood = nil
         }
     }
     
     func saveRecord() {
         let targetLog = log ?? MedicationLog(date: date)
-        let hasVitals = !systolic.isEmpty && !diastolic.isEmpty
+        let hasVitals = !bpDrafts.isEmpty || (!newSystolic.isEmpty && !newDiastolic.isEmpty)
         let hasDoseActivity = doseDrafts.contains { !$0.isPending }
         
         if log == nil && (hasDoseActivity || hasVitals || mood != nil) {
@@ -695,10 +798,23 @@ struct DailyRecordSheet: View {
             }
         }
         
+        // Include an in-progress BP form value if user typed but didn't tap Add.
+        var readings = bpDrafts
+        if let sys = Int(newSystolic), let dia = Int(newDiastolic) {
+            let calendar = Calendar.current
+            let day = calendar.startOfDay(for: date)
+            let time = calendar.dateComponents([.hour, .minute], from: newBPTime)
+            var parts = calendar.dateComponents([.year, .month, .day], from: day)
+            parts.hour = time.hour
+            parts.minute = time.minute
+            let recordedAt = calendar.date(from: parts) ?? date
+            readings.append(BloodPressureReading(recordedAt: recordedAt, systolic: sys, diastolic: dia))
+        }
+        
         targetLog.doseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
         targetLog.refreshAggregateFlags()
-        targetLog.systolic = Int(systolic)
-        targetLog.diastolic = Int(diastolic)
+        targetLog.bpReadings = readings.sorted { $0.recordedAt < $1.recordedAt }
+        targetLog.syncLegacyBPFields()
         targetLog.mood = mood?.rawValue
         
         try? modelContext.save()

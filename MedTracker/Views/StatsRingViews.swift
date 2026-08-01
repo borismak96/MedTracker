@@ -2,16 +2,16 @@ import SwiftUI
 
 /// Soft pastel palette for reminder time cards (Day Streak, Today, History).
 enum StatsRingPalette {
-    /// Morning — #FFD261
-    static let yellow = Color(red: 255/255, green: 210/255, blue: 97/255)
-    /// Afternoon — #F79E5A
-    static let orange = Color(red: 247/255, green: 158/255, blue: 90/255)
+    /// Morning — #FFDF3E
+    static let yellow = Color(red: 255/255, green: 223/255, blue: 62/255)
+    /// Afternoon — #FC7D1B
+    static let orange = Color(red: 252/255, green: 125/255, blue: 27/255)
     /// Night — #B771F4
     static let purple = Color(red: 183/255, green: 113/255, blue: 244/255)
     
-    /// Deeper accents for ring progress / filled buttons (readable on pastel fills).
-    static let yellowAccent = Color(red: 0.72, green: 0.52, blue: 0.08)
-    static let orangeAccent = Color(red: 0.72, green: 0.35, blue: 0.10)
+    /// Deeper accents for ring progress / filled buttons.
+    static let yellowAccent = Color(red: 0.45, green: 0.34, blue: 0.02)
+    static let orangeAccent = Color(red: 0.48, green: 0.20, blue: 0.04)
     static let purpleAccent = Color(red: 0.42, green: 0.18, blue: 0.68)
     
     static let green = Color(red: 0.72, green: 0.91, blue: 0.78)
@@ -21,7 +21,7 @@ enum StatsRingPalette {
     
     static let accentColors: [Color] = [yellow, orange, purple, blue]
     
-    /// Morning = #FFD261, Afternoon = #F79E5A, Night = #B771F4.
+    /// Morning = #FFDF3E, Afternoon = #FC7D1B, Night = #B771F4.
     static func color(for reminder: ReminderSlot) -> Color {
         switch period(for: reminder) {
         case .morning: return yellow
@@ -44,11 +44,11 @@ enum StatsRingPalette {
     }
     
     static func primaryText(for reminder: ReminderSlot) -> Color {
-        prefersLightText(for: reminder) ? .white : Color(white: 0.12)
+        prefersLightText(for: reminder) ? .white : Color(white: 0.10)
     }
     
     static func secondaryText(for reminder: ReminderSlot) -> Color {
-        prefersLightText(for: reminder) ? Color.white.opacity(0.92) : Color(white: 0.25)
+        prefersLightText(for: reminder) ? Color.white.opacity(0.92) : Color(white: 0.18)
     }
     
     private enum Period { case morning, afternoon, night }
@@ -352,11 +352,11 @@ struct RingDetailSheet: View {
                         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(LocalizedStringKey("Details"))
+                            Text(AppLocalization.string("Details"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                             
                             if segment.detailLines.isEmpty {
-                                Text(LocalizedStringKey("No details available."))
+                                Text(AppLocalization.string("No details available."))
                                     .font(.system(.subheadline, design: .rounded))
                                     .foregroundColor(.secondary)
                             } else {
@@ -385,7 +385,7 @@ struct RingDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(LocalizedStringKey("Done")) { dismiss() }
+                    Button(AppLocalization.string("Done")) { dismiss() }
                         .font(.system(.body, design: .rounded, weight: .semibold))
                         .foregroundColor(.mint)
                 }

@@ -18,19 +18,19 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             HomeView(selectedTab: $selectedTab)
                 .tabItem {
-                    Label("Today", systemImage: "pill.fill")
+                    Label(AppLocalization.string("Today"), systemImage: "pill.fill")
                 }
                 .tag(AppTab.today)
             
             HistoryView()
                 .tabItem {
-                    Label("History", systemImage: "calendar")
+                    Label(AppLocalization.string("History"), systemImage: "calendar")
                 }
                 .tag(AppTab.history)
             
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.fill")
+                    Label(AppLocalization.string("Profile"), systemImage: "person.fill")
                 }
                 .tag(AppTab.profile)
         }

@@ -19,16 +19,16 @@ struct AboutUsView: View {
                         .padding(.top, 8)
                         
                         VStack(spacing: 6) {
-                            Text("MedTracker")
+                            Text(AppBrand.displayName)
                                 .font(.system(.title, design: .rounded, weight: .heavy))
                                 .foregroundColor(.primary)
                             
-                            Text("Version 1.0")
+                            Text(AppLocalization.string("Version 1.0"))
                                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                         
-                        Text(LocalizedStringKey("About_Us_Content"))
+                        Text(AppLocalization.string("About_Us_Content"))
                             .font(.system(.body, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.primary.opacity(0.8))
@@ -46,7 +46,7 @@ struct AboutUsView: View {
                 .padding(.bottom, 30)
             }
         }
-        .navigationTitle(LocalizedStringKey("About Us"))
+        .navigationTitle(AppLocalization.string("About Us"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

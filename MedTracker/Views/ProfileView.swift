@@ -12,7 +12,7 @@ struct ProfileView: View {
                     
                     VStack(spacing: 0) {
                         HStack {
-                            Text("Profile")
+                            Text(AppLocalization.string("Profile"))
                                 .font(.system(.title, design: .rounded, weight: .heavy))
                                 .foregroundColor(.primary)
                             Spacer()
@@ -37,7 +37,7 @@ struct ProfileView: View {
 struct ProfileForm: View {
     @Bindable var profile: UserProfile
     @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
-    @AppStorage("appLanguage") private var appLanguage = "system"
+    @AppStorage("appLanguage", store: AppLocalization.sharedDefaults) private var appLanguage = "system"
     @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
@@ -86,7 +86,7 @@ struct ProfileForm: View {
                                     profile.profileImageData = nil
                                 }
                             }) {
-                                Text("Remove")
+                                Text(AppLocalization.string("Remove"))
                                     .font(.system(.subheadline, design: .rounded, weight: .bold))
                                     .foregroundColor(.red)
                                     .padding(.horizontal, 16)
@@ -103,11 +103,11 @@ struct ProfileForm: View {
             }
             .listRowBackground(Color.clear)
             
-            Section(header: Text("Personal Info")) {
-                TextField("Name", text: $profile.name)
+            Section(header: Text(AppLocalization.string("Personal Info"))) {
+                TextField(AppLocalization.string("Name"), text: $profile.name)
                 
-                Picker(LocalizedStringKey("Age Range"), selection: $profile.ageRange) {
-                    Text(LocalizedStringKey("Select age range"))
+                Picker(AppLocalization.string("Age Range"), selection: $profile.ageRange) {
+                    Text(AppLocalization.string("Select age range"))
                         .tag("")
                     ForEach(AgeRange.allCases) { range in
                         Text(range.localizedName)
@@ -116,13 +116,13 @@ struct ProfileForm: View {
                 }
             }
             
-            Section(header: Text("Medications")) {
+            Section(header: Text(AppLocalization.string("Medications"))) {
                 NavigationLink(destination: MedicationsSettingsView(profile: profile)) {
                     HStack {
                         Image(systemName: "pills.fill")
                             .foregroundColor(.mint)
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(LocalizedStringKey("Manage Medications"))
+                            Text(AppLocalization.string("Manage Medications"))
                                 .font(.system(.body, design: .rounded, weight: .semibold))
                             Text(medicationsSummary)
                                 .font(.system(.caption, design: .rounded))
@@ -134,13 +134,13 @@ struct ProfileForm: View {
                 }
             }
             
-            Section(header: Text(LocalizedStringKey("Reminder Times"))) {
+            Section(header: Text(AppLocalization.string("Reminder Times"))) {
                 NavigationLink(destination: RemindersSettingsView(profile: profile)) {
                     HStack {
                         Image(systemName: "bell.badge.fill")
                             .foregroundColor(.mint)
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(LocalizedStringKey("Manage Reminders"))
+                            Text(AppLocalization.string("Manage Reminders"))
                                 .font(.system(.body, design: .rounded, weight: .semibold))
                             Text(profile.targetTimeDescription)
                                 .font(.system(.caption, design: .rounded))
@@ -152,20 +152,20 @@ struct ProfileForm: View {
                 }
             }
             
-            Section(header: Text("App Settings")) {
-                Picker("Language", selection: $appLanguage) {
-                    Text("System").tag("system")
-                    Text("English").tag("en")
+            Section(header: Text(AppLocalization.string("App Settings"))) {
+                Picker(AppLocalization.string("Language"), selection: $appLanguage) {
+                    Text(AppLocalization.string("System")).tag("system")
+                    Text(AppLocalization.string("English")).tag("en")
                     Text("繁體中文").tag("zh-Hant")
                 }
             }
             
-            Section(header: Text("Reminders")) {
+            Section(header: Text(AppLocalization.string("Reminders"))) {
                 Toggle(isOn: $isNotificationEnabled) {
                     HStack {
                         Image(systemName: "bell.badge.fill")
                             .foregroundColor(.mint)
-                        Text("Enable Daily Reminders")
+                        Text(AppLocalization.string("Enable Daily Reminders"))
                     }
                 }
                 .onChange(of: isNotificationEnabled) { _, newValue in
@@ -183,9 +183,9 @@ struct ProfileForm: View {
                 }
             }
             
-            Section(header: Text(LocalizedStringKey("My Data"))) {
+            Section(header: Text(AppLocalization.string("My Data"))) {
                 HStack {
-                    Text(LocalizedStringKey("Age Range"))
+                    Text(AppLocalization.string("Age Range"))
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(localizedAgeRangeLabel)
@@ -193,7 +193,7 @@ struct ProfileForm: View {
                 }
                 
                 Button(action: exportUserData) {
-                    Label(LocalizedStringKey("Export Data"), systemImage: "square.and.arrow.up")
+                    Label(AppLocalization.string("Export Data"), systemImage: "square.and.arrow.up")
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -206,15 +206,15 @@ struct ProfileForm: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
             }
             
-            Section(header: Text(LocalizedStringKey("About"))) {
+            Section(header: Text(AppLocalization.string("About"))) {
                 NavigationLink(destination: SetupGuideView()) {
-                    Label(LocalizedStringKey("How to Set Up"), systemImage: "lightbulb.fill")
+                    Label(AppLocalization.string("How to Set Up"), systemImage: "lightbulb.fill")
                 }
                 NavigationLink(destination: AboutUsView()) {
-                    Label(LocalizedStringKey("About Us"), systemImage: "info.circle")
+                    Label(AppLocalization.string("About Us"), systemImage: "info.circle")
                 }
                 NavigationLink(destination: TermsView()) {
-                    Label(LocalizedStringKey("Terms & Conditions"), systemImage: "doc.text")
+                    Label(AppLocalization.string("Terms & Conditions"), systemImage: "doc.text")
                 }
             }
             
@@ -227,7 +227,7 @@ struct ProfileForm: View {
                             showSaveButton = false
                         }
                     }) {
-                        Text("Save Settings")
+                        Text(AppLocalization.string("Save Settings"))
                             .font(.system(.headline, design: .rounded, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -266,7 +266,7 @@ struct ProfileForm: View {
     
     private var localizedAgeRangeLabel: String {
         if profile.ageRange.isEmpty {
-            return String(localized: "Not selected")
+            return AppLocalization.string("Not selected")
         }
         if let range = AgeRange(rawValue: profile.ageRange) {
             return range.localizedName
@@ -277,12 +277,12 @@ struct ProfileForm: View {
     private var medicationsSummary: String {
         let names = profile.medications.map(\.name).filter { !$0.isEmpty }
         if names.isEmpty {
-            return String(localized: "No medications added.")
+            return AppLocalization.string("No medications added.")
         }
         if names.count == 1 {
             return names[0]
         }
-        return String(format: String(localized: "%lld medications"), names.count)
+        return AppLocalization.format("%lld medications", names.count)
     }
     
     private func exportUserData() {

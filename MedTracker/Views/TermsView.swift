@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TermsView: View {
-    private let sections: [(icon: String, color: Color, title: LocalizedStringKey, body: LocalizedStringKey)] = [
+    private let sections: [(icon: String, color: Color, title: String, body: String)] = [
         ("stethoscope", .mint, "Terms_Title_1", "Terms_Body_1"),
         ("lock.shield.fill", .blue, "Terms_Title_2", "Terms_Body_2"),
         ("exclamationmark.triangle.fill", .orange, "Terms_Title_3", "Terms_Body_3"),
@@ -29,12 +29,12 @@ struct TermsView: View {
                                         .foregroundColor(section.color)
                                 }
                                 
-                                Text(section.title)
+                                Text(AppLocalization.string(section.title))
                                     .font(.system(.headline, design: .rounded, weight: .bold))
                                     .foregroundColor(.primary)
                             }
                             
-                            Text(section.body)
+                            Text(AppLocalization.string(section.body))
                                 .font(.system(.subheadline, design: .rounded))
                                 .foregroundColor(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -51,7 +51,7 @@ struct TermsView: View {
                 .padding(.bottom, 30)
             }
         }
-        .navigationTitle(LocalizedStringKey("Terms & Conditions"))
+        .navigationTitle(AppLocalization.string("Terms & Conditions"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

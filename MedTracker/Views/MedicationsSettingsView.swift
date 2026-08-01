@@ -16,7 +16,7 @@ struct MedicationsSettingsView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "lightbulb.fill")
                                 .foregroundColor(.mint)
-                            Text(LocalizedStringKey("How to set reminders & medications"))
+                            Text(AppLocalization.string("How to set reminders & medications"))
                                 .font(.system(.subheadline, design: .rounded, weight: .semibold))
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -41,7 +41,7 @@ struct MedicationsSettingsView: View {
                                     .foregroundColor(.mint)
                             }
                             
-                            Text(LocalizedStringKey("No medications added."))
+                            Text(AppLocalization.string("No medications added."))
                                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -64,7 +64,7 @@ struct MedicationsSettingsView: View {
                     }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                            Text("Add Medication")
+                            Text(AppLocalization.string("Add Medication"))
                                 .fontWeight(.bold)
                         }
                         .font(.system(.headline, design: .rounded))
@@ -83,7 +83,7 @@ struct MedicationsSettingsView: View {
                 .padding(.bottom, 30)
             }
         }
-        .navigationTitle(LocalizedStringKey("Medications"))
+        .navigationTitle(AppLocalization.string("Medications"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             profile.ensureRemindersMigrated()
@@ -97,13 +97,13 @@ struct MedicationsSettingsView: View {
     private func medicationCard(_ med: Binding<MedicationItem>) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                TextField("Medication Name", text: med.name)
+                TextField(AppLocalization.string("Medication Name"), text: med.name)
                     .font(.system(.body, design: .rounded, weight: .medium))
                 
                 Divider()
                     .frame(height: 24)
                 
-                Picker("Dose", selection: med.dose) {
+                Picker(AppLocalization.string("Dose"), selection: med.dose) {
                     ForEach(1...20, id: \.self) { num in
                         Text("\(num)").tag("\(num)")
                     }
@@ -126,12 +126,12 @@ struct MedicationsSettingsView: View {
                 .buttonStyle(.plain)
             }
             
-            Text(LocalizedStringKey("Remind at"))
+            Text(AppLocalization.string("Remind at"))
                 .font(.system(.caption, design: .rounded, weight: .semibold))
                 .foregroundColor(.secondary)
             
             if profile.reminders.isEmpty {
-                Text(LocalizedStringKey("Add reminder times in Reminder Times settings."))
+                Text(AppLocalization.string("Add reminder times in Reminder Times settings."))
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(.secondary)
             } else {
@@ -165,7 +165,7 @@ private struct FlowReminderChips: View {
                     selectedIds = []
                 }
             } label: {
-                Text(LocalizedStringKey("All times"))
+                Text(AppLocalization.string("All times"))
                     .font(.system(.caption, design: .rounded, weight: .bold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -191,7 +191,7 @@ private struct FlowReminderChips: View {
                     HStack(spacing: 6) {
                         Image(systemName: (selectedIds.isEmpty || isOn) ? "checkmark.circle.fill" : "circle")
                             .foregroundColor((selectedIds.isEmpty || isOn) ? .mint : .secondary)
-                        Text(reminder.displayTitle)
+                        Text(reminder.localizedDisplayTitle)
                             .font(.system(.caption, design: .rounded, weight: .semibold))
                     }
                     .padding(.horizontal, 10)
