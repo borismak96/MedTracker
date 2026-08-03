@@ -177,26 +177,19 @@ enum MedTrackerExportDocument {
                 }
                 y += profileCardHeight + 14
                 
-                // Medications card
+                // Medications card — only when user has added medications
                 let meds = profile.medications.filter { !$0.name.isEmpty }
-                let medsHeight: CGFloat = 48 + max(CGFloat(meds.count), 1) * 30
-                ensureSpace(medsHeight + 16)
-                drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: medsHeight), fill: cardWhite)
-                _ = drawText(
-                    AppLocalization.string("Medications"),
-                    font: .systemFont(ofSize: 16, weight: .bold),
-                    color: mint,
-                    in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
-                )
-                rowY = y + 44
-                if meds.isEmpty {
+                if !meds.isEmpty {
+                    let medsHeight: CGFloat = 48 + CGFloat(meds.count) * 30
+                    ensureSpace(medsHeight + 16)
+                    drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: medsHeight), fill: cardWhite)
                     _ = drawText(
-                        AppLocalization.string("No medications added."),
-                        font: .systemFont(ofSize: 13, weight: .medium),
-                        color: textSecondary,
-                        in: CGRect(x: margin + 20, y: rowY, width: contentWidth - 40, height: 20)
+                        AppLocalization.string("Medications"),
+                        font: .systemFont(ofSize: 16, weight: .bold),
+                        color: mint,
+                        in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
                     )
-                } else {
+                    rowY = y + 44
                     for med in meds {
                         _ = drawText(med.name, font: .systemFont(ofSize: 13, weight: .semibold), color: textPrimary, in: CGRect(x: margin + 20, y: rowY, width: contentWidth - 100, height: 20))
                         // dose pill
@@ -210,33 +203,23 @@ enum MedTrackerExportDocument {
                         doseText.draw(in: CGRect(x: doseRect.minX + 8, y: doseRect.minY + 3, width: doseSize.width, height: 16), withAttributes: [.font: doseFont, .foregroundColor: mint])
                         rowY += 30
                     }
+                    y += medsHeight + 14
                 }
-                y += medsHeight + 14
                 
-                // Blood pressure statistics + history (all readings)
+                // Blood pressure — only when readings exist
                 let bpReadings = logs
                     .flatMap { $0.allBPReadingsForExport() }
                     .sorted { $0.recordedAt > $1.recordedAt }
-                ensureSpace(40)
-                _ = drawText(
-                    AppLocalization.string("Blood Pressure"),
-                    font: .systemFont(ofSize: 18, weight: .heavy),
-                    color: textPrimary,
-                    in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
-                )
-                y += 34
-                
-                if bpReadings.isEmpty {
-                    ensureSpace(70)
-                    drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: 60), fill: cardWhite)
+                if !bpReadings.isEmpty {
+                    ensureSpace(40)
                     _ = drawText(
-                        AppLocalization.string("No blood pressure data yet."),
-                        font: .systemFont(ofSize: 13, weight: .medium),
-                        color: textSecondary,
-                        in: CGRect(x: margin + 20, y: y + 20, width: contentWidth - 40, height: 22)
+                        AppLocalization.string("Blood Pressure"),
+                        font: .systemFont(ofSize: 18, weight: .heavy),
+                        color: textPrimary,
+                        in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
                     )
-                    y += 74
-                } else {
+                    y += 34
+                    
                     let sysValues = bpReadings.map(\.systolic)
                     let diaValues = bpReadings.map(\.diastolic)
                     let avgSys = sysValues.reduce(0, +) / sysValues.count
@@ -284,69 +267,104 @@ enum MedTrackerExportDocument {
                     bpTimeFormatter.timeStyle = .short
                     
                     for reading in bpReadings {
-                        let cardH: CGFloat = 52
+                        let category = reading.category
+                        let dateText = bpTimeFormatter.string(from: reading.recordedAt)
+                        let valueText = "\(reading.valueDescription) · \(category.localizedTitle)"
+                        let adviceText = category.localizedAdvice
+                        
+                        let innerWidth = contentWidth - 40
+                        let dateFont = UIFont.systemFont(ofSize: 12, weight: .semibold)
+                        let valueFont = UIFont.systemFont(ofSize: 14, weight: .bold)
+                        let adviceFont = UIFont.systemFont(ofSize: 12, weight: .medium)
+                        
+                        let dateH = ceil((dateText as NSString).boundingRect(
+                            with: CGSize(width: innerWidth, height: .greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: dateFont],
+                            context: nil
+                        ).height)
+                        let valueH = ceil((valueText as NSString).boundingRect(
+                            with: CGSize(width: innerWidth, height: .greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: valueFont],
+                            context: nil
+                        ).height)
+                        let adviceH = ceil((adviceText as NSString).boundingRect(
+                            with: CGSize(width: innerWidth, height: .greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: adviceFont],
+                            context: nil
+                        ).height)
+                        
+                        let cardH = 16 + dateH + 6 + valueH + 6 + adviceH + 16
                         ensureSpace(cardH + 10)
                         drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: cardH), fill: cardWhite)
+                        
+                        var textY = y + 16
                         _ = drawText(
-                            bpTimeFormatter.string(from: reading.recordedAt),
-                            font: .systemFont(ofSize: 13, weight: .semibold),
+                            dateText,
+                            font: dateFont,
                             color: textSecondary,
-                            in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 180, height: 20)
+                            in: CGRect(x: margin + 20, y: textY, width: innerWidth, height: dateH + 2)
                         )
-                        let category = reading.category
+                        textY += dateH + 6
+                        
                         _ = drawText(
-                            "\(reading.valueDescription) · \(category.localizedTitle)",
-                            font: .systemFont(ofSize: 13, weight: .bold),
+                            valueText,
+                            font: valueFont,
                             color: UIColor.systemRed,
-                            in: CGRect(x: margin + contentWidth - 200, y: y + 10, width: 180, height: 18),
-                            alignment: .right
+                            in: CGRect(x: margin + 20, y: textY, width: innerWidth, height: valueH + 2)
                         )
+                        textY += valueH + 6
+                        
                         _ = drawText(
-                            category.localizedAdvice,
-                            font: .systemFont(ofSize: 11, weight: .medium),
+                            adviceText,
+                            font: adviceFont,
                             color: textSecondary,
-                            in: CGRect(x: margin + contentWidth - 200, y: y + 28, width: 180, height: 16),
-                            alignment: .right
+                            in: CGRect(x: margin + 20, y: textY, width: innerWidth, height: adviceH + 4)
                         )
-                        y += cardH + 8
+                        
+                        y += cardH + 10
                     }
                     y += 6
                 }
                 
-                // History section title
-                ensureSpace(40)
-                _ = drawText(
-                    AppLocalization.string("History"),
-                    font: .systemFont(ofSize: 18, weight: .heavy),
-                    color: textPrimary,
-                    in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
-                )
-                y += 34
+                // History — only days with actual recorded data
+                func logHasRecordedData(_ log: MedicationLog) -> Bool {
+                    if log.isTaken || log.skippedTime != nil { return true }
+                    if log.doseRecords.contains(where: { $0.isTaken || $0.isSkipped }) { return true }
+                    if let mood = log.mood, !mood.isEmpty { return true }
+                    if let notes = log.notes, !notes.isEmpty { return true }
+                    if let medicine = log.medicineName, !medicine.isEmpty { return true }
+                    if !log.allBPReadingsForExport().isEmpty { return true }
+                    return false
+                }
                 
-                if logs.isEmpty {
-                    ensureSpace(70)
-                    drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: 60), fill: cardWhite)
+                let recordedLogs = logs.filter(logHasRecordedData)
+                if !recordedLogs.isEmpty {
+                    ensureSpace(40)
                     _ = drawText(
-                        AppLocalization.string("No data to display yet."),
-                        font: .systemFont(ofSize: 13, weight: .medium),
-                        color: textSecondary,
-                        in: CGRect(x: margin + 20, y: y + 20, width: contentWidth - 40, height: 22)
+                        AppLocalization.string("History"),
+                        font: .systemFont(ofSize: 18, weight: .heavy),
+                        color: textPrimary,
+                        in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
                     )
-                } else {
-                    for log in logs {
+                    y += 34
+                    
+                    for log in recordedLogs {
                         let medicine = (log.medicineName ?? "").replacingOccurrences(of: "\n", with: ", ")
                         let dose = (log.dose ?? "").replacingOccurrences(of: "\n", with: ", ")
                         let status: String
                         let statusColor: UIColor
-                        if log.isTaken {
+                        if log.isTaken || log.doseRecords.contains(where: \.isTaken) {
                             status = AppLocalization.string("Taken")
                             statusColor = UIColor.systemGreen
-                        } else if log.skippedTime != nil {
+                        } else if log.skippedTime != nil || log.doseRecords.contains(where: \.isSkipped) {
                             status = AppLocalization.string("Skipped")
                             statusColor = UIColor.systemRed
                         } else {
-                            status = AppLocalization.string("Not Recorded")
-                            statusColor = textSecondary
+                            status = AppLocalization.string("Recorded")
+                            statusColor = mint
                         }
                         
                         var details: [String] = []
