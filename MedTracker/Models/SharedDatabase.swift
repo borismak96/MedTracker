@@ -14,25 +14,33 @@ final class SharedDatabase: @unchecked Sendable {
             UserProfile.self
         ])
         
-        let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.example.MedTracker")!
-        let databaseURL = appGroupURL.appendingPathComponent("MedTracker.sqlite")
-        
-        // Optional: Migrate existing default store to App Group store
-        let defaultStoreURL = URL.applicationSupportDirectory.appendingPathComponent("default.store")
-        if FileManager.default.fileExists(atPath: defaultStoreURL.path) && !FileManager.default.fileExists(atPath: databaseURL.path) {
-            do {
-                try FileManager.default.copyItem(at: defaultStoreURL, to: databaseURL)
-                let shmURL = URL.applicationSupportDirectory.appendingPathComponent("default.store-shm")
-                let walURL = URL.applicationSupportDirectory.appendingPathComponent("default.store-wal")
-                if FileManager.default.fileExists(atPath: shmURL.path) {
-                    try FileManager.default.copyItem(at: shmURL, to: appGroupURL.appendingPathComponent("MedTracker.sqlite-shm"))
+        // Prefer App Group store (shared with widget). Fall back to app sandbox if the
+        // group isn't available yet (misconfigured signing / identifiers).
+        let appGroupID = AppLocalization.appGroupSuiteName
+        let databaseURL: URL
+        if let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
+            databaseURL = appGroupURL.appendingPathComponent("MedTracker.sqlite")
+            
+            // Optional: Migrate existing default store to App Group store
+            let defaultStoreURL = URL.applicationSupportDirectory.appendingPathComponent("default.store")
+            if FileManager.default.fileExists(atPath: defaultStoreURL.path) && !FileManager.default.fileExists(atPath: databaseURL.path) {
+                do {
+                    try FileManager.default.copyItem(at: defaultStoreURL, to: databaseURL)
+                    let shmURL = URL.applicationSupportDirectory.appendingPathComponent("default.store-shm")
+                    let walURL = URL.applicationSupportDirectory.appendingPathComponent("default.store-wal")
+                    if FileManager.default.fileExists(atPath: shmURL.path) {
+                        try FileManager.default.copyItem(at: shmURL, to: appGroupURL.appendingPathComponent("MedTracker.sqlite-shm"))
+                    }
+                    if FileManager.default.fileExists(atPath: walURL.path) {
+                        try FileManager.default.copyItem(at: walURL, to: appGroupURL.appendingPathComponent("MedTracker.sqlite-wal"))
+                    }
+                } catch {
+                    print("Legacy store copy failed: \(error)")
                 }
-                if FileManager.default.fileExists(atPath: walURL.path) {
-                    try FileManager.default.copyItem(at: walURL, to: appGroupURL.appendingPathComponent("MedTracker.sqlite-wal"))
-                }
-            } catch {
-                print("Legacy store copy failed: \(error)")
             }
+        } else {
+            print("App Group '\(appGroupID)' unavailable; using local Application Support store.")
+            databaseURL = URL.applicationSupportDirectory.appendingPathComponent("MedTracker.sqlite")
         }
         
         let modelConfiguration = ModelConfiguration(schema: schema, url: databaseURL)
