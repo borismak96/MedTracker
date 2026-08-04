@@ -33,6 +33,8 @@ struct MedTrackerApp: App {
                         }
                 }
             }
+            // Keep light look in both system Light and Dark Mode.
+            .preferredColorScheme(.light)
             // Apply to the whole app (including Splash), so formatters follow in-app language.
             .environment(\.locale, resolvedLocale)
         }
