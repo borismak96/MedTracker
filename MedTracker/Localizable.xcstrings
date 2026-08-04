@@ -1233,6 +1233,23 @@
         }
       }
     },
+    "Follow these steps to schedule reminder times and assign medicines to each one." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follow these steps to schedule reminder times and assign medicines to each one."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依照以下步驟設定提醒時間，並為每個時段指定藥物。"
+          }
+        }
+      }
+    },
     "Fri" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1240,6 +1257,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "五"
+          }
+        }
+      }
+    },
+    "Go to Profile to manage your medications, reminder times, and daily reminder notifications." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to Profile to manage your medications, reminder times, and daily reminder notifications."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往個人檔案管理藥物、提醒時間與每日提醒通知。"
           }
         }
       }
@@ -1430,6 +1464,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在個人資料中開啟每日提醒，藥伴伴就會在各時段通知你該吃的藥物。"
+          }
+        }
+      }
+    },
+    "In Profile, enable Daily Reminders so PillPal can notify you at each scheduled time." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Profile, enable Daily Reminders so PillPal can notify you at each scheduled time."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在個人檔案開啟每日提醒，藥伴伴便會在每個排程時間通知你。"
           }
         }
       }
@@ -2214,6 +2265,57 @@
         }
       }
     },
+    "On Home, log each reminder with Take Now or Skip / Missed, and record how you feel." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On Home, log each reminder with Take Now or Skip / Missed, and record how you feel."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在今日頁面使用「現在服用」或「略過／錯過」記錄每次提醒，並記下心情。"
+          }
+        }
+      }
+    },
+    "Open Profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Profile"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開個人檔案"
+          }
+        }
+      }
+    },
+    "Open Profile → Manage Medications. Add each medicine and dose, then assign it to reminder times." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Profile → Manage Medications. Add each medicine and dose, then assign it to reminder times."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開個人檔案 → 管理藥物。新增每種藥物與劑量，並指定對應的提醒時間。"
+          }
+        }
+      }
+    },
     "Open Profile → Manage Medications. Add each medicine and dose, then choose which reminder times it should use — or keep All times." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2244,6 +2346,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前往個人資料 → 提醒時間。新增一或多個每日鬧鐘（例如早上、下午、晚上），並自訂每個時間。"
+          }
+        }
+      }
+    },
+    "Open Profile → Reminder Times. Add one or more daily alarms (Morning, Afternoon, Night, or Custom)." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Profile → Reminder Times. Add one or more daily alarms (Morning, Afternoon, Night, or Custom)."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開個人檔案 → 提醒時間。新增一個或多個每日鬧鐘（早上、下午、晚上或自訂）。"
           }
         }
       }
@@ -3517,7 +3636,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在首頁追蹤"
+            "value" : "在今日頁面記錄"
           }
         }
       }
