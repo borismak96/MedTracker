@@ -21,6 +21,7 @@ struct HomeView: View {
     
     @State private var showingBPChart = false
     @State private var showingMedicalCard = false
+    @State private var showingSetupGuide = false
     
     var profile: UserProfile? { profiles.first }
     
@@ -104,6 +105,19 @@ struct HomeView: View {
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
             }
+            .sheet(isPresented: $showingSetupGuide) {
+                NavigationView {
+                    SetupGuideView()
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button(AppLocalization.string("Done")) {
+                                    showingSetupGuide = false
+                                }
+                                .font(.system(.body, design: .rounded, weight: .bold))
+                            }
+                        }
+                }
+            }
             .alert(
                 bpAlertCategory?.localizedTitle ?? AppLocalization.string("Blood Pressure"),
                 isPresented: Binding(
@@ -140,17 +154,32 @@ struct HomeView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                        showingMedicalCard = true
+                HStack(spacing: 10) {
+                    Button(action: {
+                        showingSetupGuide = true
+                    }) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.mint)
+                            .padding(12)
+                            .background(Circle().fill(Color.white))
+                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                     }
-                }) {
-                    Image(systemName: "person.text.rectangle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.mint)
-                        .padding(12)
-                        .background(Circle().fill(Color.white))
-                        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .accessibilityLabel(AppLocalization.string("How to Set Up"))
+                    
+                    Button(action: {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            showingMedicalCard = true
+                        }
+                    }) {
+                        Image(systemName: "person.text.rectangle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.mint)
+                            .padding(12)
+                            .background(Circle().fill(Color.white))
+                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    }
+                    .accessibilityLabel(AppLocalization.string("Medical Card"))
                 }
             }
             
