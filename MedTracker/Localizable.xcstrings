@@ -2430,6 +2430,23 @@
         }
       }
     },
+    "Recorded" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recorded"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已記錄"
+          }
+        }
+      }
+    },
     "Remaining" : {
       "extractionState" : "stale",
       "localizations" : {

@@ -31,7 +31,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9B851C7C2C41D8DF006BEED4"
-               BuildableName = "MedTracker.app"
+               BuildableName = "PillPal.app"
                BlueprintName = "MedTracker"
                ReferencedContainer = "container:MedTracker.xcodeproj">
             </BuildableReference>
@@ -73,7 +73,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9B851C7C2C41D8DF006BEED4"
-            BuildableName = "MedTracker.app"
+            BuildableName = "PillPal.app"
             BlueprintName = "MedTracker"
             ReferencedContainer = "container:MedTracker.xcodeproj">
          </BuildableReference>
@@ -109,7 +109,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9B851C7C2C41D8DF006BEED4"
-            BuildableName = "MedTracker.app"
+            BuildableName = "PillPal.app"
             BlueprintName = "MedTracker"
             ReferencedContainer = "container:MedTracker.xcodeproj">
          </BuildableReference>

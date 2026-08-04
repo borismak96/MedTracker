@@ -80,6 +80,9 @@ struct HistoryView: View {
     
     private func syncSelectedDateDoseRecords() {
         guard let profile, let log = logForDate(selectedDate) else { return }
+        // Only auto-create reminder slots for today. Past empty days should stay "Not Recorded"
+        // so new users don't see Pending on days they never tracked.
+        guard Calendar.current.isDateInToday(selectedDate) else { return }
         log.syncDoseRecords(with: profile)
         try? log.modelContext?.save()
     }
@@ -262,22 +265,65 @@ struct HistoryView: View {
     }
     
     private func historyDoseRecords(for log: MedicationLog?) -> [ReminderDoseRecord] {
+        let isToday = Calendar.current.isDateInToday(selectedDate)
+        
         // Prefer persisted per-reminder records (same source as Home).
         if let log, !log.doseRecords.isEmpty {
-            return log.sortedDoseRecords
+            let records = log.sortedDoseRecords
+            if isToday {
+                return records
+            }
+            // Past days: only show doses the user actually took or skipped.
+            return records.filter { $0.isTaken || $0.isSkipped }
         }
         
         guard let profile else { return [] }
         profile.ensureRemindersMigrated()
         
-        // No day log yet — show reminder slots as pending placeholders.
+        // Past days with no real activity → empty ("Not Recorded"), never Pending placeholders.
+        if !isToday {
+            guard let log else { return [] }
+            if log.isTaken {
+                return profile.sortedReminders.map { reminder in
+                    ReminderDoseRecord(
+                        id: reminder.id,
+                        label: reminder.label,
+                        hour: reminder.hour,
+                        minute: reminder.minute,
+                        status: DoseRecordStatus.taken.rawValue,
+                        notes: log.notes,
+                        medicineName: log.medicineName,
+                        dose: log.dose,
+                        mood: log.mood
+                    )
+                }
+            }
+            if log.skippedTime != nil {
+                return profile.sortedReminders.enumerated().map { index, reminder in
+                    let skipped = index == 0
+                    return ReminderDoseRecord(
+                        id: reminder.id,
+                        label: reminder.label,
+                        hour: reminder.hour,
+                        minute: reminder.minute,
+                        status: skipped ? DoseRecordStatus.skipped.rawValue : DoseRecordStatus.pending.rawValue,
+                        skippedTime: skipped ? log.skippedTime : nil,
+                        physicalReaction: skipped ? log.physicalReaction : nil,
+                        notes: skipped ? log.notes : nil
+                    )
+                }.filter { $0.isTaken || $0.isSkipped }
+            }
+            return []
+        }
+        
+        // Today with no day log yet — show reminder slots as pending placeholders.
         guard let log else {
             return profile.sortedReminders.map {
                 ReminderDoseRecord(id: $0.id, label: $0.label, hour: $0.hour, minute: $0.minute)
             }
         }
         
-        // Legacy day-level log without doseRecords yet.
+        // Today: legacy day-level log without doseRecords yet.
         return profile.sortedReminders.map { reminder in
             if log.isTaken {
                 return ReminderDoseRecord(
@@ -467,6 +513,11 @@ struct DayCell: View {
     private var doseDotColors: [Color] {
         guard let log = log else { return [] }
         if !log.doseRecords.isEmpty {
+            let hasActivity = log.doseRecords.contains { $0.isTaken || $0.isSkipped }
+            // Don't treat pending-only past days as activity on the calendar.
+            if !hasActivity && !Calendar.current.isDateInToday(date) {
+                return []
+            }
             return log.sortedDoseRecords.prefix(3).map { record in
                 if record.isTaken { return .green }
                 if record.isSkipped { return .red }

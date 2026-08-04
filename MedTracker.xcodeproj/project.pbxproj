@@ -7,22 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
-		G1E2N3E4R5A6T7E8D9L0C1 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
-		G1E2N3E4R5A6T7E8D9L0C2 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
-		A1B2C3D4E5F6A7B8C9D0E1F3 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
-		B7A9D1C2E3F405162738495A /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
-		B7A9D1C2E3F405162738495B /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
-		B7A9D1C2E3F405162738495C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F405162738495D /* InfoPlist.strings */; };
-		M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */; };
-		B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */; };
-		B8C7D6E5F4039281706A5B4C /* MedicationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */; };
-		R8E7M6I5N4D3E2R1S0E9T8I7 /* RemindersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */; };
-		S3T4U5P6G7U8I9D0E1V2W3X4 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */; };
-		S3T4U5R6I7N8G9V0I1E2W3X5 /* StatsRingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */; };
-		F60718293A4B5C6D7E8F9012 /* MedTrackerExportDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F60718293A4B5C6D7E8F90 /* MedTrackerExportDocument.swift */; };
-		D4E5F60718293A4B5C6D7E8F /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */; };
-		B2C3D4E5F60718293A4B5C6D /* AppBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */; };
 		0C0AB7EDB74422A79C71151D /* MedTrackerWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980BFC9B7EFD7E4C4D02B547 /* MedTrackerWidget.swift */; };
 		2ED602DFD191A5DF3AE4149B /* AboutUsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */; };
 		412BCB2261EDA85512EEEE89 /* MedTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6226F93B9707E7AD3D2DA46C /* MedTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -34,16 +18,32 @@
 		9B851C832C41D8DF006BEED4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B851C822C41D8DF006BEED4 /* ContentView.swift */; };
 		9B851C852C41D8E0006BEED4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9B851C842C41D8E0006BEED4 /* Assets.xcassets */; };
 		9B851C882C41D8E0006BEED4 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9B851C872C41D8E0006BEED4 /* Preview Assets.xcassets */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F3 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
+		B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */; };
+		B2C3D4E5F60718293A4B5C6D /* AppBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */; };
+		B7A9D1C2E3F405162738495A /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
+		B7A9D1C2E3F405162738495B /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
+		B7A9D1C2E3F405162738495C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F405162738495D /* InfoPlist.strings */; };
+		B8C7D6E5F4039281706A5B4C /* MedicationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */; };
 		BP0000000000000000000002 /* BloodPressureChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BP0000000000000000000001 /* BloodPressureChartView.swift */; };
 		C70AB866F0D119D673C991A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F6B28B383D1C077F6A60E93C /* Foundation.framework */; };
 		CA75DDF73D2C4C511F9DB857 /* MedTrackerWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E2B8E50C7B9DB48B21BF344 /* MedTrackerWidgetBundle.swift */; };
 		CEFB41C1302E4A56AF536BA7 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF22C41D8E0006BEED4 /* UserProfile.swift */; };
+		D4E5F60718293A4B5C6D7E8F /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */; };
 		E4EB6D0920D3208D9AC5119B /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011571613D5C57B7060090D3 /* AppIntent.swift */; };
 		E9ABE51C7C03D5B824D591D8 /* MedicalCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */; };
+		F60718293A4B5C6D7E8F9012 /* MedTrackerExportDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F60718293A4B5C6D7E8F90 /* MedTrackerExportDocument.swift */; };
 		FBF419714E9A58DAC18B824C /* SharedDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97FF95AC4323101CF487683 /* SharedDatabase.swift */; };
+		G1E2N3E4R5A6T7E8D9L0C1 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
+		G1E2N3E4R5A6T7E8D9L0C2 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
+		M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */; };
 		MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */; };
 		MODEL0022C41D8E0006BEED4 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF22C41D8E0006BEED4 /* UserProfile.swift */; };
 		NM0000000000000000000002 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0000000000000000000001 /* NotificationManager.swift */; };
+		R8E7M6I5N4D3E2R1S0E9T8I7 /* RemindersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */; };
+		S3T4U5P6G7U8I9D0E1V2W3X4 /* SetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */; };
+		S3T4U5R6I7N8G9V0I1E2W3X5 /* StatsRingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */; };
 		STRING0012C41D8E0006BEED4 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */; };
 		STRING0012C41D8E0006BEED5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */; };
 		VIEW0012C41D8E0006BEED4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWREF12C41D8E0006BEED4 /* HomeView.swift */; };
@@ -76,20 +76,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocalization.swift; sourceTree = "<group>"; };
-		B7A9D1C2E3F4051627384959 /* AppBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBrand.swift; sourceTree = "<group>"; };
-		M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodFaceView.swift; sourceTree = "<group>"; };
-		B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodPressureCategoryBadge.swift; sourceTree = "<group>"; };
-		B7A9D1C2E3F405162738495E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		B7A9D1C2E3F405162738495F /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedLocalizations.swift; sourceTree = "<group>"; };
-		A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsSettingsView.swift; sourceTree = "<group>"; };
-		R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersSettingsView.swift; sourceTree = "<group>"; };
-		S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
-		S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsRingViews.swift; sourceTree = "<group>"; };
-		E5F60718293A4B5C6D7E8F90 /* MedTrackerExportDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedTrackerExportDocument.swift; sourceTree = "<group>"; };
-		C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBackground.swift; sourceTree = "<group>"; };
 		011571613D5C57B7060090D3 /* AppIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
 		0E2B8E50C7B9DB48B21BF344 /* MedTrackerWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MedTrackerWidgetBundle.swift; sourceTree = "<group>"; };
 		21F235341DB6499C3450112A /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -97,20 +83,34 @@
 		6226F93B9707E7AD3D2DA46C /* MedTrackerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MedTrackerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		870A7C086F9735A09C05FA2E /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		980BFC9B7EFD7E4C4D02B547 /* MedTrackerWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MedTrackerWidget.swift; sourceTree = "<group>"; };
-		9B851C7D2C41D8DF006BEED4 /* MedTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MedTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B851C7D2C41D8DF006BEED4 /* PillPal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PillPal.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B851C802C41D8DF006BEED4 /* MedTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedTrackerApp.swift; sourceTree = "<group>"; };
 		9B851C822C41D8DF006BEED4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		9B851C842C41D8E0006BEED4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9B851C872C41D8E0006BEED4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBackground.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocalization.swift; sourceTree = "<group>"; };
 		A97FF95AC4323101CF487683 /* SharedDatabase.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedDatabase.swift; sourceTree = "<group>"; };
+		A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsSettingsView.swift; sourceTree = "<group>"; };
+		B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodPressureCategoryBadge.swift; sourceTree = "<group>"; };
+		B7A9D1C2E3F4051627384959 /* AppBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBrand.swift; sourceTree = "<group>"; };
+		B7A9D1C2E3F405162738495E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		B7A9D1C2E3F405162738495F /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		BP0000000000000000000001 /* BloodPressureChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodPressureChartView.swift; sourceTree = "<group>"; };
+		C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		CB86104A6E0F41CB7B6B161C /* MedTrackerWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = MedTrackerWidget.entitlements; sourceTree = "<group>"; };
+		E5F60718293A4B5C6D7E8F90 /* MedTrackerExportDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedTrackerExportDocument.swift; sourceTree = "<group>"; };
 		F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AboutUsView.swift; sourceTree = "<group>"; };
 		F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalCardView.swift; sourceTree = "<group>"; };
 		F6B28B383D1C077F6A60E93C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedLocalizations.swift; sourceTree = "<group>"; };
+		M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodFaceView.swift; sourceTree = "<group>"; };
 		MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationLog.swift; sourceTree = "<group>"; };
 		MODELREF22C41D8E0006BEED4 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		NM0000000000000000000001 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersSettingsView.swift; sourceTree = "<group>"; };
+		S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupGuideView.swift; sourceTree = "<group>"; };
+		S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsRingViews.swift; sourceTree = "<group>"; };
 		STRINGREF12C41D8E0006BEED4 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		VIEWREF12C41D8E0006BEED4 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
@@ -161,7 +161,6 @@
 				21F235341DB6499C3450112A /* Info.plist */,
 				CB86104A6E0F41CB7B6B161C /* MedTrackerWidget.entitlements */,
 			);
-			name = MedTrackerWidget;
 			path = MedTrackerWidget;
 			sourceTree = "<group>";
 		};
@@ -178,7 +177,7 @@
 		9B851C7E2C41D8DF006BEED4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9B851C7D2C41D8DF006BEED4 /* MedTracker.app */,
+				9B851C7D2C41D8DF006BEED4 /* PillPal.app */,
 				6226F93B9707E7AD3D2DA46C /* MedTrackerWidgetExtension.appex */,
 			);
 			name = Products;
@@ -281,7 +280,7 @@
 			);
 			name = MedTracker;
 			productName = MedTracker;
-			productReference = 9B851C7D2C41D8DF006BEED4 /* MedTracker.app */;
+			productReference = 9B851C7D2C41D8DF006BEED4 /* PillPal.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -393,6 +392,15 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A46522F6E305548BFD46A681 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MedTrackerWidgetExtension;
+			target = 49B96925498668D457862CE9 /* MedTrackerWidgetExtension */;
+			targetProxy = ADF38FFBA456C0C6DB17EA8F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		B7A9D1C2E3F405162738495D /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
@@ -405,15 +413,6 @@
 		};
 /* End PBXVariantGroup section */
 
-/* Begin PBXTargetDependency section */
-		A46522F6E305548BFD46A681 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MedTrackerWidgetExtension;
-			target = 49B96925498668D457862CE9 /* MedTrackerWidgetExtension */;
-			targetProxy = ADF38FFBA456C0C6DB17EA8F /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
 		4ABFD74C74074BAEE40136D1 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -422,11 +421,17 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = 7F99P68Z67;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MedTracker.MedTrackerWidget;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -440,11 +445,17 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = 7F99P68Z67;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MedTracker.MedTrackerWidget;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -577,25 +588,31 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
+				DEVELOPMENT_TEAM = 7F99P68Z67;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MedTracker;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
+				PRODUCT_NAME = PillPal;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -607,25 +624,31 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
+				DEVELOPMENT_TEAM = 7F99P68Z67;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MedTracker;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
+				PRODUCT_NAME = PillPal;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

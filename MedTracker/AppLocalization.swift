@@ -5,7 +5,7 @@ import Foundation
 /// Uses the compiled zh-Hant dictionary from `GeneratedLocalizations` so Chinese
 /// works even when Foundation's String Catalog lookup ignores the in-app locale.
 enum AppLocalization {
-    static let appGroupSuiteName = "group.com.example.MedTracker"
+    static let appGroupSuiteName = "group.com.borismak.PillPal"
     
     /// Shared with the widget extension.
     static var sharedDefaults: UserDefaults {
