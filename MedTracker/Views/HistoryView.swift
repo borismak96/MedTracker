@@ -411,23 +411,31 @@ struct HistoryView: View {
             }
             
             if let medName = record.medicineName, !medName.isEmpty {
-                let names = medName.components(separatedBy: "\n")
-                let doses = record.dose?.components(separatedBy: "\n") ?? []
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(0..<names.count, id: \.self) { index in
-                        HStack {
-                            Text(names[index])
-                                .font(.system(.caption, design: .rounded, weight: .medium))
-                                .foregroundColor(secondaryColor)
-                            Spacer()
-                            if index < doses.count, !doses[index].isEmpty {
-                                Text(doses[index])
-                                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                                    .foregroundColor(titleColor)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.white.opacity(0.35))
-                                    .cornerRadius(6)
+                let activeNames = profile?.activeMedicationNames ?? []
+                let filtered = UserProfile.filteredMedicationLines(
+                    names: medName,
+                    doses: record.dose,
+                    activeNames: activeNames
+                )
+                if let visibleNames = filtered.names, !visibleNames.isEmpty {
+                    let names = visibleNames.components(separatedBy: "\n")
+                    let doses = filtered.doses?.components(separatedBy: "\n") ?? []
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(0..<names.count, id: \.self) { index in
+                            HStack {
+                                Text(names[index])
+                                    .font(.system(.caption, design: .rounded, weight: .medium))
+                                    .foregroundColor(secondaryColor)
+                                Spacer()
+                                if index < doses.count, !doses[index].isEmpty {
+                                    Text(doses[index])
+                                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                                        .foregroundColor(titleColor)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.white.opacity(0.35))
+                                        .cornerRadius(6)
+                                }
                             }
                         }
                     }

@@ -3,6 +3,7 @@ import SwiftData
 
 struct MedicationsSettingsView: View {
     @Bindable var profile: UserProfile
+    @Query private var logs: [MedicationLog]
     @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
     @Environment(\.dismiss) private var dismiss
     
@@ -89,6 +90,7 @@ struct MedicationsSettingsView: View {
             profile.ensureRemindersMigrated()
         }
         .onChange(of: profile.medications) { _, _ in
+            profile.pruneRemovedMedications(from: logs)
             updateNotificationIfNeeded()
             try? profile.modelContext?.save()
         }

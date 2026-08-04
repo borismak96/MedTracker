@@ -153,4 +153,68 @@ class UserProfile {
             return med.reminderIds.contains(reminder.id)
         }
     }
+    
+    /// Current medication names still in the profile (trimmed).
+    var activeMedicationNames: Set<String> {
+        Set(
+            medications
+                .map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+        )
+    }
+    
+    /// Keep only medication/dose lines that still exist in the profile.
+    static func filteredMedicationLines(
+        names: String?,
+        doses: String?,
+        activeNames: Set<String>
+    ) -> (names: String?, doses: String?) {
+        guard let names, !names.isEmpty else { return (nil, nil) }
+        let nameParts = names.components(separatedBy: "\n")
+        let doseParts = doses?.components(separatedBy: "\n") ?? []
+        var keptNames: [String] = []
+        var keptDoses: [String] = []
+        
+        for (index, rawName) in nameParts.enumerated() {
+            let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, activeNames.contains(trimmed) else { continue }
+            keptNames.append(rawName)
+            keptDoses.append(index < doseParts.count ? doseParts[index] : "")
+        }
+        
+        guard !keptNames.isEmpty else { return (nil, nil) }
+        let doseValue = keptDoses.contains(where: { !$0.isEmpty })
+            ? keptDoses.joined(separator: "\n")
+            : nil
+        return (keptNames.joined(separator: "\n"), doseValue)
+    }
+    
+    /// Remove deleted medication names from stored history dose records.
+    func pruneRemovedMedications(from logs: [MedicationLog]) {
+        let active = activeMedicationNames
+        for log in logs {
+            if !log.doseRecords.isEmpty {
+                var records = log.doseRecords
+                for index in records.indices {
+                    let filtered = Self.filteredMedicationLines(
+                        names: records[index].medicineName,
+                        doses: records[index].dose,
+                        activeNames: active
+                    )
+                    records[index].medicineName = filtered.names
+                    records[index].dose = filtered.doses
+                }
+                log.doseRecords = records
+                log.refreshAggregateFlags()
+            } else {
+                let filtered = Self.filteredMedicationLines(
+                    names: log.medicineName,
+                    doses: log.dose,
+                    activeNames: active
+                )
+                log.medicineName = filtered.names
+                log.dose = filtered.doses
+            }
+        }
+    }
 }
