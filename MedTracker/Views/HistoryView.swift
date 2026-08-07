@@ -242,6 +242,42 @@ struct HistoryView: View {
                     .background(Color(UIColor.systemGray6))
                     .cornerRadius(12)
                 }
+                
+                let hrReadings = log.sortedHRReadings
+                if !hrReadings.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.pink)
+                            Text(AppLocalization.string("Heart Rate"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(.pink)
+                            Spacer()
+                            Text(AppLocalization.format("%lld readings", hrReadings.count))
+                                .font(.system(.caption, design: .rounded, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        ForEach(Array(hrReadings.reversed())) { reading in
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(reading.timeDescription)
+                                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text(reading.valueDescription)
+                                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                        .foregroundColor(reading.category.color)
+                                }
+                                HeartRateCategoryBadge(category: reading.category, compact: true)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(UIColor.systemGray6))
+                    .cornerRadius(12)
+                }
             }
             
             if let log = log, let moodStr = log.mood, let mood = MoodStatus.from(string: moodStr) {
@@ -571,6 +607,9 @@ struct DailyRecordSheet: View {
     @State private var newSystolic = ""
     @State private var newDiastolic = ""
     @State private var newBPTime = Date()
+    @State private var hrDrafts: [HeartRateReading] = []
+    @State private var newHRBPM = ""
+    @State private var newHRTime = Date()
     @State private var mood: MoodStatus? = nil
     
     var body: some View {
@@ -673,6 +712,92 @@ struct DailyRecordSheet: View {
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
                                     .background(Color.red.opacity(0.8))
+                                    .cornerRadius(14)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(16)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(AppLocalization.string("Heart Rate (Optional)"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                            
+                            if hrDrafts.isEmpty {
+                                Text(AppLocalization.string("No heart rate recorded for this day."))
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            } else {
+                                ForEach(hrDrafts) { reading in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(reading.valueDescription)
+                                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                    .foregroundColor(reading.category.color)
+                                                Text(reading.timeDescription)
+                                                    .font(.system(.caption, design: .rounded))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            Spacer()
+                                            Button {
+                                                hrDrafts.removeAll { $0.id == reading.id }
+                                            } label: {
+                                                Image(systemName: "trash.circle.fill")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(.red.opacity(0.8))
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                        HeartRateCategoryBadge(category: reading.category, compact: true)
+                                    }
+                                    .padding(10)
+                                    .background(reading.category.color.opacity(0.08))
+                                    .cornerRadius(12)
+                                }
+                            }
+                            
+                            Text(AppLocalization.string("Add Reading"))
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.secondary)
+                                .padding(.top, 4)
+                            
+                            TextField(AppLocalization.string("Beats per minute"), text: $newHRBPM)
+                                .keyboardType(.numberPad)
+                                .padding(12)
+                                .background(Color(UIColor.systemGray6))
+                                .cornerRadius(12)
+                            
+                            DatePicker(
+                                AppLocalization.string("Time"),
+                                selection: $newHRTime,
+                                displayedComponents: .hourAndMinute
+                            )
+                            
+                            Button {
+                                guard let bpm = Int(newHRBPM), bpm > 0 else { return }
+                                let calendar = Calendar.current
+                                let day = calendar.startOfDay(for: date)
+                                let time = calendar.dateComponents([.hour, .minute], from: newHRTime)
+                                var parts = calendar.dateComponents([.year, .month, .day], from: day)
+                                parts.hour = time.hour
+                                parts.minute = time.minute
+                                let recordedAt = calendar.date(from: parts) ?? date
+                                hrDrafts.append(
+                                    HeartRateReading(recordedAt: recordedAt, bpm: bpm)
+                                )
+                                hrDrafts.sort { $0.recordedAt < $1.recordedAt }
+                                newHRBPM = ""
+                                newHRTime = date
+                            } label: {
+                                Text(AppLocalization.string("Add Reading"))
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.pink.opacity(0.85))
                                     .cornerRadius(14)
                             }
                             .buttonStyle(.plain)
@@ -818,6 +943,7 @@ struct DailyRecordSheet: View {
             existing.ensureBPReadingsMigrated()
             doseDrafts = existing.sortedDoseRecords
             bpDrafts = existing.sortedBPReadings
+            hrDrafts = existing.sortedHRReadings
             mood = MoodStatus.from(string: existing.mood)
         } else {
             doseDrafts = profile.sortedReminders.map { reminder in
@@ -832,13 +958,17 @@ struct DailyRecordSheet: View {
                 )
             }
             bpDrafts = []
+            hrDrafts = []
             mood = nil
         }
     }
     
     func saveRecord() {
         let targetLog = log ?? MedicationLog(date: date)
-        let hasVitals = !bpDrafts.isEmpty || (!newSystolic.isEmpty && !newDiastolic.isEmpty)
+        let hasVitals = !bpDrafts.isEmpty
+            || (!newSystolic.isEmpty && !newDiastolic.isEmpty)
+            || !hrDrafts.isEmpty
+            || !newHRBPM.isEmpty
         let hasDoseActivity = doseDrafts.contains { !$0.isPending }
         
         if log == nil && (hasDoseActivity || hasVitals || mood != nil) {
@@ -870,10 +1000,24 @@ struct DailyRecordSheet: View {
             readings.append(BloodPressureReading(recordedAt: recordedAt, systolic: sys, diastolic: dia))
         }
         
+        var hrReadings = hrDrafts
+        if let bpm = Int(newHRBPM), bpm > 0 {
+            let calendar = Calendar.current
+            let day = calendar.startOfDay(for: date)
+            let time = calendar.dateComponents([.hour, .minute], from: newHRTime)
+            var parts = calendar.dateComponents([.year, .month, .day], from: day)
+            parts.hour = time.hour
+            parts.minute = time.minute
+            let recordedAt = calendar.date(from: parts) ?? date
+            hrReadings.append(HeartRateReading(recordedAt: recordedAt, bpm: bpm))
+        }
+        
         targetLog.doseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
         targetLog.refreshAggregateFlags()
         targetLog.bpReadings = readings.sorted { $0.recordedAt < $1.recordedAt }
         targetLog.syncLegacyBPFields()
+        targetLog.hrReadings = hrReadings.sorted { $0.recordedAt < $1.recordedAt }
+        targetLog.syncLegacyHRFields()
         targetLog.mood = mood?.rawValue
         
         try? modelContext.save()

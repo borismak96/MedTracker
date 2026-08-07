@@ -179,6 +179,74 @@ struct BloodPressureReading: Codable, Identifiable, Hashable {
     }
 }
 
+/// Adult resting heart-rate bands (bpm).
+enum HeartRateCategory: Int, Comparable {
+    case low = 0
+    case normal = 1
+    case high = 2
+    
+    static func < (lhs: HeartRateCategory, rhs: HeartRateCategory) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+    
+    static func classify(bpm: Int) -> HeartRateCategory {
+        if bpm < 60 { return .low }
+        if bpm > 100 { return .high }
+        return .normal
+    }
+    
+    var titleKey: String {
+        switch self {
+        case .low: return "Low Heart Rate"
+        case .normal: return "Normal Heart Rate"
+        case .high: return "High Heart Rate"
+        }
+    }
+    
+    var adviceKey: String {
+        switch self {
+        case .low:
+            return "Your heart rate is a little low. If you feel dizzy or unwell, please talk to your family doctor."
+        case .normal:
+            return "Your heart rate looks healthy. Keep checking from time to time."
+        case .high:
+            return "Your heart rate is high. If you can, please talk to your family doctor."
+        }
+    }
+    
+    var localizedTitle: String { AppLocalization.string(titleKey) }
+    var localizedAdvice: String { AppLocalization.string(adviceKey) }
+    
+    var color: Color {
+        switch self {
+        case .low: return .blue
+        case .normal: return .green
+        case .high: return .orange
+        }
+    }
+}
+
+struct HeartRateReading: Codable, Identifiable, Hashable {
+    var id: UUID = UUID()
+    var recordedAt: Date = Date()
+    var bpm: Int
+    
+    var valueDescription: String {
+        "\(bpm) bpm"
+    }
+    
+    var timeDescription: String {
+        let formatter = DateFormatter()
+        formatter.locale = AppLocalization.locale
+        formatter.timeStyle = .short
+        return formatter.string(from: recordedAt)
+    }
+    
+    var category: HeartRateCategory {
+        HeartRateCategory.classify(bpm: bpm)
+    }
+}
+
 @Model
 class MedicationLog {
     var id: UUID
@@ -193,6 +261,8 @@ class MedicationLog {
     /// Latest reading mirror for widgets / older code paths.
     var systolic: Int?
     var diastolic: Int?
+    /// Latest heart-rate mirror (bpm).
+    var heartRate: Int?
     var mood: String?
     
     /// Per-reminder take / skip records for the day.
@@ -201,7 +271,10 @@ class MedicationLog {
     /// Multiple blood-pressure readings for the day.
     var bpReadings: [BloodPressureReading] = []
     
-    init(id: UUID = UUID(), date: Date, isTaken: Bool = false, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, systolic: Int? = nil, diastolic: Int? = nil, mood: String? = nil, doseRecords: [ReminderDoseRecord] = [], bpReadings: [BloodPressureReading] = []) {
+    /// Multiple heart-rate readings for the day.
+    var hrReadings: [HeartRateReading] = []
+    
+    init(id: UUID = UUID(), date: Date, isTaken: Bool = false, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, systolic: Int? = nil, diastolic: Int? = nil, heartRate: Int? = nil, mood: String? = nil, doseRecords: [ReminderDoseRecord] = [], bpReadings: [BloodPressureReading] = [], hrReadings: [HeartRateReading] = []) {
         self.id = id
         self.date = date
         self.isTaken = isTaken
@@ -212,9 +285,11 @@ class MedicationLog {
         self.dose = dose
         self.systolic = systolic
         self.diastolic = diastolic
+        self.heartRate = heartRate
         self.mood = mood
         self.doseRecords = doseRecords
         self.bpReadings = bpReadings
+        self.hrReadings = hrReadings
     }
     
     var sortedDoseRecords: [ReminderDoseRecord] {
@@ -315,6 +390,85 @@ class MedicationLog {
     /// All readings for charts/export.
     func allBPReadingsForExport() -> [BloodPressureReading] {
         sortedBPReadings
+    }
+    
+    var sortedHRReadings: [HeartRateReading] {
+        if !hrReadings.isEmpty {
+            return hrReadings.sorted { $0.recordedAt < $1.recordedAt }
+        }
+        if let bpm = heartRate {
+            var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+            components.hour = 12
+            components.minute = 0
+            let recordedAt = Calendar.current.date(from: components) ?? date
+            return [HeartRateReading(recordedAt: recordedAt, bpm: bpm)]
+        }
+        return []
+    }
+    
+    var latestHRReading: HeartRateReading? {
+        sortedHRReadings.last
+    }
+    
+    @discardableResult
+    func ensureHRReadingsMigrated() -> Bool {
+        guard hrReadings.isEmpty, let bpm = heartRate else { return false }
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        components.hour = 12
+        components.minute = 0
+        let recordedAt = Calendar.current.date(from: components) ?? date
+        hrReadings = [HeartRateReading(recordedAt: recordedAt, bpm: bpm)]
+        try? modelContext?.save()
+        return true
+    }
+    
+    func syncLegacyHRFields() {
+        if let latest = hrReadings.sorted(by: { $0.recordedAt < $1.recordedAt }).last {
+            heartRate = latest.bpm
+        } else {
+            heartRate = nil
+        }
+    }
+    
+    func addHR(bpm: Int, recordedAt: Date = Date()) {
+        ensureHRReadingsMigrated()
+        var readings = hrReadings
+        if readings.isEmpty {
+            readings = sortedHRReadings
+        }
+        readings.append(HeartRateReading(recordedAt: recordedAt, bpm: bpm))
+        hrReadings = readings
+        syncLegacyHRFields()
+        try? modelContext?.save()
+    }
+    
+    func updateHR(id: UUID, bpm: Int, recordedAt: Date) {
+        ensureHRReadingsMigrated()
+        var readings = hrReadings
+        if readings.isEmpty {
+            readings = sortedHRReadings
+        }
+        guard let index = readings.firstIndex(where: { $0.id == id }) else { return }
+        readings[index].bpm = bpm
+        readings[index].recordedAt = recordedAt
+        hrReadings = readings
+        syncLegacyHRFields()
+        try? modelContext?.save()
+    }
+    
+    func removeHR(id: UUID) {
+        ensureHRReadingsMigrated()
+        var readings = hrReadings
+        if readings.isEmpty {
+            readings = sortedHRReadings
+        }
+        hrReadings = readings.filter { $0.id != id }
+        syncLegacyHRFields()
+        try? modelContext?.save()
+    }
+    
+    func allHRReadingsForExport() -> [HeartRateReading] {
+        sortedHRReadings
     }
     
     /// Keeps dose rows in sync with reminder slots and migrates legacy day-level status.

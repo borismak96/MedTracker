@@ -329,6 +329,124 @@ enum MedTrackerExportDocument {
                     y += 6
                 }
                 
+                // Heart rate — only when readings exist
+                let hrReadings = logs
+                    .flatMap { $0.allHRReadingsForExport() }
+                    .sorted { $0.recordedAt > $1.recordedAt }
+                if !hrReadings.isEmpty {
+                    ensureSpace(40)
+                    _ = drawText(
+                        AppLocalization.string("Heart Rate"),
+                        font: .systemFont(ofSize: 18, weight: .heavy),
+                        color: textPrimary,
+                        in: CGRect(x: margin, y: y, width: contentWidth, height: 28)
+                    )
+                    y += 34
+                    
+                    let bpmValues = hrReadings.map(\.bpm)
+                    let avgBPM = bpmValues.reduce(0, +) / bpmValues.count
+                    let minBPM = bpmValues.min() ?? 0
+                    let maxBPM = bpmValues.max() ?? 0
+                    
+                    let hrStatsLines = [
+                        (AppLocalization.string("Readings"), "\(hrReadings.count)"),
+                        (AppLocalization.string("Average"), "\(avgBPM) bpm"),
+                        (AppLocalization.string("Range"), "\(minBPM)–\(maxBPM) bpm")
+                    ]
+                    let hrStatsHeight: CGFloat = 48 + CGFloat(hrStatsLines.count) * 28
+                    ensureSpace(hrStatsHeight + 16)
+                    drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: hrStatsHeight), fill: cardWhite)
+                    _ = drawText(
+                        AppLocalization.string("HR Statistics"),
+                        font: .systemFont(ofSize: 16, weight: .bold),
+                        color: mint,
+                        in: CGRect(x: margin + 20, y: y + 16, width: contentWidth - 40, height: 22)
+                    )
+                    rowY = y + 44
+                    for (label, value) in hrStatsLines {
+                        _ = drawText(label, font: .systemFont(ofSize: 12, weight: .semibold), color: textSecondary, in: CGRect(x: margin + 20, y: rowY, width: 140, height: 20))
+                        _ = drawText(value, font: .systemFont(ofSize: 13, weight: .bold), color: textPrimary, in: CGRect(x: margin + 160, y: rowY, width: contentWidth - 180, height: 20))
+                        rowY += 28
+                    }
+                    y += hrStatsHeight + 14
+                    
+                    ensureSpace(30)
+                    _ = drawText(
+                        AppLocalization.string("HR History"),
+                        font: .systemFont(ofSize: 16, weight: .bold),
+                        color: mint,
+                        in: CGRect(x: margin, y: y, width: contentWidth, height: 22)
+                    )
+                    y += 28
+                    
+                    let hrTimeFormatter = DateFormatter()
+                    hrTimeFormatter.locale = AppLocalization.locale
+                    hrTimeFormatter.dateStyle = .medium
+                    hrTimeFormatter.timeStyle = .short
+                    
+                    for reading in hrReadings {
+                        let category = reading.category
+                        let dateText = hrTimeFormatter.string(from: reading.recordedAt)
+                        let valueText = "\(reading.valueDescription) · \(category.localizedTitle)"
+                        let adviceText = category.localizedAdvice
+                        
+                        let innerWidth = contentWidth - 40
+                        let dateFont = UIFont.systemFont(ofSize: 12, weight: .semibold)
+                        let valueFont = UIFont.systemFont(ofSize: 14, weight: .bold)
+                        let adviceFont = UIFont.systemFont(ofSize: 12, weight: .medium)
+                        
+                        let dateH = ceil((dateText as NSString).boundingRect(
+                            with: CGSize(width: innerWidth, height: .greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: dateFont],
+                            context: nil
+                        ).height)
+                        let valueH = ceil((valueText as NSString).boundingRect(
+                            with: CGSize(width: innerWidth, height: .greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: valueFont],
+                            context: nil
+                        ).height)
+                        let adviceH = ceil((adviceText as NSString).boundingRect(
+                            with: CGSize(width: innerWidth, height: .greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: adviceFont],
+                            context: nil
+                        ).height)
+                        
+                        let cardH = 16 + dateH + 6 + valueH + 6 + adviceH + 16
+                        ensureSpace(cardH + 10)
+                        drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: cardH), fill: cardWhite)
+                        
+                        var textY = y + 16
+                        _ = drawText(
+                            dateText,
+                            font: dateFont,
+                            color: textSecondary,
+                            in: CGRect(x: margin + 20, y: textY, width: innerWidth, height: dateH + 2)
+                        )
+                        textY += dateH + 6
+                        
+                        _ = drawText(
+                            valueText,
+                            font: valueFont,
+                            color: UIColor.systemPink,
+                            in: CGRect(x: margin + 20, y: textY, width: innerWidth, height: valueH + 2)
+                        )
+                        textY += valueH + 6
+                        
+                        _ = drawText(
+                            adviceText,
+                            font: adviceFont,
+                            color: textSecondary,
+                            in: CGRect(x: margin + 20, y: textY, width: innerWidth, height: adviceH + 4)
+                        )
+                        
+                        y += cardH + 10
+                    }
+                    y += 6
+                }
+                
                 // History — only days with actual recorded data
                 func logHasRecordedData(_ log: MedicationLog) -> Bool {
                     if log.isTaken || log.skippedTime != nil { return true }
@@ -337,6 +455,7 @@ enum MedTrackerExportDocument {
                     if let notes = log.notes, !notes.isEmpty { return true }
                     if let medicine = log.medicineName, !medicine.isEmpty { return true }
                     if !log.allBPReadingsForExport().isEmpty { return true }
+                    if !log.allHRReadingsForExport().isEmpty { return true }
                     return false
                 }
                 

@@ -128,17 +128,12 @@ struct MedicationsSettingsView: View {
                 .buttonStyle(.plain)
             }
             
-            Text(AppLocalization.string("Remind at"))
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundColor(.secondary)
-            
-            if profile.reminders.isEmpty {
-                Text(AppLocalization.string("Add reminder times in Reminder Times settings."))
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundColor(.secondary)
-            } else {
-                FlowReminderChips(profile: profile, selectedIds: med.reminderIds)
-            }
+            TextField(AppLocalization.string("Remark (optional)"), text: med.remark, axis: .vertical)
+                .font(.system(.subheadline, design: .rounded))
+                .lineLimit(2...4)
+                .padding(10)
+                .background(Color(UIColor.systemGray6))
+                .cornerRadius(12)
         }
         .padding(16)
         .background(Color.white)
@@ -155,55 +150,3 @@ struct MedicationsSettingsView: View {
     }
 }
 
-/// Horizontal wrap-style chip toggles for reminder assignment.
-private struct FlowReminderChips: View {
-    @Bindable var profile: UserProfile
-    @Binding var selectedIds: [UUID]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button {
-                withAnimation {
-                    selectedIds = []
-                }
-            } label: {
-                Text(AppLocalization.string("All times"))
-                    .font(.system(.caption, design: .rounded, weight: .bold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(selectedIds.isEmpty ? Color.mint.opacity(0.25) : Color(UIColor.systemGray6))
-                    .cornerRadius(10)
-            }
-            .buttonStyle(.plain)
-            
-            ForEach(profile.sortedReminders) { reminder in
-                let isOn = selectedIds.contains(reminder.id)
-                Button {
-                    withAnimation {
-                        if selectedIds.isEmpty {
-                            // Switching from "all" to specific: select only this one
-                            selectedIds = [reminder.id]
-                        } else if isOn {
-                            selectedIds.removeAll { $0 == reminder.id }
-                        } else {
-                            selectedIds.append(reminder.id)
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: (selectedIds.isEmpty || isOn) ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor((selectedIds.isEmpty || isOn) ? .mint : .secondary)
-                        Text(reminder.localizedDisplayTitle)
-                            .font(.system(.caption, design: .rounded, weight: .semibold))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background((selectedIds.isEmpty || isOn) ? Color.mint.opacity(0.12) : Color(UIColor.systemGray6))
-                    .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-}
