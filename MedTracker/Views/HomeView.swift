@@ -19,7 +19,14 @@ struct HomeView: View {
     @State private var editingBPReadingId: UUID?
     @State private var bpAlertCategory: BloodPressureCategory?
     
+    @State private var showingHRSheet = false
+    @State private var hrBPM = ""
+    @State private var hrRecordedAt = Date()
+    @State private var editingHRReadingId: UUID?
+    @State private var hrAlertCategory: HeartRateCategory?
+    
     @State private var showingBPChart = false
+    @State private var showingHRChart = false
     @State private var showingMedicalCard = false
     @State private var showingSetupGuide = false
     
@@ -62,6 +69,15 @@ struct HomeView: View {
                                     editingBPReadingId: $editingBPReadingId
                                 )
                                 
+                                HeartRateCard(
+                                    log: log,
+                                    showingHRSheet: $showingHRSheet,
+                                    showingHRChart: $showingHRChart,
+                                    hrBPM: $hrBPM,
+                                    hrRecordedAt: $hrRecordedAt,
+                                    editingHRReadingId: $editingHRReadingId
+                                )
+                                
                                 MoodStatsCard(logs: logs)
                             }
                         } else {
@@ -102,8 +118,18 @@ struct HomeView: View {
                     bpSheetContent(for: log)
                 }
             }
+            .sheet(isPresented: $showingHRSheet, onDismiss: {
+                editingHRReadingId = nil
+            }) {
+                if let log = todayLog {
+                    hrSheetContent(for: log)
+                }
+            }
             .sheet(isPresented: $showingBPChart) {
                 BloodPressureChartView(logs: logs)
+            }
+            .sheet(isPresented: $showingHRChart) {
+                HeartRateChartView(logs: logs)
             }
             .sheet(isPresented: $showingSetupGuide) {
                 NavigationView {
@@ -130,6 +156,19 @@ struct HomeView: View {
                 }
             } message: {
                 Text(bpAlertCategory?.localizedAdvice ?? "")
+            }
+            .alert(
+                hrAlertCategory?.localizedTitle ?? AppLocalization.string("Heart Rate"),
+                isPresented: Binding(
+                    get: { hrAlertCategory != nil },
+                    set: { if !$0 { hrAlertCategory = nil } }
+                )
+            ) {
+                Button(AppLocalization.string("OK"), role: .cancel) {
+                    hrAlertCategory = nil
+                }
+            } message: {
+                Text(hrAlertCategory?.localizedAdvice ?? "")
             }
             .onAppear {
                 profile?.ensureRemindersMigrated()
@@ -417,6 +456,99 @@ struct HomeView: View {
         }
     }
     
+    private func hrSheetContent(for log: MedicationLog) -> some View {
+        let isEditing = editingHRReadingId != nil
+        return NavigationView {
+            ZStack {
+                AppBackground()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        sheetHeader(
+                            icon: "heart.fill",
+                            title: AppLocalization.string(isEditing ? "Edit Heart Rate" : "Log Heart Rate"),
+                            subtitle: AppLocalization.string("Heart Rate (bpm)")
+                        )
+                        
+                        VStack(spacing: 0) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "heart.circle.fill")
+                                    .foregroundColor(.pink.opacity(0.85))
+                                TextField(AppLocalization.string("Beats per minute"), text: $hrBPM)
+                                    .font(.system(.body, design: .rounded))
+                                    .keyboardType(.numberPad)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            
+                            Divider().padding(.leading, 16)
+                            
+                            DatePicker(
+                                AppLocalization.string("Time"),
+                                selection: $hrRecordedAt,
+                                displayedComponents: .hourAndMinute
+                            )
+                            .font(.system(.body, design: .rounded))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                        }
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+                        
+                        Button {
+                            guard let bpm = Int(hrBPM), bpm > 0 else { return }
+                            let calendar = Calendar.current
+                            let day = calendar.startOfDay(for: log.date)
+                            let time = calendar.dateComponents([.hour, .minute], from: hrRecordedAt)
+                            var parts = calendar.dateComponents([.year, .month, .day], from: day)
+                            parts.hour = time.hour
+                            parts.minute = time.minute
+                            let recordedAt = calendar.date(from: parts) ?? Date()
+                            
+                            if let editId = editingHRReadingId {
+                                log.updateHR(id: editId, bpm: bpm, recordedAt: recordedAt)
+                            } else {
+                                log.addHR(bpm: bpm, recordedAt: recordedAt)
+                            }
+                            let category = HeartRateCategory.classify(bpm: bpm)
+                            editingHRReadingId = nil
+                            showingHRSheet = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                hrAlertCategory = category
+                            }
+                        } label: {
+                            Text(AppLocalization.string("Save"))
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.mint)
+                                .cornerRadius(20)
+                                .shadow(color: Color.mint.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 30)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(AppLocalization.string("Cancel")) {
+                        editingHRReadingId = nil
+                        showingHRSheet = false
+                    }
+                    .font(.system(.body, design: .rounded, weight: .semibold))
+                    .foregroundColor(.mint)
+                }
+            }
+        }
+    }
+    
     private func sheetHeader(icon: String, title: String, subtitle: String) -> some View {
         VStack(spacing: 14) {
             ZStack {
@@ -596,9 +728,16 @@ struct TodayCard: View {
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(meds) { med in
-                        Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
-                            .font(.system(.subheadline, design: .rounded, weight: .medium))
-                            .foregroundColor(titleColor.opacity(0.9))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .foregroundColor(titleColor.opacity(0.9))
+                            if !med.remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                Text(med.remark)
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(secondaryColor)
+                            }
+                        }
                     }
                 }
             }
@@ -609,7 +748,6 @@ struct TodayCard: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-                undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else if record.isSkipped {
                 if let reaction = record.physicalReaction, !reaction.isEmpty {
                     Text(AppLocalization.format("Reaction: %@", reaction))
@@ -854,6 +992,151 @@ struct VitalsCard: View {
         .cornerRadius(30)
         .onAppear {
             log.ensureBPReadingsMigrated()
+        }
+        .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+    }
+}
+
+struct HeartRateCard: View {
+    @Bindable var log: MedicationLog
+    @Binding var showingHRSheet: Bool
+    @Binding var showingHRChart: Bool
+    @Binding var hrBPM: String
+    @Binding var hrRecordedAt: Date
+    @Binding var editingHRReadingId: UUID?
+    
+    private var readings: [HeartRateReading] {
+        log.sortedHRReadings
+    }
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(AppLocalization.string("Vitals"))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundColor(.secondary)
+                    
+                    Text(AppLocalization.string("Heart Rate"))
+                        .font(.system(.title2, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    if !readings.isEmpty {
+                        Text(AppLocalization.format("%lld readings today", readings.count))
+                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Spacer()
+                
+                ZStack {
+                    Circle()
+                        .fill(Color.pink.opacity(0.15))
+                        .frame(width: 70, height: 70)
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(.pink)
+                }
+            }
+            
+            if readings.isEmpty {
+                Text(AppLocalization.string("No heart rate recorded today."))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(UIColor.systemGray6))
+                    .cornerRadius(16)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(Array(readings.reversed())) { reading in
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "heart.fill")
+                                    .font(.title3)
+                                    .foregroundColor(reading.category.color)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(reading.valueDescription)
+                                        .font(.system(.headline, design: .rounded, weight: .bold))
+                                        .foregroundColor(reading.category.color)
+                                    Text(reading.timeDescription)
+                                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Button {
+                                    editingHRReadingId = reading.id
+                                    hrBPM = "\(reading.bpm)"
+                                    hrRecordedAt = reading.recordedAt
+                                    showingHRSheet = true
+                                } label: {
+                                    Text(AppLocalization.string("Edit"))
+                                        .font(.system(.caption, design: .rounded, weight: .bold))
+                                        .foregroundColor(.secondary)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(Color(UIColor.systemGray6))
+                                        .cornerRadius(12)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button {
+                                    withAnimation {
+                                        log.removeHR(id: reading.id)
+                                    }
+                                } label: {
+                                    Image(systemName: "trash.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.red.opacity(0.8))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                            HeartRateCategoryBadge(category: reading.category)
+                        }
+                        .padding(14)
+                        .background(reading.category.color.opacity(0.08))
+                        .cornerRadius(16)
+                    }
+                }
+            }
+            
+            Button {
+                editingHRReadingId = nil
+                hrBPM = ""
+                hrRecordedAt = Date()
+                showingHRSheet = true
+            } label: {
+                Text(AppLocalization.string(readings.isEmpty ? "Log Heart Rate" : "Add Reading"))
+                    .font(.system(.headline, design: .rounded, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.pink.opacity(0.85))
+                    .cornerRadius(20)
+                    .shadow(color: Color.pink.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .buttonStyle(.plain)
+            
+            Button(action: { showingHRChart = true }) {
+                Text(AppLocalization.string("View HR Trends"))
+                    .font(.system(.headline, design: .rounded, weight: .bold))
+                    .foregroundColor(.pink)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.pink.opacity(0.1))
+                    .cornerRadius(20)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(24)
+        .background(Color.white)
+        .cornerRadius(30)
+        .onAppear {
+            log.ensureHRReadingsMigrated()
         }
         .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
     }

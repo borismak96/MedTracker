@@ -68,6 +68,8 @@ struct MedicationItem: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
     var name: String = ""
     var dose: String = "1"
+    /// Optional note shown with this medicine on Home.
+    var remark: String = ""
     /// Reminder slot IDs this medicine should alert for. Empty = all reminders.
     var reminderIds: [UUID] = []
 }

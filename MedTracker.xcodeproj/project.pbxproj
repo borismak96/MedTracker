@@ -21,6 +21,8 @@
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppLocalization.swift */; };
 		B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */; };
+		HR0000000000000000000002 /* HeartRateCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000001 /* HeartRateCategoryBadge.swift */; };
+		HR0000000000000000000004 /* HeartRateChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000003 /* HeartRateChartView.swift */; };
 		B2C3D4E5F60718293A4B5C6D /* AppBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */; };
 		B7A9D1C2E3F405162738495A /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
 		B7A9D1C2E3F405162738495B /* AppBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A9D1C2E3F4051627384959 /* AppBrand.swift */; };
@@ -93,6 +95,8 @@
 		A97FF95AC4323101CF487683 /* SharedDatabase.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedDatabase.swift; sourceTree = "<group>"; };
 		A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationsSettingsView.swift; sourceTree = "<group>"; };
 		B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodPressureCategoryBadge.swift; sourceTree = "<group>"; };
+		HR0000000000000000000001 /* HeartRateCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateCategoryBadge.swift; sourceTree = "<group>"; };
+		HR0000000000000000000003 /* HeartRateChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateChartView.swift; sourceTree = "<group>"; };
 		B7A9D1C2E3F4051627384959 /* AppBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBrand.swift; sourceTree = "<group>"; };
 		B7A9D1C2E3F405162738495E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		B7A9D1C2E3F405162738495F /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -226,6 +230,7 @@
 				870A7C086F9735A09C05FA2E /* SplashView.swift */,
 				F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */,
 				BP0000000000000000000001 /* BloodPressureChartView.swift */,
+				HR0000000000000000000003 /* HeartRateChartView.swift */,
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
 				VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */,
 				VIEWREF32C41D8E0006BEED4 /* ProfileView.swift */,
@@ -235,6 +240,7 @@
 				S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */,
 				M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */,
 				B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */,
+				HR0000000000000000000001 /* HeartRateCategoryBadge.swift */,
 				F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */,
 				A1B2C3D4E5F60718293A4B5C /* AppBackground.swift */,
 				C3D4E5F60718293A4B5C6D7E /* ShareSheet.swift */,
@@ -348,6 +354,7 @@
 				81DAB988EF10E11EDD17E522 /* SplashView.swift in Sources */,
 				E9ABE51C7C03D5B824D591D8 /* MedicalCardView.swift in Sources */,
 				BP0000000000000000000002 /* BloodPressureChartView.swift in Sources */,
+				HR0000000000000000000004 /* HeartRateChartView.swift in Sources */,
 				NM0000000000000000000002 /* NotificationManager.swift in Sources */,
 				9B851C832C41D8DF006BEED4 /* ContentView.swift in Sources */,
 				MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */,
@@ -361,6 +368,7 @@
 				S3T4U5R6I7N8G9V0I1E2W3X5 /* StatsRingViews.swift in Sources */,
 				M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */,
 				B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */,
+				HR0000000000000000000002 /* HeartRateCategoryBadge.swift in Sources */,
 				9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* AppLocalization.swift in Sources */,
 				B7A9D1C2E3F405162738495A /* AppBrand.swift in Sources */,
