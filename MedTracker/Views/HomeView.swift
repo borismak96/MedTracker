@@ -886,7 +886,7 @@ struct VitalsCard: View {
                     Circle()
                         .fill(Color.red.opacity(0.15))
                         .frame(width: 70, height: 70)
-                    Image(systemName: "heart.fill")
+                    Image(systemName: "drop.fill")
                         .font(.system(size: 30))
                         .foregroundColor(.red)
                 }
