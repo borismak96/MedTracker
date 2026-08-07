@@ -4161,7 +4161,7 @@
       },
       "extractionState": "manual"
     },
-    "Systolic <90 or Diastolic <60 mmHg": {
+    "Upper under 90 or lower under 60": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
@@ -4172,7 +4172,7 @@
       },
       "extractionState": "manual"
     },
-    "Systolic <120 and Diastolic <80 mmHg": {
+    "Upper under 120 and lower under 80": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
@@ -4183,7 +4183,7 @@
       },
       "extractionState": "manual"
     },
-    "Systolic 120–129 or Diastolic 80–84 mmHg": {
+    "Upper 120–129 or lower 80–84": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
@@ -4194,7 +4194,7 @@
       },
       "extractionState": "manual"
     },
-    "Systolic 130–139 or Diastolic 85–89 mmHg": {
+    "Upper 130–139 or lower 85–89": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {
@@ -4205,7 +4205,7 @@
       },
       "extractionState": "manual"
     },
-    "Systolic ≥140 or Diastolic ≥90 mmHg": {
+    "Upper 140+ or lower 90+": {
       "localizations": {
         "zh-Hant": {
           "stringUnit": {

@@ -145,15 +145,15 @@ enum BloodPressureCategory: Int, Comparable {
     var adviceKey: String {
         switch self {
         case .low:
-            return "Systolic <90 or Diastolic <60 mmHg"
+            return "Upper under 90 or lower under 60"
         case .ideal:
-            return "Systolic <120 and Diastolic <80 mmHg"
+            return "Upper under 120 and lower under 80"
         case .normal:
-            return "Systolic 120–129 or Diastolic 80–84 mmHg"
+            return "Upper 120–129 or lower 80–84"
         case .highNormal:
-            return "Systolic 130–139 or Diastolic 85–89 mmHg"
+            return "Upper 130–139 or lower 85–89"
         case .high:
-            return "Systolic ≥140 or Diastolic ≥90 mmHg"
+            return "Upper 140+ or lower 90+"
         }
     }
     
