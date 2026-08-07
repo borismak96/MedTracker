@@ -74,6 +74,41 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     var dose: String? = nil
     var mood: String? = nil
     
+    enum CodingKeys: String, CodingKey {
+        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood
+    }
+    
+    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil) {
+        self.id = id
+        self.label = label
+        self.hour = hour
+        self.minute = minute
+        self.status = status
+        self.takenAt = takenAt
+        self.skippedTime = skippedTime
+        self.physicalReaction = physicalReaction
+        self.notes = notes
+        self.medicineName = medicineName
+        self.dose = dose
+        self.mood = mood
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.label = try container.decodeIfPresent(String.self, forKey: .label) ?? ""
+        self.hour = try container.decodeIfPresent(Int.self, forKey: .hour) ?? 8
+        self.minute = try container.decodeIfPresent(Int.self, forKey: .minute) ?? 0
+        self.status = try container.decodeIfPresent(String.self, forKey: .status) ?? DoseRecordStatus.pending.rawValue
+        self.takenAt = try container.decodeIfPresent(Date.self, forKey: .takenAt)
+        self.skippedTime = try container.decodeIfPresent(Date.self, forKey: .skippedTime)
+        self.physicalReaction = try container.decodeIfPresent(String.self, forKey: .physicalReaction)
+        self.notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        self.medicineName = try container.decodeIfPresent(String.self, forKey: .medicineName)
+        self.dose = try container.decodeIfPresent(String.self, forKey: .dose)
+        self.mood = try container.decodeIfPresent(String.self, forKey: .mood)
+    }
+    
     var doseStatus: DoseRecordStatus {
         DoseRecordStatus(rawValue: status) ?? .pending
     }
@@ -177,6 +212,25 @@ struct BloodPressureReading: Codable, Identifiable, Hashable {
     var systolic: Int
     var diastolic: Int
     
+    enum CodingKeys: String, CodingKey {
+        case id, recordedAt, systolic, diastolic
+    }
+    
+    init(id: UUID = UUID(), recordedAt: Date = Date(), systolic: Int, diastolic: Int) {
+        self.id = id
+        self.recordedAt = recordedAt
+        self.systolic = systolic
+        self.diastolic = diastolic
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.recordedAt = try container.decodeIfPresent(Date.self, forKey: .recordedAt) ?? Date()
+        self.systolic = try container.decodeIfPresent(Int.self, forKey: .systolic) ?? 120
+        self.diastolic = try container.decodeIfPresent(Int.self, forKey: .diastolic) ?? 80
+    }
+    
     var valueDescription: String {
         "\(systolic) / \(diastolic) mmHg"
     }
@@ -244,6 +298,23 @@ struct HeartRateReading: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
     var recordedAt: Date = Date()
     var bpm: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id, recordedAt, bpm
+    }
+    
+    init(id: UUID = UUID(), recordedAt: Date = Date(), bpm: Int) {
+        self.id = id
+        self.recordedAt = recordedAt
+        self.bpm = bpm
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.recordedAt = try container.decodeIfPresent(Date.self, forKey: .recordedAt) ?? Date()
+        self.bpm = try container.decodeIfPresent(Int.self, forKey: .bpm) ?? 80
+    }
     
     var valueDescription: String {
         "\(bpm) bpm"

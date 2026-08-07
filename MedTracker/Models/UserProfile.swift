@@ -7,6 +7,25 @@ struct ReminderSlot: Codable, Identifiable, Hashable {
     var minute: Int = 0
     var label: String = "Morning"
     
+    enum CodingKeys: String, CodingKey {
+        case id, hour, minute, label
+    }
+    
+    init(id: UUID = UUID(), hour: Int = 8, minute: Int = 0, label: String = "Morning") {
+        self.id = id
+        self.hour = hour
+        self.minute = minute
+        self.label = label
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.hour = try container.decodeIfPresent(Int.self, forKey: .hour) ?? 8
+        self.minute = try container.decodeIfPresent(Int.self, forKey: .minute) ?? 0
+        self.label = try container.decodeIfPresent(String.self, forKey: .label) ?? "Morning"
+    }
+    
     var timeDescription: String {
         AppLocalization.shortTime(hour: hour, minute: minute)
     }
@@ -72,6 +91,27 @@ struct MedicationItem: Codable, Identifiable, Hashable {
     var remark: String = ""
     /// Reminder slot IDs this medicine should alert for. Empty = all reminders.
     var reminderIds: [UUID] = []
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, dose, remark, reminderIds
+    }
+    
+    init(id: UUID = UUID(), name: String = "", dose: String = "1", remark: String = "", reminderIds: [UUID] = []) {
+        self.id = id
+        self.name = name
+        self.dose = dose
+        self.remark = remark
+        self.reminderIds = reminderIds
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+        self.dose = try container.decodeIfPresent(String.self, forKey: .dose) ?? "1"
+        self.remark = try container.decodeIfPresent(String.self, forKey: .remark) ?? ""
+        self.reminderIds = try container.decodeIfPresent([UUID].self, forKey: .reminderIds) ?? []
+    }
 }
 
 enum AgeRange: String, CaseIterable, Identifiable {
