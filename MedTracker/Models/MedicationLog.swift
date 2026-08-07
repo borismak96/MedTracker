@@ -99,49 +99,61 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     }
 }
 
-/// Adult BP classification (normal / slightly high / high).
-/// When systolic and diastolic fall in different bands, the higher band wins.
+/// Adult BP classification (based on 5 levels).
 enum BloodPressureCategory: Int, Comparable {
-    case normal = 0
-    case slightlyHigh = 1
-    case high = 2
+    case low = 0
+    case ideal = 1
+    case normal = 2
+    case highNormal = 3
+    case high = 4
     
     static func < (lhs: BloodPressureCategory, rhs: BloodPressureCategory) -> Bool {
         lhs.rawValue < rhs.rawValue
     }
     
     static func classify(systolic: Int, diastolic: Int) -> BloodPressureCategory {
-        max(classifySystolic(systolic), classifyDiastolic(diastolic))
+        if systolic < 90 || diastolic < 60 {
+            return .low
+        }
+        return max(classifySystolic(systolic), classifyDiastolic(diastolic))
     }
     
     private static func classifySystolic(_ value: Int) -> BloodPressureCategory {
         if value >= 140 { return .high }
-        if value >= 120 { return .slightlyHigh }
-        return .normal
+        if value >= 130 { return .highNormal }
+        if value >= 120 { return .normal }
+        return .ideal
     }
     
     private static func classifyDiastolic(_ value: Int) -> BloodPressureCategory {
         if value >= 90 { return .high }
-        if value >= 80 { return .slightlyHigh }
-        return .normal
+        if value >= 85 { return .highNormal }
+        if value >= 80 { return .normal }
+        return .ideal
     }
     
     var titleKey: String {
         switch self {
-        case .normal: return "Normal"
-        case .slightlyHigh: return "Slightly High Blood Pressure"
+        case .low: return "Low Blood Pressure"
+        case .ideal: return "Ideal Blood Pressure"
+        case .normal: return "Normal Blood Pressure"
+        case .highNormal: return "High-Normal Blood Pressure"
         case .high: return "High Blood Pressure"
         }
     }
     
     var adviceKey: String {
         switch self {
+        case .low:
+            return "Systolic <90 or Diastolic <60 mmHg"
+        case .ideal:
+            return "Systolic <120 and Diastolic <80 mmHg"
         case .normal:
-            return "Your blood pressure looks healthy. Plan another check within two years."
-        case .slightlyHigh:
-            return "Your reading is a little high. Checking again within a year will help you stay on top of it."
+            return "Systolic 120–129 or Diastolic 80–84 mmHg"
+        case .highNormal:
+            return "Systolic 130–139 or Diastolic 85–89 mmHg"
         case .high:
-            return "This reading is high. If you can, please talk to your family doctor."
+            return "Systolic ≥140 or Diastolic ≥90 mmHg"
         }
     }
     
@@ -150,8 +162,10 @@ enum BloodPressureCategory: Int, Comparable {
     
     var color: Color {
         switch self {
-        case .normal: return .green
-        case .slightlyHigh: return .orange
+        case .low: return .blue
+        case .ideal: return .green
+        case .normal: return .mint
+        case .highNormal: return .orange
         case .high: return .red
         }
     }
