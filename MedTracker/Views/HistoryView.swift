@@ -211,7 +211,7 @@ struct HistoryView: View {
                 if !readings.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Image(systemName: "waveform.path.ecg")
+                            Image(systemName: "drop.fill")
                                 .foregroundColor(.red)
                             Text(AppLocalization.string("Blood Pressure"))
                                 .font(.system(.headline, design: .rounded, weight: .bold))

@@ -359,7 +359,7 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         sheetHeader(
-                            icon: "heart.text.square.fill",
+                            icon: "drop.fill",
                             title: AppLocalization.string(isEditing ? "Edit Blood Pressure" : "Log Blood Pressure"),
                             subtitle: AppLocalization.string("Blood Pressure (mmHg)")
                         )
@@ -886,7 +886,7 @@ struct VitalsCard: View {
                     Circle()
                         .fill(Color.red.opacity(0.15))
                         .frame(width: 70, height: 70)
-                    Image(systemName: "heart.fill")
+                    Image(systemName: "drop.fill")
                         .font(.system(size: 30))
                         .foregroundColor(.red)
                 }
@@ -905,7 +905,7 @@ struct VitalsCard: View {
                     ForEach(Array(readings.reversed())) { reading in
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(spacing: 12) {
-                                Image(systemName: "waveform.path.ecg")
+                                Image(systemName: "drop.fill")
                                     .font(.title3)
                                     .foregroundColor(reading.category.color)
                                 
