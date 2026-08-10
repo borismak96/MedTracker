@@ -37,6 +37,11 @@ class NotificationManager {
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = body
+            
+            // Set interruption level to Time Sensitive for iOS 15+
+            if #available(iOS 15.0, *) {
+                content.interruptionLevel = .timeSensitive
+            }
             content.sound = .default
             
             var dateComponents = DateComponents()
@@ -72,6 +77,10 @@ class NotificationManager {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
+        
+        if #available(iOS 15.0, *) {
+            content.interruptionLevel = .timeSensitive
+        }
         content.sound = .default
         
         var dateComponents = DateComponents()
