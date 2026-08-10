@@ -39,6 +39,7 @@ struct ProfileForm: View {
     @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
     @AppStorage("appLanguage", store: AppLocalization.sharedDefaults) private var appLanguage = "system"
     @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
+    @AppStorage("isNotificationSoundEnabled") private var isNotificationSoundEnabled = true
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var showSaveButton = true
@@ -179,6 +180,20 @@ struct ProfileForm: View {
                         }
                     } else {
                         NotificationManager.shared.cancelNotifications()
+                    }
+                }
+                
+                if isNotificationEnabled {
+                    Toggle(isOn: $isNotificationSoundEnabled) {
+                        HStack {
+                            Image(systemName: isNotificationSoundEnabled ? "speaker.wave.3.fill" : "speaker.slash.fill")
+                                .foregroundColor(isNotificationSoundEnabled ? .mint : .secondary)
+                                .frame(width: 24)
+                            Text(AppLocalization.string("Notification Sound"))
+                        }
+                    }
+                    .onChange(of: isNotificationSoundEnabled) { _, _ in
+                        scheduleCurrentNotification()
                     }
                 }
             }
@@ -327,7 +342,7 @@ struct ProfileForm: View {
     
     private func scheduleCurrentNotification() {
         profile.ensureRemindersMigrated()
-        NotificationManager.shared.scheduleReminders(profile.sortedReminders) { reminder in
+        NotificationManager.shared.scheduleReminders(profile.sortedReminders, playSound: isNotificationSoundEnabled) { reminder in
             profile.medications(for: reminder)
         }
     }
