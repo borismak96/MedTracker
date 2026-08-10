@@ -18,7 +18,7 @@ class NotificationManager {
     }
     
     /// Schedules one repeating daily notification per reminder slot.
-    func scheduleReminders(_ reminders: [ReminderSlot], medicationsForReminder: (ReminderSlot) -> [MedicationItem]) {
+    func scheduleReminders(_ reminders: [ReminderSlot], playSound: Bool = true, medicationsForReminder: (ReminderSlot) -> [MedicationItem]) {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
         
@@ -42,7 +42,9 @@ class NotificationManager {
             if #available(iOS 15.0, *) {
                 content.interruptionLevel = .timeSensitive
             }
-            content.sound = .default
+            if playSound {
+                content.sound = .default
+            }
             
             var dateComponents = DateComponents()
             dateComponents.hour = reminder.hour
@@ -66,9 +68,9 @@ class NotificationManager {
     }
     
     /// Legacy single-alarm helper (kept for compatibility).
-    func scheduleNotification(hour: Int, minute: Int, title: String, body: String) {
+    func scheduleNotification(hour: Int, minute: Int, title: String, body: String, playSound: Bool = true) {
         let slot = ReminderSlot(hour: hour, minute: minute, label: "")
-        scheduleReminders([slot]) { _ in [] }
+        scheduleReminders([slot], playSound: playSound) { _ in [] }
         
         // Re-schedule with custom title/body for the single slot
         let center = UNUserNotificationCenter.current()
@@ -81,7 +83,9 @@ class NotificationManager {
         if #available(iOS 15.0, *) {
             content.interruptionLevel = .timeSensitive
         }
-        content.sound = .default
+        if playSound {
+            content.sound = .default
+        }
         
         var dateComponents = DateComponents()
         dateComponents.hour = hour
