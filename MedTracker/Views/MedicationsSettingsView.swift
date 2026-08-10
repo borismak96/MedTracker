@@ -5,6 +5,7 @@ struct MedicationsSettingsView: View {
     @Bindable var profile: UserProfile
     @Query private var logs: [MedicationLog]
     @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
+    @AppStorage("isNotificationSoundEnabled") private var isNotificationSoundEnabled = true
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -144,7 +145,7 @@ struct MedicationsSettingsView: View {
     private func updateNotificationIfNeeded() {
         guard isNotificationEnabled else { return }
         profile.ensureRemindersMigrated()
-        NotificationManager.shared.scheduleReminders(profile.sortedReminders) { reminder in
+        NotificationManager.shared.scheduleReminders(profile.sortedReminders, playSound: isNotificationSoundEnabled) { reminder in
             profile.medications(for: reminder)
         }
     }
