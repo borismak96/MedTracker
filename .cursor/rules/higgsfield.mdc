@@ -1,0 +1,19 @@
+---
+description: Use Higgsfield MCP for App Store previews and other image/video generation in this project.
+alwaysApply: true
+---
+
+# Higgsfield for PillPal
+
+When the user asks to generate, create, or design images, screenshots, App Store previews, posters, or videos, use the **Higgsfield MCP** tools (`generate_image`, `generate_video`, `media_upload`, `media_confirm`). Do not fall back to Gemini, Composio, or the built-in image tool unless Higgsfield is unavailable.
+
+## App Store previews
+
+- Aspect ratio: `9:16` (iPhone)
+- Style: mint cream background, white rounded cards, PillPal branding
+- Save files under `AppStorePreviews/`
+- Prefer real product screenshots as references when the user provides them
+
+## Auth
+
+If Higgsfield tools fail with auth/connection errors, tell the user to open **Cursor Settings → Tools & MCP**, enable **higgsfield**, and complete the OAuth sign-in in the browser.
