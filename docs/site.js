@@ -1,7 +1,18 @@
 (function () {
   var storageKey = "pillpal-lang";
 
+  function fromQuery() {
+    try {
+      var q = new URLSearchParams(window.location.search).get("lang");
+      if (q === "en") return "en";
+      if (q === "zh" || q === "zh-Hant" || q === "zh-TW") return "zh-Hant";
+    } catch (e) {}
+    return null;
+  }
+
   function preferredLang() {
+    var queryLang = fromQuery();
+    if (queryLang) return queryLang;
     try {
       var saved = localStorage.getItem(storageKey);
       if (saved === "en" || saved === "zh-Hant") return saved;
@@ -27,6 +38,11 @@
   document.querySelectorAll("[data-set-lang]").forEach(function (button) {
     button.addEventListener("click", function () {
       applyLang(button.getAttribute("data-set-lang"));
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.set("lang", button.getAttribute("data-set-lang") === "zh-Hant" ? "zh-Hant" : "en");
+        history.replaceState({}, "", url);
+      } catch (e) {}
     });
   });
 })();

@@ -10,9 +10,12 @@
   <script>
     (function () {
       try {
-        var saved = localStorage.getItem("pillpal-lang");
+        var q = new URLSearchParams(location.search).get("lang");
+        var saved = q || localStorage.getItem("pillpal-lang");
         var nav = (navigator.language || "").toLowerCase();
-        var lang = saved || (nav.indexOf("zh") === 0 ? "zh-Hant" : "en");
+        var lang = (saved === "zh" || saved === "zh-Hant" || saved === "zh-TW")
+          ? "zh-Hant"
+          : (saved === "en" ? "en" : (nav.indexOf("zh") === 0 ? "zh-Hant" : "en"));
         document.documentElement.setAttribute("data-lang", lang);
         document.documentElement.setAttribute("lang", lang === "zh-Hant" ? "zh-Hant" : "en");
       } catch (e) {}
