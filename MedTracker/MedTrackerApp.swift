@@ -1,8 +1,22 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        NotificationPreferences.migrateIfNeeded()
+        UNUserNotificationCenter.current().delegate = NotificationManager.shared
+        NotificationManager.shared.registerCategories()
+        return true
+    }
+}
 
 @main
 struct MedTrackerApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @AppStorage("appLanguage", store: AppLocalization.sharedDefaults) private var appLanguage = "system"
     @State private var isActive = false
     
@@ -13,6 +27,7 @@ struct MedTrackerApp: App {
            let legacy = UserDefaults.standard.string(forKey: "appLanguage") {
             group.set(legacy, forKey: "appLanguage")
         }
+        NotificationPreferences.migrateIfNeeded()
     }
     
     var body: some Scene {
