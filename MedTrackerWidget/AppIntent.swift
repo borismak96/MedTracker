@@ -21,25 +21,33 @@ struct LogMedicationIntent: AppIntent {
         let container = SharedDatabase.shared.container
         let context = ModelContext(container)
         
+        let profileDescriptor = FetchDescriptor<UserProfile>()
+        let profiles = (try? context.fetch(profileDescriptor)) ?? []
+        let profile = ActiveProfileStore.resolve(from: profiles)
+        
         let todayStart = Calendar.current.startOfDay(for: Date())
         var targetLog: MedicationLog
         
         let descriptor = FetchDescriptor<MedicationLog>()
-        if let logs = try? context.fetch(descriptor),
-           let log = logs.first(where: { Calendar.current.startOfDay(for: $0.date) == todayStart }) {
+        let logs = (try? context.fetch(descriptor)) ?? []
+        if let profile,
+           let log = logs.first(where: { $0.belongs(to: profile) && Calendar.current.startOfDay(for: $0.date) == todayStart }) {
+            targetLog = log
+        } else if let log = logs.first(where: { Calendar.current.startOfDay(for: $0.date) == todayStart }), profile == nil {
             targetLog = log
         } else {
-            targetLog = MedicationLog(date: todayStart)
+            targetLog = MedicationLog(date: todayStart, profileId: profile?.id)
             context.insert(targetLog)
         }
         
-        let profileDescriptor = FetchDescriptor<UserProfile>()
-        let profile = (try? context.fetch(profileDescriptor))?.first
-        
         if let profile {
             targetLog.syncDoseRecords(with: profile)
+            targetLog.refreshOccurrenceStates()
             
-            if let pending = targetLog.sortedDoseRecords.first(where: \.isPending) {
+            let open = targetLog.sortedDoseRecords.first(where: { $0.isDue || $0.isSnoozed })
+                ?? targetLog.sortedDoseRecords.first(where: \.isOpen)
+            
+            if let pending = open {
                 let reminder = profile.sortedReminders.first(where: { $0.id == pending.id })
                 let meds = reminder.map { profile.medications(for: $0) } ?? []
                 
