@@ -246,12 +246,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         multipleProfiles: Bool,
         isFollowUp: Bool
     ) {
-        let meds = profile.medications(for: reminder)
-        let medNames = meds.map(\.name).filter { !$0.isEmpty }
-        let medName = medNames.isEmpty
-            ? AppLocalization.string("your medication")
-            : medNames.joined(separator: ", ")
-        
         let content = UNMutableNotificationContent()
         if multipleProfiles {
             content.title = "\(AppBrand.displayName) · \(profile.displayName)"
@@ -261,12 +255,9 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
                 : AppLocalization.string("Medication Reminder")
         }
         
-        let labelPrefix = reminder.localizedLabel.isEmpty ? "" : "\(reminder.localizedLabel): "
-        if isFollowUp {
-            content.body = labelPrefix + AppLocalization.format("Still time to take %@", medName)
-        } else {
-            content.body = labelPrefix + AppLocalization.format("It's time to take %@", medName)
-        }
+        content.body = isFollowUp
+            ? AppLocalization.string("Still time for your medication.")
+            : AppLocalization.string("Time for your medication.")
         
         content.categoryIdentifier = Self.categoryIdentifier
         content.threadIdentifier = profile.id.uuidString

@@ -1,2 +1,3 @@
 /* Localized app name under the Home Screen icon */
 "CFBundleDisplayName" = "PillPal";
+"NSPhotoLibraryUsageDescription" = "PillPal uses your photo library only when you choose a profile picture. Photos stay on this device.";

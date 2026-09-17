@@ -146,26 +146,8 @@ struct MedTrackerMediumWidgetEntryView : View {
                 }
                 
                 if let profile = entry.profile, !profile.medications.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(profile.medications.prefix(3)) { med in
-                            HStack {
-                                Text(med.name)
-                                    .font(.system(.caption, design: .rounded, weight: .medium))
-                                    .lineLimit(1)
-                                Spacer()
-                                Text(med.dose)
-                                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                                    .padding(.horizontal, 4)
-                                    .background(Color.mint.opacity(0.2))
-                                    .cornerRadius(4)
-                            }
-                        }
-                        if profile.medications.count > 3 {
-                            Text("...")
-                                .font(.system(.caption))
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    Text(AppLocalization.format("%lld medications", profile.medications.count))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 } else {
                     Text(AppLocalization.string("No medications added."))
                         .font(.caption)
@@ -183,22 +165,9 @@ struct MedTrackerMediumWidgetEntryView : View {
                     .font(.system(.headline, design: .rounded, weight: .bold))
                     .foregroundColor(.blue)
                 
-                if let log = entry.log, let sys = log.systolic, let dia = log.diastolic {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(AppLocalization.string("Blood Pressure"))
-                            .font(.system(.caption2, design: .rounded, weight: .bold))
-                            .foregroundColor(.secondary)
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text("\(sys)")
-                                .font(.system(.title3, design: .rounded, weight: .black))
-                                .foregroundColor(sys > 130 ? .red : .primary)
-                            Text("/")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("\(dia)")
-                                .font(.system(.subheadline, design: .rounded, weight: .bold))
-                        }
-                    }
+                if let log = entry.log, log.systolic != nil, log.diastolic != nil {
+                    Text(AppLocalization.string("BP recorded today."))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 } else {
                     Text(AppLocalization.string("No BP recorded today."))
                         .font(.caption)
@@ -231,7 +200,7 @@ struct MedTrackerMediumWidget: Widget {
             MedTrackerMediumWidgetEntryView(entry: entry)
         }
         .configurationDisplayName(AppLocalization.string("Overview"))
-        .description(AppLocalization.string("Shows medications and recent health data."))
+        .description(AppLocalization.string("Shows your daily status without medicine names."))
         .supportedFamilies([.systemMedium])
     }
 }

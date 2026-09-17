@@ -54,6 +54,7 @@ struct ProfileForm: View {
     @State private var showingAddPerson = false
     @State private var newPersonName = ""
     @State private var profilePendingDelete: UserProfile?
+    @State private var showExportConfirm = false
     
     private var logs: [MedicationLog] {
         HouseholdData.logs(for: profile, in: allLogs)
@@ -232,7 +233,7 @@ struct ProfileForm: View {
                         .fontWeight(.semibold)
                 }
                 
-                Button(action: exportUserData) {
+                Button(action: { showExportConfirm = true }) {
                     Label(AppLocalization.string("Export Data"), systemImage: "square.and.arrow.up")
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
@@ -314,6 +315,17 @@ struct ProfileForm: View {
             }
         } message: {
             Text(AppLocalization.string("All data for this person will be removed from this device."))
+        }
+        .alert(
+            AppLocalization.string("Export Data"),
+            isPresented: $showExportConfirm
+        ) {
+            Button(AppLocalization.string("Cancel"), role: .cancel) { }
+            Button(AppLocalization.string("Export Data")) {
+                exportUserData()
+            }
+        } message: {
+            Text(AppLocalization.string("This export includes your health records. Only share it with people you trust."))
         }
         .sheet(isPresented: $showingAddPerson) {
             addPersonSheet

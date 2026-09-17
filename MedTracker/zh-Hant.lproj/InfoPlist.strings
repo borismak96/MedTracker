@@ -1,2 +1,3 @@
 /* Localized app name under the Home Screen icon */
 "CFBundleDisplayName" = "藥伴伴";
+"NSPhotoLibraryUsageDescription" = "藥伴伴僅在您選擇個人照片時使用相簿。照片只會儲存在本裝置。";
