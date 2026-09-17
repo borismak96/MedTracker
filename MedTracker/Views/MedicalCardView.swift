@@ -42,14 +42,9 @@ struct MedicalCardView: View {
                                         .foregroundStyle(.white, Color.mint)
                                 }
                                 
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(profile.name.isEmpty ? "Name Not Set" : profile.name)
-                                        .font(.system(.title2, design: .rounded, weight: .bold))
-                                        .foregroundColor(.primary)
-                                    Text(AppLocalization.string("Patient"))
-                                        .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                }
+                                Text(profile.name.isEmpty ? "Name Not Set" : profile.name)
+                                    .font(.system(.title2, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
                                 Spacer()
                             }
                             .padding(20)
