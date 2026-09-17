@@ -4,6 +4,7 @@ import PhotosUI
 
 struct ProfileView: View {
     @Query private var profiles: [UserProfile]
+    @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
     
         var body: some View {
             NavigationView {
@@ -11,18 +12,23 @@ struct ProfileView: View {
                     AppBackground()
                     
                     VStack(spacing: 0) {
+                        let _ = activeProfileID
                         HStack {
                             Text(AppLocalization.string("Profile"))
                                 .font(.system(.title, design: .rounded, weight: .heavy))
                                 .foregroundColor(.primary)
                             Spacer()
+                            if let active = ActiveProfileStore.resolve(from: profiles), profiles.count > 1 {
+                                ProfileSwitcher(profiles: profiles, active: active, compact: true)
+                            }
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 10)
                         .padding(.bottom, 10)
                         
-                        if let profile = profiles.first {
-                            ProfileForm(profile: profile)
+                        if let profile = ActiveProfileStore.resolve(from: profiles) {
+                            ProfileForm(profile: profile, allProfiles: profiles)
+                                .id(profile.id)
                         } else {
                             ProgressView()
                                 .frame(maxHeight: .infinity)
@@ -36,16 +42,31 @@ struct ProfileView: View {
 
 struct ProfileForm: View {
     @Bindable var profile: UserProfile
-    @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
+    var allProfiles: [UserProfile]
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @AppStorage("appLanguage", store: AppLocalization.sharedDefaults) private var appLanguage = "system"
-    @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
-    @AppStorage("isNotificationSoundEnabled") private var isNotificationSoundEnabled = true
+    @AppStorage("isNotificationEnabled", store: AppLocalization.sharedDefaults) private var isNotificationEnabled = false
+    @AppStorage("isNotificationSoundEnabled", store: AppLocalization.sharedDefaults) private var isNotificationSoundEnabled = true
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var showSaveButton = true
+    @State private var showingAddPerson = false
+    @State private var newPersonName = ""
+    @State private var profilePendingDelete: UserProfile?
+    
+    private var logs: [MedicationLog] {
+        HouseholdData.logs(for: profile, in: allLogs)
+    }
     
     var body: some View {
         Form {
+            Section {
+                householdSection
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            
             Section {
                 VStack(spacing: 16) {
                     if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
@@ -183,6 +204,10 @@ struct ProfileForm: View {
                     }
                 }
                 
+                Text(AppLocalization.string("Reminders include Taken and Snooze actions."))
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundColor(.secondary)
+                
                 if isNotificationEnabled {
                     Toggle(isOn: $isNotificationSoundEnabled) {
                         HStack {
@@ -270,6 +295,184 @@ struct ProfileForm: View {
         .onChange(of: profile.profileImageData) { _, _ in revealSaveButton() }
         .onChange(of: appLanguage) { _, _ in revealSaveButton() }
         .onChange(of: isNotificationEnabled) { _, _ in revealSaveButton() }
+        .alert(
+            AppLocalization.format("Delete \"%@\"?", profilePendingDelete?.displayName ?? ""),
+            isPresented: Binding(
+                get: { profilePendingDelete != nil },
+                set: { if !$0 { profilePendingDelete = nil } }
+            )
+        ) {
+            Button(AppLocalization.string("Cancel"), role: .cancel) {
+                profilePendingDelete = nil
+            }
+            Button(AppLocalization.string("Delete Profile"), role: .destructive) {
+                if let pending = profilePendingDelete {
+                    HouseholdData.deleteProfile(pending, logs: allLogs, remaining: allProfiles, context: modelContext)
+                    NotificationManager.shared.rescheduleFromStore()
+                }
+                profilePendingDelete = nil
+            }
+        } message: {
+            Text(AppLocalization.string("All data for this person will be removed from this device."))
+        }
+        .sheet(isPresented: $showingAddPerson) {
+            addPersonSheet
+        }
+    }
+    
+    private var householdSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(AppLocalization.string("Household"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                    Text(AppLocalization.string("Profiles stay on this iPhone. No account needed."))
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(allProfiles.sorted { $0.sortOrder < $1.sortOrder }, id: \.id) { member in
+                        Button {
+                            ActiveProfileStore.select(member)
+                        } label: {
+                            VStack(spacing: 8) {
+                                ZStack(alignment: .topTrailing) {
+                                    householdAvatar(member)
+                                    if member.id == profile.id {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.mint)
+                                            .background(Circle().fill(Color.white))
+                                            .offset(x: 4, y: -4)
+                                    }
+                                }
+                                Text(member.displayName)
+                                    .font(.system(.caption, design: .rounded, weight: .bold))
+                                    .foregroundColor(.primary)
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 76)
+                        }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            if allProfiles.count > 1 {
+                                Button(role: .destructive) {
+                                    profilePendingDelete = member
+                                } label: {
+                                    Label(AppLocalization.string("Delete Profile"), systemImage: "trash")
+                                }
+                            }
+                        }
+                    }
+                    
+                    if allProfiles.count < HouseholdData.maxProfiles {
+                        Button {
+                            newPersonName = ""
+                            showingAddPerson = true
+                        } label: {
+                            VStack(spacing: 8) {
+                                ZStack {
+                                    Circle()
+                                        .strokeBorder(Color.mint, style: StrokeStyle(lineWidth: 2, dash: [5]))
+                                        .frame(width: 56, height: 56)
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.mint)
+                                }
+                                Text(AppLocalization.string("Add Person"))
+                                    .font(.system(.caption, design: .rounded, weight: .bold))
+                                    .foregroundColor(.mint)
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 76)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            
+            if allProfiles.count > 1 {
+                Button(role: .destructive) {
+                    profilePendingDelete = profile
+                } label: {
+                    Text(AppLocalization.string("Delete Profile"))
+                        .font(.system(.caption, design: .rounded, weight: .bold))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
+    }
+    
+    private func householdAvatar(_ member: UserProfile) -> some View {
+        Group {
+            if let data = member.profileImageData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .foregroundStyle(.white, Color.mint)
+            }
+        }
+        .frame(width: 56, height: 56)
+        .clipShape(Circle())
+    }
+    
+    private var addPersonSheet: some View {
+        NavigationView {
+            ZStack {
+                AppBackground()
+                VStack(spacing: 20) {
+                    Text(AppLocalization.string("Who is this for?"))
+                        .font(.system(.title2, design: .rounded, weight: .bold))
+                    Text(AppLocalization.string("Add a family member to keep medicines, reminders, and history separate — all on this device."))
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    TextField(AppLocalization.string("Family member"), text: $newPersonName)
+                        .font(.system(.body, design: .rounded))
+                        .padding(14)
+                        .background(Color.white)
+                        .cornerRadius(14)
+                    
+                    Button {
+                        _ = HouseholdData.addProfile(name: newPersonName, among: allProfiles, context: modelContext)
+                        showingAddPerson = false
+                        NotificationManager.shared.rescheduleFromStore()
+                    } label: {
+                        Text(AppLocalization.string("Add Person"))
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.mint)
+                            .cornerRadius(20)
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                }
+                .padding(24)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(AppLocalization.string("Cancel")) {
+                        showingAddPerson = false
+                    }
+                    .foregroundColor(.mint)
+                }
+            }
+        }
     }
     
     private func revealSaveButton() {
@@ -342,8 +545,6 @@ struct ProfileForm: View {
     
     private func scheduleCurrentNotification() {
         profile.ensureRemindersMigrated()
-        NotificationManager.shared.scheduleReminders(profile.sortedReminders, playSound: isNotificationSoundEnabled) { reminder in
-            profile.medications(for: reminder)
-        }
+        NotificationManager.shared.rescheduleFromStore()
     }
 }
