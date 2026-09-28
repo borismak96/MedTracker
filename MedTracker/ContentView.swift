@@ -3,6 +3,7 @@ import SwiftData
 
 enum AppTab: Hashable {
     case today
+    case care
     case history
     case profile
 }
@@ -23,6 +24,12 @@ struct ContentView: View {
                     Label(AppLocalization.string("Today"), systemImage: "pill.fill")
                 }
                 .tag(AppTab.today)
+            
+            CareDayboardView()
+                .tabItem {
+                    Label(AppLocalization.string("Care"), systemImage: "checklist")
+                }
+                .tag(AppTab.care)
             
             HistoryView()
                 .tabItem {

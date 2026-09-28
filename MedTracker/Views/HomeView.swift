@@ -31,6 +31,7 @@ struct HomeView: View {
     @State private var showingHRChart = false
     @State private var showingMedicalCard = false
     @State private var showingSetupGuide = false
+    @State private var showingVisitPack = false
     
     var profile: UserProfile? {
         _ = activeProfileID
@@ -57,6 +58,8 @@ struct HomeView: View {
                         if let profile = profile {
                             headerSection(profile: profile)
                                 .padding(.top, 10)
+                            
+                            clinicPackCard
                             
                             historyTeaser
                             
@@ -160,6 +163,21 @@ struct HomeView: View {
                         }
                 }
             }
+            .sheet(isPresented: $showingVisitPack) {
+                if let profile {
+                    NavigationView {
+                        VisitPackView(profile: profile, logs: logs)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button(AppLocalization.string("Done")) {
+                                        showingVisitPack = false
+                                    }
+                                    .font(.system(.body, design: .rounded, weight: .bold))
+                                }
+                            }
+                    }
+                }
+            }
             .alert(
                 bpAlertCategory?.localizedTitle ?? AppLocalization.string("Blood Pressure"),
                 isPresented: Binding(
@@ -226,6 +244,18 @@ struct HomeView: View {
                     .accessibilityLabel(AppLocalization.string("How to Set Up"))
                     
                     Button(action: {
+                        showingVisitPack = true
+                    }) {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.mint)
+                            .padding(12)
+                            .background(Circle().fill(Color.white))
+                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    }
+                    .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
+                    
+                    Button(action: {
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                             showingMedicalCard = true
                         }
@@ -279,6 +309,40 @@ struct HomeView: View {
         }
     }
     
+    private var clinicPackCard: some View {
+        Button {
+            showingVisitPack = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mint.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "doc.text.fill")
+                        .foregroundColor(.mint)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(AppLocalization.string("Clinic Visit Pack"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text(AppLocalization.string("Share a bilingual summary for your clinic visit."))
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Image(systemName: "square.and.arrow.up")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(.mint)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(22)
+            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
+    }
+    
     private var historyTeaser: some View {
         Button {
             selectedTab = .history
@@ -286,16 +350,16 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.orange.opacity(0.15))
+                        .fill(Color.mint.opacity(0.15))
                         .frame(width: 44, height: 44)
-                    Image(systemName: "flame.fill")
-                        .foregroundColor(.orange)
+                    Image(systemName: "calendar")
+                        .foregroundColor(.mint)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(AppLocalization.format("%lld day streak", AdherenceStats.consecutiveDayStreak(logs: logs)))
+                    Text(AppLocalization.format("%lld complete days in a row", AdherenceStats.consecutiveDayStreak(logs: logs)))
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
-                    Text(AppLocalization.string("Weekly Summary"))
+                    Text(AppLocalization.format("Adherence: %lld%%", AdherenceStats.weekSummary(logs: logs).adherencePercent))
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(.secondary)
                 }
@@ -657,6 +721,7 @@ struct TodayCard: View {
     
     @State private var selectedMood: MoodStatus? = nil
     @State private var remarkText: String = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -903,46 +968,48 @@ struct TodayCard: View {
                         .foregroundColor(secondaryColor)
                 }
                 VStack(spacing: 8) {
-                    Button {
-                        withAnimation {
-                            log.markTaken(
-                                reminderId: record.id,
-                                mood: selectedMood?.rawValue,
-                                remark: remarkText.isEmpty ? nil : remarkText,
-                                medications: meds
-                            )
-                        }
-                    } label: {
-                        Text(AppLocalization.string("Take Now"))
-                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(accent)
-                            .cornerRadius(14)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    HStack(spacing: 10) {
-                        snoozeMenu(reminderId: record.id, titleColor: titleColor)
-                        
                         Button {
-                            activeSkipReminderId = record.id
-                            skippedTime = Date()
-                            skipReaction = ""
-                            skipNotes = ""
-                            showingSkipSheet = true
+                            withAnimation {
+                                log.markTaken(
+                                    reminderId: record.id,
+                                    mood: selectedMood?.rawValue,
+                                    remark: remarkText.isEmpty ? nil : remarkText,
+                                    medications: meds
+                                )
+                            }
                         } label: {
-                            Text(AppLocalization.string("Skip / Missed"))
-                                .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                .foregroundColor(titleColor)
+                            Text(AppLocalization.string("Take Now"))
+                                .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.55))
+                                .frame(minHeight: elderMode ? ElderMode.buttonHeight : 0.0)
+                                .padding(.vertical, elderMode ? 0 : 12)
+                                .background(accent)
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                    }
+                        
+                        HStack(spacing: 10) {
+                            snoozeMenu(reminderId: record.id, titleColor: titleColor)
+                            
+                            Button {
+                                activeSkipReminderId = record.id
+                                skippedTime = Date()
+                                skipReaction = ""
+                                skipNotes = ""
+                                showingSkipSheet = true
+                            } label: {
+                                Text(AppLocalization.string("Skip / Missed"))
+                                    .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(titleColor)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: elderMode ? ElderMode.buttonHeight : 0.0)
+                                    .padding(.vertical, elderMode ? 0 : 12)
+                                    .background(Color.white.opacity(0.55))
+                                    .cornerRadius(14)
+                            }
+                            .buttonStyle(.plain)
+                        }
                 }
             }
         }

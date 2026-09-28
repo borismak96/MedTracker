@@ -42,6 +42,10 @@
 		HH0000000000000000000005 /* AdherenceStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000004 /* AdherenceStats.swift */; };
 		HH0000000000000000000006 /* AdherenceStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000004 /* AdherenceStats.swift */; };
 		HH0000000000000000000008 /* ProfileSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000007 /* ProfileSwitcher.swift */; };
+		V12000000000000000000002 /* VisitPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000001 /* VisitPack.swift */; };
+		V12000000000000000000004 /* VisitPackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000003 /* VisitPackView.swift */; };
+		V12000000000000000000006 /* CareDayboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000005 /* CareDayboardView.swift */; };
+		V12000000000000000000008 /* OfflineQRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000007 /* OfflineQRCode.swift */; };
 		HR0000000000000000000002 /* HeartRateCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000001 /* HeartRateCategoryBadge.swift */; };
 		HR0000000000000000000004 /* HeartRateChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000003 /* HeartRateChartView.swift */; };
 		M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */; };
@@ -117,6 +121,10 @@
 		HH0000000000000000000001 /* ActiveProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveProfileStore.swift; sourceTree = "<group>"; };
 		HH0000000000000000000004 /* AdherenceStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdherenceStats.swift; sourceTree = "<group>"; };
 		HH0000000000000000000007 /* ProfileSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitcher.swift; sourceTree = "<group>"; };
+		V12000000000000000000001 /* VisitPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitPack.swift; sourceTree = "<group>"; };
+		V12000000000000000000003 /* VisitPackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitPackView.swift; sourceTree = "<group>"; };
+		V12000000000000000000005 /* CareDayboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareDayboardView.swift; sourceTree = "<group>"; };
+		V12000000000000000000007 /* OfflineQRCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineQRCode.swift; sourceTree = "<group>"; };
 		HR0000000000000000000001 /* HeartRateCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateCategoryBadge.swift; sourceTree = "<group>"; };
 		HR0000000000000000000003 /* HeartRateChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateChartView.swift; sourceTree = "<group>"; };
 		M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodFaceView.swift; sourceTree = "<group>"; };
@@ -234,6 +242,7 @@
 				MODELREF22C41D8E0006BEED4 /* UserProfile.swift */,
 				HH0000000000000000000001 /* ActiveProfileStore.swift */,
 				HH0000000000000000000004 /* AdherenceStats.swift */,
+				V12000000000000000000001 /* VisitPack.swift */,
 				A97FF95AC4323101CF487683 /* SharedDatabase.swift */,
 			);
 			path = Models;
@@ -244,6 +253,9 @@
 			children = (
 				870A7C086F9735A09C05FA2E /* SplashView.swift */,
 				F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */,
+				V12000000000000000000003 /* VisitPackView.swift */,
+				V12000000000000000000005 /* CareDayboardView.swift */,
+				V12000000000000000000007 /* OfflineQRCode.swift */,
 				BP0000000000000000000001 /* BloodPressureChartView.swift */,
 				HR0000000000000000000003 /* HeartRateChartView.swift */,
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
@@ -377,6 +389,10 @@
 				HH0000000000000000000002 /* ActiveProfileStore.swift in Sources */,
 				HH0000000000000000000005 /* AdherenceStats.swift in Sources */,
 				HH0000000000000000000008 /* ProfileSwitcher.swift in Sources */,
+				V12000000000000000000002 /* VisitPack.swift in Sources */,
+				V12000000000000000000004 /* VisitPackView.swift in Sources */,
+				V12000000000000000000006 /* CareDayboardView.swift in Sources */,
+				V12000000000000000000008 /* OfflineQRCode.swift in Sources */,
 				9B851C832C41D8DF006BEED4 /* ContentView.swift in Sources */,
 				MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */,
 				MODEL0022C41D8E0006BEED4 /* UserProfile.swift in Sources */,
@@ -454,11 +470,11 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -477,11 +493,11 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -626,7 +642,7 @@
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -644,7 +660,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
 				PRODUCT_NAME = PillPal;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -663,7 +679,7 @@
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -681,7 +697,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
 				PRODUCT_NAME = PillPal;
 				PROVISIONING_PROFILE_SPECIFIER = "";

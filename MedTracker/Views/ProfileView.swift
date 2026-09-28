@@ -55,6 +55,8 @@ struct ProfileForm: View {
     @State private var newPersonName = ""
     @State private var profilePendingDelete: UserProfile?
     @State private var showExportConfirm = false
+    @State private var showingMedicalCard = false
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     private var logs: [MedicationLog] {
         HouseholdData.logs(for: profile, in: allLogs)
@@ -139,6 +141,33 @@ struct ProfileForm: View {
                 }
             }
             
+            Section(header: Text(AppLocalization.string("Medical Card"))) {
+                TextField(AppLocalization.string("Allergies (e.g. penicillin)"), text: $profile.allergies, axis: .vertical)
+                    .lineLimit(2...4)
+                TextField(AppLocalization.string("ICE Name"), text: $profile.emergencyContactName)
+                TextField(AppLocalization.string("Relationship"), text: $profile.emergencyContactRelation)
+                TextField(AppLocalization.string("ICE Phone"), text: $profile.emergencyContactPhone)
+                    .keyboardType(.phonePad)
+                Text(AppLocalization.string("Not an official medical ID"))
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundColor(.secondary)
+                
+                Button {
+                    showingMedicalCard = true
+                } label: {
+                    Label(AppLocalization.string("View Medical Card"), systemImage: "person.text.rectangle.fill")
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 14)
+                        .background(Color.mint)
+                        .cornerRadius(16)
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            }
+            
             Section(header: Text(AppLocalization.string("Medications"))) {
                 NavigationLink(destination: MedicationsSettingsView(profile: profile)) {
                     HStack {
@@ -181,6 +210,17 @@ struct ProfileForm: View {
                     Text(AppLocalization.string("English")).tag("en")
                     Text("繁體中文").tag("zh-Hant")
                 }
+                
+                Toggle(isOn: $elderMode) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(AppLocalization.string("樂齡 Mode"))
+                            .font(.system(.body, design: .rounded, weight: .semibold))
+                        Text(AppLocalization.string("Larger text and high-contrast buttons for easier tapping."))
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(elderMode ? Color(red: 0.20, green: 0.20, blue: 0.22) : Color.secondary)
+                    }
+                }
+                .tint(.mint)
             }
             
             Section(header: Text(AppLocalization.string("Reminders"))) {
@@ -231,6 +271,10 @@ struct ProfileForm: View {
                     Spacer()
                     Text(localizedAgeRangeLabel)
                         .fontWeight(.semibold)
+                }
+                
+                NavigationLink(destination: VisitPackView(profile: profile, logs: logs)) {
+                    Label(AppLocalization.string("Clinic Visit Pack"), systemImage: "doc.text.fill")
                 }
                 
                 Button(action: { showExportConfirm = true }) {
@@ -294,8 +338,19 @@ struct ProfileForm: View {
         .onChange(of: profile.medications) { _, _ in revealSaveButton() }
         .onChange(of: profile.reminders) { _, _ in revealSaveButton() }
         .onChange(of: profile.profileImageData) { _, _ in revealSaveButton() }
+        .onChange(of: profile.allergies) { _, _ in revealSaveButton() }
+        .onChange(of: profile.emergencyContactName) { _, _ in revealSaveButton() }
+        .onChange(of: profile.emergencyContactPhone) { _, _ in revealSaveButton() }
+        .onChange(of: profile.emergencyContactRelation) { _, _ in revealSaveButton() }
         .onChange(of: appLanguage) { _, _ in revealSaveButton() }
         .onChange(of: isNotificationEnabled) { _, _ in revealSaveButton() }
+        .sheet(isPresented: $showingMedicalCard) {
+            ZStack {
+                Color.black.opacity(0.25).ignoresSafeArea()
+                MedicalCardView(profile: profile, isShowing: $showingMedicalCard)
+            }
+            .background(Color.clear)
+        }
         .alert(
             AppLocalization.format("Delete \"%@\"?", profilePendingDelete?.displayName ?? ""),
             isPresented: Binding(
@@ -520,33 +575,7 @@ struct ProfileForm: View {
             print("Export failed: could not create PDF")
             return
         }
-        
-        // Present the system share sheet directly (avoids a blank SwiftUI sheet).
-        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
-                ?? scene.windows.first?.rootViewController else {
-            return
-        }
-        
-        var presenter = root
-        while let presented = presenter.presentedViewController {
-            presenter = presented
-        }
-        
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = presenter.view
-            popover.sourceRect = CGRect(
-                x: presenter.view.bounds.midX,
-                y: presenter.view.bounds.midY,
-                width: 0,
-                height: 0
-            )
-            popover.permittedArrowDirections = []
-        }
-        
-        presenter.present(activityVC, animated: true)
+        SharePresenter.present(items: [url])
     }
     
     private func updateNotificationIfNeeded() {

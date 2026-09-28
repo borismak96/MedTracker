@@ -66,6 +66,71 @@ enum NotificationPreferences {
     }
 }
 
+enum ElderMode {
+    static let enabledKey = "isElderModeEnabled"
+    
+    static var isEnabled: Bool {
+        AppLocalization.sharedDefaults.bool(forKey: enabledKey)
+    }
+    
+    static let titleSize: Double = 32
+    static let headlineSize: Double = 24
+    static let bodySize: Double = 22
+    static let buttonHeight: Double = 52
+    static let minTap: Double = 44
+}
+
+enum DayboardSelection {
+    static let key = "dayboardProfileIDs"
+    private static let noneValue = "__none__"
+    
+    static func selectedIDs() -> Set<UUID>? {
+        guard let raw = AppLocalization.sharedDefaults.string(forKey: key) else { return nil }
+        if raw == noneValue { return [] }
+        let parts = raw.split(separator: ",").compactMap { UUID(uuidString: String($0)) }
+        return Set(parts)
+    }
+    
+    static func setSelectedIDs(_ ids: Set<UUID>?) {
+        if ids == nil {
+            AppLocalization.sharedDefaults.removeObject(forKey: key)
+        } else if ids?.isEmpty == true {
+            AppLocalization.sharedDefaults.set(noneValue, forKey: key)
+        } else {
+            AppLocalization.sharedDefaults.set(ids!.map(\.uuidString).sorted().joined(separator: ","), forKey: key)
+        }
+    }
+    
+    /// Nil stored selection means “show everyone on this device”.
+    static func visibleProfiles(from profiles: [UserProfile]) -> [UserProfile] {
+        let ordered = profiles.sorted {
+            if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
+            return $0.createdAt < $1.createdAt
+        }
+        guard let stored = selectedIDs() else { return ordered }
+        return ordered.filter { stored.contains($0.id) }
+    }
+    
+    static func isIncluded(_ profile: UserProfile) -> Bool {
+        guard let stored = selectedIDs() else { return true }
+        return stored.contains(profile.id)
+    }
+    
+    static func toggle(_ profile: UserProfile, among profiles: [UserProfile]) {
+        var stored = selectedIDs() ?? Set(profiles.map(\.id))
+        if stored.contains(profile.id) {
+            stored.remove(profile.id)
+        } else {
+            stored.insert(profile.id)
+        }
+        if stored.count == profiles.count {
+            setSelectedIDs(nil)
+        } else {
+            setSelectedIDs(stored)
+        }
+    }
+}
+
 enum HouseholdData {
     static let maxProfiles = 8
     
