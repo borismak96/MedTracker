@@ -14,6 +14,7 @@ struct HistoryView: View {
     @State private var currentMonth: Date = Date()
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     @State private var editingDateWrapper: DateWrapper? = nil
+    @State private var showingVisitPack = false
     
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
@@ -47,6 +48,17 @@ struct HistoryView: View {
                             .foregroundColor(.primary)
                         Spacer()
                         if let profile {
+                            Button {
+                                showingVisitPack = true
+                            } label: {
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.mint)
+                                    .padding(10)
+                                    .background(Circle().fill(Color.white))
+                                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                            }
+                            .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
                             ProfileSwitcher(profiles: profiles, active: profile, compact: true)
                         }
                     }
@@ -88,6 +100,21 @@ struct HistoryView: View {
                     DailyRecordSheet(date: dateWrapper.date, profile: profile)
                 }
             }
+            .sheet(isPresented: $showingVisitPack) {
+                if let profile {
+                    NavigationView {
+                        VisitPackView(profile: profile, logs: logs)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button(AppLocalization.string("Done")) {
+                                        showingVisitPack = false
+                                    }
+                                    .font(.system(.body, design: .rounded, weight: .bold))
+                                }
+                            }
+                    }
+                }
+            }
             .onAppear {
                 syncSelectedDateDoseRecords()
             }
@@ -123,14 +150,14 @@ struct HistoryView: View {
                 }
                 Spacer()
                 HStack(spacing: 6) {
-                    Image(systemName: "flame.fill")
-                        .foregroundColor(.orange)
-                    Text(AppLocalization.format("%lld day streak", streak))
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.mint)
+                    Text(AppLocalization.format("%lld complete days in a row", streak))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.orange.opacity(0.15))
+                .background(Color.mint.opacity(0.12))
                 .cornerRadius(12)
             }
             

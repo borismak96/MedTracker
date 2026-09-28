@@ -46,7 +46,12 @@ enum AppLocalization {
     }
     
     static func string(_ key: String) -> String {
-        if prefersTraditionalChinese {
+        string(key, chinese: prefersTraditionalChinese)
+    }
+    
+    /// Resolve a catalog key in English or Traditional Chinese regardless of the in-app toggle.
+    static func string(_ key: String, chinese: Bool) -> String {
+        if chinese {
             return GeneratedLocalizations.zhHant[key]
                 ?? GeneratedLocalizations.en[key]
                 ?? key
@@ -57,8 +62,17 @@ enum AppLocalization {
     }
     
     static func format(_ key: String, _ arguments: CVarArg...) -> String {
-        let template = string(key)
-        return String(format: template, locale: locale, arguments: arguments)
+        format(key, chinese: prefersTraditionalChinese, arguments: arguments)
+    }
+    
+    static func format(_ key: String, chinese: Bool, arguments: [CVarArg]) -> String {
+        let template = string(key, chinese: chinese)
+        let loc = chinese ? Locale(identifier: "zh-Hant") : Locale(identifier: "en")
+        return String(format: template, locale: loc, arguments: arguments)
+    }
+    
+    static func format(_ key: String, chinese: Bool, _ arguments: CVarArg...) -> String {
+        format(key, chinese: chinese, arguments: arguments)
     }
     
     static func shortTime(hour: Int, minute: Int) -> String {

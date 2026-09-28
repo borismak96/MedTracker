@@ -750,6 +750,10 @@ class MedicationLog {
         persistAndNotify()
     }
     
+    func markMissed(reminderId: UUID, time: Date = Date()) {
+        markSkipped(reminderId: reminderId, time: time, reaction: nil, notes: nil)
+    }
+    
     func markSkipped(reminderId: UUID, time: Date, reaction: String?, notes: String?) {
         guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
         var records = doseRecords

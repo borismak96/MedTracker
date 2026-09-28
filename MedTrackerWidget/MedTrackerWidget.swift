@@ -96,14 +96,14 @@ struct MedTrackerWidgetEntryView : View {
             }
             
             HStack {
-                Image(systemName: "flame.fill")
-                    .foregroundColor(.orange)
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.mint)
                 Text("\(entry.dayStreak) \(AppLocalization.string("Days"))")
                     .font(.system(.caption, design: .rounded, weight: .bold))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(Color.orange.opacity(0.2))
+            .background(Color.mint.opacity(0.18))
             .cornerRadius(10)
         }
         .containerBackground(for: .widget) {
@@ -120,7 +120,7 @@ struct MedTrackerWidget: Widget {
             MedTrackerWidgetEntryView(entry: entry)
         }
         .configurationDisplayName(AppLocalization.string("Daily Status"))
-        .description(AppLocalization.string("Shows your medication status and day streak."))
+        .description(AppLocalization.string("Shows your medication status and recent days."))
         .supportedFamilies([.systemSmall])
     }
 }

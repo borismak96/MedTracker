@@ -96,4 +96,125 @@ enum AdherenceStats {
             adherencePercent: percent
         )
     }
+    
+    struct WindowDay {
+        var date: Date
+        var taken: Int
+        var skipped: Int
+        var missed: Int
+        var open: Int
+        var complete: Bool
+        var hasActivity: Bool
+        var mood: String?
+        var bpReadings: [BloodPressureReading]
+        var hrReadings: [HeartRateReading]
+    }
+    
+    struct WindowSummary {
+        var days: Int
+        var takenDoses: Int
+        var skippedDoses: Int
+        var missedDoses: Int
+        var openDoses: Int
+        var completeDays: Int
+        var daysWithActivity: Int
+        var adherencePercent: Int
+        var dayRows: [WindowDay]
+        var bpReadings: [BloodPressureReading]
+        var hrReadings: [HeartRateReading]
+        var moods: [String]
+        
+        var hasAdherenceHistory: Bool {
+            takenDoses + skippedDoses + missedDoses > 0
+        }
+    }
+    
+    /// Inclusive rolling window ending today (7 or 14 days).
+    static func windowSummary(logs: [MedicationLog], days: Int, now: Date = Date(), calendar: Calendar = .current) -> WindowSummary {
+        let today = calendar.startOfDay(for: now)
+        let span = max(days, 1)
+        var taken = 0
+        var skipped = 0
+        var missed = 0
+        var open = 0
+        var completeDays = 0
+        var daysWithActivity = 0
+        var rows: [WindowDay] = []
+        var bp: [BloodPressureReading] = []
+        var hr: [HeartRateReading] = []
+        var moods: [String] = []
+        
+        for offset in (0..<span).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let log = logs.first { calendar.isDate($0.date, inSameDayAs: date) }
+            let records = log?.sortedDoseRecords ?? []
+            let dayTaken: Int
+            let daySkipped: Int
+            let dayMissed: Int
+            let dayOpen: Int
+            if records.isEmpty {
+                dayTaken = (log?.isTaken == true) ? 1 : 0
+                daySkipped = (log?.skippedTime != nil && log?.isTaken != true) ? 1 : 0
+                dayMissed = 0
+                dayOpen = (log == nil || (dayTaken == 0 && daySkipped == 0)) ? 0 : 0
+            } else {
+                dayTaken = records.filter(\.isTaken).count
+                daySkipped = records.filter(\.isSkipped).count
+                dayMissed = records.filter(\.isMissed).count
+                dayOpen = records.filter(\.isOpen).count
+            }
+            taken += dayTaken
+            skipped += daySkipped
+            missed += dayMissed
+            open += dayOpen
+            let complete = log.map { isComplete($0) } ?? false
+            let activity = log.map { hasLoggedActivity($0) } ?? false
+            if complete { completeDays += 1 }
+            if activity { daysWithActivity += 1 }
+            
+            let dayBP = log?.allBPReadingsForExport() ?? []
+            let dayHR = log?.allHRReadingsForExport() ?? []
+            bp.append(contentsOf: dayBP)
+            hr.append(contentsOf: dayHR)
+            
+            var dayMoods: [String] = []
+            if let mood = log?.mood, !mood.isEmpty { dayMoods.append(mood) }
+            for record in records {
+                if let mood = record.mood, !mood.isEmpty { dayMoods.append(mood) }
+            }
+            moods.append(contentsOf: dayMoods)
+            
+            rows.append(
+                WindowDay(
+                    date: date,
+                    taken: dayTaken,
+                    skipped: daySkipped,
+                    missed: dayMissed,
+                    open: dayOpen,
+                    complete: complete,
+                    hasActivity: activity,
+                    mood: dayMoods.last,
+                    bpReadings: dayBP,
+                    hrReadings: dayHR
+                )
+            )
+        }
+        
+        let finished = taken + skipped + missed
+        let percent = finished == 0 ? 0 : Int((Double(taken) / Double(finished) * 100).rounded())
+        return WindowSummary(
+            days: span,
+            takenDoses: taken,
+            skippedDoses: skipped,
+            missedDoses: missed,
+            openDoses: open,
+            completeDays: completeDays,
+            daysWithActivity: daysWithActivity,
+            adherencePercent: percent,
+            dayRows: rows,
+            bpReadings: bp,
+            hrReadings: hr,
+            moods: moods
+        )
+    }
 }

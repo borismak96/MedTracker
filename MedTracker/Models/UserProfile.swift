@@ -40,24 +40,33 @@ struct ReminderSlot: Codable, Identifiable, Hashable {
     }
     
     var localizedDisplayTitle: String {
-        localizedLabel.isEmpty ? timeDescription : "\(localizedLabel) · \(timeDescription)"
+        displayTitle(chinese: AppLocalization.prefersTraditionalChinese)
+    }
+    
+    func displayTitle(chinese: Bool) -> String {
+        let loc = Self.localizedLabel(for: label, chinese: chinese)
+        return loc.isEmpty ? timeDescription : "\(loc) · \(timeDescription)"
     }
     
     static func localizedLabel(for label: String) -> String {
+        localizedLabel(for: label, chinese: AppLocalization.prefersTraditionalChinese)
+    }
+    
+    static func localizedLabel(for label: String, chinese: Bool) -> String {
         let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "" }
         
         switch trimmed.lowercased() {
         case "morning", "早上":
-            return AppLocalization.string("Morning")
+            return AppLocalization.string("Morning", chinese: chinese)
         case "afternoon", "下午":
-            return AppLocalization.string("Afternoon")
+            return AppLocalization.string("Afternoon", chinese: chinese)
         case "night", "晚上", "evening":
-            return AppLocalization.string("Night")
+            return AppLocalization.string("Night", chinese: chinese)
         case "custom", "自訂", "自定义":
-            return AppLocalization.string("Custom")
+            return AppLocalization.string("Custom", chinese: chinese)
         case "reminder", "提醒":
-            return AppLocalization.string("Reminder")
+            return AppLocalization.string("Reminder", chinese: chinese)
         default:
             return trimmed
         }
@@ -158,7 +167,20 @@ class UserProfile {
     var createdAt: Date = Date()
     var sortOrder: Int = 0
     
-    init(name: String = "", ageRange: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil, medications: [MedicationItem] = [], reminders: [ReminderSlot] = [], id: UUID = UUID(), createdAt: Date = Date(), sortOrder: Int = 0) {
+    /// Free-text allergies for the medical card. Empty string = not filled.
+    var allergies: String = ""
+    var emergencyContactName: String = ""
+    var emergencyContactPhone: String = ""
+    var emergencyContactRelation: String = ""
+    
+    /// Opt-in offline QR on the medical card (off by default).
+    var showMedicalCardQR: Bool = false
+    var qrIncludeName: Bool = true
+    var qrIncludeAllergies: Bool = true
+    var qrIncludeICE: Bool = true
+    var qrIncludeMedications: Bool = true
+    
+    init(name: String = "", ageRange: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil, medications: [MedicationItem] = [], reminders: [ReminderSlot] = [], id: UUID = UUID(), createdAt: Date = Date(), sortOrder: Int = 0, allergies: String = "", emergencyContactName: String = "", emergencyContactPhone: String = "", emergencyContactRelation: String = "", showMedicalCardQR: Bool = false, qrIncludeName: Bool = true, qrIncludeAllergies: Bool = true, qrIncludeICE: Bool = true, qrIncludeMedications: Bool = true) {
         self.name = name
         self.ageRange = ageRange
         self.targetTimeHour = targetTimeHour
@@ -169,12 +191,67 @@ class UserProfile {
         self.id = id
         self.createdAt = createdAt
         self.sortOrder = sortOrder
+        self.allergies = allergies
+        self.emergencyContactName = emergencyContactName
+        self.emergencyContactPhone = emergencyContactPhone
+        self.emergencyContactRelation = emergencyContactRelation
+        self.showMedicalCardQR = showMedicalCardQR
+        self.qrIncludeName = qrIncludeName
+        self.qrIncludeAllergies = qrIncludeAllergies
+        self.qrIncludeICE = qrIncludeICE
+        self.qrIncludeMedications = qrIncludeMedications
     }
     
     /// Empty names show as “Me” so the first profile is usable without setup.
     var displayName: String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? AppLocalization.string("Me") : trimmed
+    }
+    
+    var trimmedAllergies: String {
+        allergies.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var trimmedICEName: String {
+        emergencyContactName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var trimmedICEPhone: String {
+        emergencyContactPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var trimmedICERelation: String {
+        emergencyContactRelation.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var hasAllergies: Bool { !trimmedAllergies.isEmpty }
+    
+    var hasEmergencyContact: Bool {
+        !trimmedICEName.isEmpty || !trimmedICEPhone.isEmpty
+    }
+    
+    var activeMedications: [MedicationItem] {
+        medications.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+    
+    /// Reminder times this medicine is assigned to (empty assignment = every reminder).
+    func scheduleSlots(for med: MedicationItem) -> [ReminderSlot] {
+        ensureRemindersMigrated()
+        if med.reminderIds.isEmpty { return sortedReminders }
+        let wanted = Set(med.reminderIds)
+        return sortedReminders.filter { wanted.contains($0.id) }
+    }
+    
+    func scheduleDescription(for med: MedicationItem, chinese: Bool? = nil) -> String {
+        let useChinese = chinese ?? AppLocalization.prefersTraditionalChinese
+        let slots = scheduleSlots(for: med)
+        if slots.isEmpty {
+            return AppLocalization.string("No reminders yet.", chinese: useChinese)
+        }
+        if med.reminderIds.isEmpty {
+            return AppLocalization.string("All times", chinese: useChinese) + " · " + slots.map { $0.displayTitle(chinese: useChinese) }.joined(separator: ", ")
+        }
+        return slots.map { $0.displayTitle(chinese: useChinese) }.joined(separator: ", ")
     }
     
     /// Ensures at least one reminder exists (migrates from legacy single time).
