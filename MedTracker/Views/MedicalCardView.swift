@@ -55,9 +55,9 @@ struct MedicalCardView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(profile.name.isEmpty ? AppLocalization.string("Name Not Set") : profile.name)
+                            Text(profile.displayName)
                                 .font(.system(.title3, design: .rounded, weight: .bold))
-                            if profile.name.isEmpty {
+                            if profile.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text(AppLocalization.string("Add a name in Profile"))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
@@ -238,10 +238,7 @@ struct MedicalCardView: View {
         lines.append("PillPal Medical Card")
         lines.append(AppLocalization.string("Not an official medical ID"))
         if profile.qrIncludeName {
-            let name = profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !name.isEmpty {
-                lines.append("\(AppLocalization.string("Name")): \(name)")
-            }
+            lines.append("\(AppLocalization.string("Name")): \(profile.displayName)")
         }
         if profile.qrIncludeAllergies {
             lines.append("\(AppLocalization.string("Allergies")): \(profile.hasAllergies ? profile.trimmedAllergies : AppLocalization.string("Not recorded yet"))")

@@ -77,9 +77,10 @@ struct CareDayboardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppLocalization.string("Care"))
                     .font(.system(elderMode ? .largeTitle : .title, design: .rounded, weight: .heavy))
+                    .foregroundColor(ink)
                 Text(AppLocalization.mediumDate())
                     .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(mutedInk)
             }
             Spacer()
         }
@@ -93,15 +94,16 @@ struct CareDayboardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppLocalization.string("樂齡 Mode"))
                     .font(.system(elderMode ? .title3 : .headline, design: .rounded, weight: .bold))
+                    .foregroundColor(ink)
                 Text(AppLocalization.string("Larger text and high-contrast buttons for easier tapping."))
                     .font(.system(elderMode ? .body : .caption, design: .rounded))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(mutedInk)
             }
         }
-        .tint(.mint)
+        .tint(actionMint)
         .padding(elderMode ? 20 : 16)
         .background(Color.white)
-        .foregroundColor(.primary)
+        .foregroundColor(ink)
         .cornerRadius(22)
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
@@ -120,11 +122,11 @@ struct CareDayboardView: View {
                         } label: {
                             Text(member.displayName)
                                 .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
-                                .foregroundColor(on ? .white : .mint)
+                                .foregroundColor(on ? .white : actionMint)
                                 .padding(.horizontal, elderMode ? 18 : 14)
                                 .padding(.vertical, elderMode ? 14 : 8)
                                 .frame(minHeight: ElderMode.minTap)
-                                .background(on ? Color.mint : Color.mint.opacity(0.12))
+                                .background(on ? actionMint : actionMint.opacity(elderMode ? 0.18 : 0.12))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
@@ -135,7 +137,7 @@ struct CareDayboardView: View {
         .padding(elderMode ? 20 : 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
-        .foregroundColor(.primary)
+        .foregroundColor(ink)
         .cornerRadius(22)
     }
     
@@ -150,10 +152,11 @@ struct CareDayboardView: View {
             HStack {
                 Text(member.displayName)
                     .font(.system(elderMode ? .title : .title3, design: .rounded, weight: .heavy))
+                    .foregroundColor(ink)
                 Spacer()
                 Text(AppLocalization.format("%lld of %lld doses done", done.count, max(records.count, 0)))
                     .font(.system(elderMode ? .body : .caption, design: .rounded, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(mutedInk)
             }
             
             if records.isEmpty {
@@ -166,7 +169,7 @@ struct CareDayboardView: View {
                 if remaining.isEmpty {
                     Text(AppLocalization.string("All done for today"))
                         .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
-                        .foregroundColor(.green)
+                        .foregroundColor(statusGreen)
                 } else {
                     Text(AppLocalization.string("Remaining"))
                         .font(.system(elderMode ? .title3 : .headline, design: .rounded, weight: .bold))
@@ -188,7 +191,7 @@ struct CareDayboardView: View {
         .padding(elderMode ? 22 : 18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
-        .foregroundColor(.primary)
+        .foregroundColor(ink)
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
@@ -204,11 +207,11 @@ struct CareDayboardView: View {
                     if meds.isEmpty {
                         Text(AppLocalization.string("No medicines assigned yet."))
                             .font(.system(elderMode ? .body : .caption, design: .rounded))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(mutedInk)
                     } else {
                         Text(meds.map { $0.dose.isEmpty ? $0.name : "\($0.name) · \($0.dose)" }.joined(separator: ", "))
                             .font(.system(elderMode ? .body : .caption, design: .rounded))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(mutedInk)
                     }
                 }
                 Spacer()
@@ -225,7 +228,7 @@ struct CareDayboardView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: elderMode ? ElderMode.buttonHeight : 44.0)
-                            .background(Color.mint)
+                            .background(actionMint)
                             .cornerRadius(16)
                     }
                     .buttonStyle(.plain)
@@ -242,7 +245,7 @@ struct CareDayboardView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: elderMode ? ElderMode.buttonHeight : 44.0)
-                            .background(Color.red.opacity(elderMode ? 1 : 0.85))
+                            .background(statusRed)
                             .cornerRadius(16)
                     }
                     .buttonStyle(.plain)
@@ -259,16 +262,16 @@ struct CareDayboardView: View {
         let tint: Color
         if record.isTaken {
             title = AppLocalization.string("Taken")
-            tint = .green
+            tint = statusGreen
         } else if record.isSkipped || record.isMissed {
             title = record.isMissed ? AppLocalization.string("Missed") : AppLocalization.string("Skipped")
-            tint = .red
+            tint = statusRed
         } else if record.isDue || record.isSnoozed {
             title = AppLocalization.string("Due")
-            tint = .orange
+            tint = statusOrange
         } else {
             title = AppLocalization.string("Scheduled")
-            tint = .mint
+            tint = actionMint
         }
         return Text(title)
             .font(.system(elderMode ? .headline : .caption, design: .rounded, weight: .bold))
@@ -285,12 +288,38 @@ struct CareDayboardView: View {
                 .font(.system(elderMode ? .title2 : .headline, design: .rounded, weight: .bold))
             Text(message)
                 .font(.system(elderMode ? .body : .subheadline, design: .rounded))
-                .foregroundColor(.secondary)
+                .foregroundColor(mutedInk)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(elderMode ? 22 : 18)
         .background(embedded ? Color.clear : Color.white)
         .cornerRadius(22)
+    }
+    
+    private var ink: Color {
+        elderMode ? Color(red: 0.08, green: 0.08, blue: 0.10) : Color.primary
+    }
+    
+    /// ~12:1 on white — system `.secondary` is too light for 樂齡.
+    private var mutedInk: Color {
+        elderMode ? Color(red: 0.20, green: 0.20, blue: 0.22) : Color.secondary
+    }
+    
+    /// Darker mint so white button/chip text stays readable.
+    private var actionMint: Color {
+        elderMode ? Color(red: 0.00, green: 0.42, blue: 0.40) : Color.mint
+    }
+    
+    private var statusGreen: Color {
+        elderMode ? Color(red: 0.00, green: 0.42, blue: 0.20) : Color.green
+    }
+    
+    private var statusRed: Color {
+        elderMode ? Color(red: 0.72, green: 0.10, blue: 0.10) : Color.red.opacity(0.85)
+    }
+    
+    private var statusOrange: Color {
+        elderMode ? Color(red: 0.70, green: 0.34, blue: 0.00) : Color.orange
     }
     
     private func todayLog(for profile: UserProfile) -> MedicationLog? {

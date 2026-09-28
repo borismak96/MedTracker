@@ -666,4 +666,22 @@ enum GeneratedLocalizations {
         "Shows your medication status and recent days.": "顯示服藥狀態與近日紀錄。",
         "%lld taken · %lld skipped · %lld missed": "已服用 %lld · 已跳過 %lld · 錯過 %lld",
     ]
+    
+    /// English catalog `one` variants. 繁中 keeps a single form.
+    private static let enOne: [String: String] = [
+        "%lld readings": "%lld reading",
+        "%lld readings today": "%lld reading today",
+        "%lld complete days in a row": "%lld complete day in a row",
+    ]
+    
+    static func pluralTemplate(_ key: String, count: Int, chinese: Bool) -> String? {
+        guard enOne[key] != nil else { return nil }
+        if chinese {
+            return zhHant[key] ?? en[key]
+        }
+        if count == 1 {
+            return enOne[key]
+        }
+        return en[key]
+    }
 }

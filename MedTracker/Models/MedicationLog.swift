@@ -201,7 +201,13 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     }
     
     var localizedDisplayTitle: String {
-        localizedLabel.isEmpty ? timeDescription : "\(localizedLabel) · \(timeDescription)"
+        displayTitle(chinese: AppLocalization.prefersTraditionalChinese)
+    }
+    
+    func displayTitle(chinese: Bool) -> String {
+        let loc = ReminderSlot.localizedLabel(for: label, chinese: chinese)
+        let time = AppLocalization.shortTime(hour: hour, minute: minute, chinese: chinese)
+        return loc.isEmpty ? time : "\(loc) · \(time)"
     }
 }
 

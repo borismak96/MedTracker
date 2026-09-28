@@ -65,8 +65,16 @@ enum AppLocalization {
         format(key, chinese: prefersTraditionalChinese, arguments: arguments)
     }
     
+    static func format(_ key: String, _ count: Int) -> String {
+        format(key, chinese: prefersTraditionalChinese, arguments: [count])
+    }
+    
+    static func format(_ key: String, chinese: Bool, _ count: Int) -> String {
+        format(key, chinese: chinese, arguments: [count])
+    }
+    
     static func format(_ key: String, chinese: Bool, arguments: [CVarArg]) -> String {
-        let template = string(key, chinese: chinese)
+        let template = formatTemplate(key, chinese: chinese, arguments: arguments)
         let loc = chinese ? Locale(identifier: "zh-Hant") : Locale(identifier: "en")
         return String(format: template, locale: loc, arguments: arguments)
     }
@@ -75,17 +83,52 @@ enum AppLocalization {
         format(key, chinese: chinese, arguments: arguments)
     }
     
-    static func shortTime(hour: Int, minute: Int) -> String {
+    /// English `one`/`other` from the string catalog; 繁中 uses the same form for every count.
+    private static func formatTemplate(_ key: String, chinese: Bool, arguments: [CVarArg]) -> String {
+        if let count = firstInteger(arguments),
+           let plural = GeneratedLocalizations.pluralTemplate(key, count: count, chinese: chinese) {
+            return plural
+        }
+        return string(key, chinese: chinese)
+    }
+    
+    private static func firstInteger(_ arguments: [CVarArg]) -> Int? {
+        guard let first = arguments.first else { return nil }
+        if let value = first as? Int { return value }
+        if let value = first as? Int64 { return Int(value) }
+        if let value = first as? Int32 { return Int(value) }
+        if let value = first as? UInt { return Int(value) }
+        if let value = first as? UInt64 { return Int(value) }
+        return nil
+    }
+    
+    static func shortTime(hour: Int, minute: Int, chinese: Bool? = nil) -> String {
         var components = DateComponents()
         components.hour = hour
         components.minute = minute
         guard let date = Calendar.current.date(from: components) else {
             return String(format: "%d:%02d", hour, minute)
         }
+        let useChinese = chinese ?? prefersTraditionalChinese
         let formatter = DateFormatter()
-        formatter.locale = locale
+        if let chinese {
+            formatter.locale = chinese ? Locale(identifier: "zh-Hant") : Locale(identifier: "en")
+        } else {
+            formatter.locale = locale
+        }
         formatter.timeStyle = .short
-        return formatter.string(from: date)
+        let raw = formatter.string(from: date)
+        return useChinese ? stripChineseDayPeriod(raw) : raw
+    }
+    
+    /// zh-Hant `short` times include 上午/晚上, which duplicates slot labels like 「晚上 · 晚上9:00」.
+    private static func stripChineseDayPeriod(_ time: String) -> String {
+        let periods = ["上午", "下午", "晚上", "清晨", "凌晨", "中午", "傍晚", "午夜", "早上"]
+        var result = time
+        for period in periods {
+            result = result.replacingOccurrences(of: period, with: "")
+        }
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     static func mediumDate(_ date: Date = .now) -> String {

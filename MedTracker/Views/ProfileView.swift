@@ -217,7 +217,7 @@ struct ProfileForm: View {
                             .font(.system(.body, design: .rounded, weight: .semibold))
                         Text(AppLocalization.string("Larger text and high-contrast buttons for easier tapping."))
                             .font(.system(.caption, design: .rounded))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(elderMode ? Color(red: 0.20, green: 0.20, blue: 0.22) : Color.secondary)
                     }
                 }
                 .tint(.mint)

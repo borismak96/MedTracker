@@ -45,7 +45,8 @@ struct ReminderSlot: Codable, Identifiable, Hashable {
     
     func displayTitle(chinese: Bool) -> String {
         let loc = Self.localizedLabel(for: label, chinese: chinese)
-        return loc.isEmpty ? timeDescription : "\(loc) · \(timeDescription)"
+        let time = AppLocalization.shortTime(hour: hour, minute: minute, chinese: chinese)
+        return loc.isEmpty ? time : "\(loc) · \(time)"
     }
     
     static func localizedLabel(for label: String) -> String {
