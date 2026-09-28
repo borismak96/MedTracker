@@ -100,8 +100,8 @@ struct CareDayboardView: View {
         }
         .tint(.mint)
         .padding(elderMode ? 20 : 16)
-        .background(elderMode ? Color.black : Color.white)
-        .foregroundColor(elderMode ? .white : .primary)
+        .background(Color.white)
+        .foregroundColor(.primary)
         .cornerRadius(22)
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
@@ -120,11 +120,11 @@ struct CareDayboardView: View {
                         } label: {
                             Text(member.displayName)
                                 .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
-                                .foregroundColor(on ? .white : (elderMode ? .white : .mint))
+                                .foregroundColor(on ? .white : .mint)
                                 .padding(.horizontal, elderMode ? 18 : 14)
                                 .padding(.vertical, elderMode ? 14 : 8)
                                 .frame(minHeight: ElderMode.minTap)
-                                .background(on ? Color.mint : (elderMode ? Color.white.opacity(0.15) : Color.mint.opacity(0.12)))
+                                .background(on ? Color.mint : Color.mint.opacity(0.12))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
@@ -134,8 +134,8 @@ struct CareDayboardView: View {
         }
         .padding(elderMode ? 20 : 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(elderMode ? Color(white: 0.12) : Color.white)
-        .foregroundColor(elderMode ? .white : .primary)
+        .background(Color.white)
+        .foregroundColor(.primary)
         .cornerRadius(22)
     }
     
@@ -153,7 +153,7 @@ struct CareDayboardView: View {
                 Spacer()
                 Text(AppLocalization.format("%lld of %lld doses done", done.count, max(records.count, 0)))
                     .font(.system(elderMode ? .body : .caption, design: .rounded, weight: .semibold))
-                    .foregroundColor(elderMode ? Color.white.opacity(0.85) : .secondary)
+                    .foregroundColor(.secondary)
             }
             
             if records.isEmpty {
@@ -187,8 +187,8 @@ struct CareDayboardView: View {
         }
         .padding(elderMode ? 22 : 18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(elderMode ? Color.black : Color.white)
-        .foregroundColor(elderMode ? .white : .primary)
+        .background(Color.white)
+        .foregroundColor(.primary)
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
@@ -204,11 +204,11 @@ struct CareDayboardView: View {
                     if meds.isEmpty {
                         Text(AppLocalization.string("No medicines assigned yet."))
                             .font(.system(elderMode ? .body : .caption, design: .rounded))
-                            .foregroundColor(elderMode ? Color.white.opacity(0.75) : .secondary)
+                            .foregroundColor(.secondary)
                     } else {
                         Text(meds.map { $0.dose.isEmpty ? $0.name : "\($0.name) · \($0.dose)" }.joined(separator: ", "))
                             .font(.system(elderMode ? .body : .caption, design: .rounded))
-                            .foregroundColor(elderMode ? Color.white.opacity(0.8) : .secondary)
+                            .foregroundColor(.secondary)
                     }
                 }
                 Spacer()
@@ -250,7 +250,7 @@ struct CareDayboardView: View {
             }
         }
         .padding(elderMode ? 16 : 12)
-        .background(elderMode ? Color.white.opacity(0.12) : Color(UIColor.secondarySystemBackground))
+        .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(16)
     }
     
@@ -285,11 +285,11 @@ struct CareDayboardView: View {
                 .font(.system(elderMode ? .title2 : .headline, design: .rounded, weight: .bold))
             Text(message)
                 .font(.system(elderMode ? .body : .subheadline, design: .rounded))
-                .foregroundColor(elderMode && !embedded ? Color.white.opacity(0.8) : .secondary)
+                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(elderMode ? 22 : 18)
-        .background(embedded ? Color.clear : (elderMode ? Color.black : Color.white))
+        .background(embedded ? Color.clear : Color.white)
         .cornerRadius(22)
     }
     
