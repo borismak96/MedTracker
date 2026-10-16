@@ -44,7 +44,6 @@
 		HH0000000000000000000008 /* ProfileSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000007 /* ProfileSwitcher.swift */; };
 		V12000000000000000000002 /* VisitPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000001 /* VisitPack.swift */; };
 		V12000000000000000000004 /* VisitPackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000003 /* VisitPackView.swift */; };
-		V12000000000000000000006 /* CareDayboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000005 /* CareDayboardView.swift */; };
 		V12000000000000000000008 /* OfflineQRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = V12000000000000000000007 /* OfflineQRCode.swift */; };
 		HR0000000000000000000002 /* HeartRateCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000001 /* HeartRateCategoryBadge.swift */; };
 		HR0000000000000000000004 /* HeartRateChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000003 /* HeartRateChartView.swift */; };
@@ -123,7 +122,6 @@
 		HH0000000000000000000007 /* ProfileSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitcher.swift; sourceTree = "<group>"; };
 		V12000000000000000000001 /* VisitPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitPack.swift; sourceTree = "<group>"; };
 		V12000000000000000000003 /* VisitPackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitPackView.swift; sourceTree = "<group>"; };
-		V12000000000000000000005 /* CareDayboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareDayboardView.swift; sourceTree = "<group>"; };
 		V12000000000000000000007 /* OfflineQRCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineQRCode.swift; sourceTree = "<group>"; };
 		HR0000000000000000000001 /* HeartRateCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateCategoryBadge.swift; sourceTree = "<group>"; };
 		HR0000000000000000000003 /* HeartRateChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateChartView.swift; sourceTree = "<group>"; };
@@ -254,7 +252,6 @@
 				870A7C086F9735A09C05FA2E /* SplashView.swift */,
 				F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */,
 				V12000000000000000000003 /* VisitPackView.swift */,
-				V12000000000000000000005 /* CareDayboardView.swift */,
 				V12000000000000000000007 /* OfflineQRCode.swift */,
 				BP0000000000000000000001 /* BloodPressureChartView.swift */,
 				HR0000000000000000000003 /* HeartRateChartView.swift */,
@@ -391,7 +388,6 @@
 				HH0000000000000000000008 /* ProfileSwitcher.swift in Sources */,
 				V12000000000000000000002 /* VisitPack.swift in Sources */,
 				V12000000000000000000004 /* VisitPackView.swift in Sources */,
-				V12000000000000000000006 /* CareDayboardView.swift in Sources */,
 				V12000000000000000000008 /* OfflineQRCode.swift in Sources */,
 				9B851C832C41D8DF006BEED4 /* ContentView.swift in Sources */,
 				MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */,

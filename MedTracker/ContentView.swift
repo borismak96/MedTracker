@@ -3,7 +3,6 @@ import SwiftData
 
 enum AppTab: Hashable {
     case today
-    case care
     case history
     case profile
 }
@@ -16,6 +15,7 @@ struct ContentView: View {
     
     @State private var selectedTab: AppTab = .today
     @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -24,12 +24,6 @@ struct ContentView: View {
                     Label(AppLocalization.string("Today"), systemImage: "pill.fill")
                 }
                 .tag(AppTab.today)
-            
-            CareDayboardView()
-                .tabItem {
-                    Label(AppLocalization.string("Care"), systemImage: "checklist")
-                }
-                .tag(AppTab.care)
             
             HistoryView()
                 .tabItem {
@@ -43,6 +37,7 @@ struct ContentView: View {
                 }
                 .tag(AppTab.profile)
         }
+        .modifier(ElderDynamicType(enabled: elderMode))
         .onAppear {
             initializeData()
         }
@@ -73,4 +68,17 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .modelContainer(for: [MedicationLog.self, UserProfile.self], inMemory: true)
+}
+
+private struct ElderDynamicType: ViewModifier {
+    var enabled: Bool
+    
+    func body(content: Content) -> some View {
+        if enabled {
+            // One step below Accessibility sizes so cards, tabs, and pills still fit.
+            content.dynamicTypeSize(.xxLarge)
+        } else {
+            content
+        }
+    }
 }

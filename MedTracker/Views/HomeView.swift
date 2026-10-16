@@ -7,6 +7,7 @@ struct HomeView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     @State private var showingSkipSheet = false
     @State private var skipNotes = ""
@@ -227,8 +228,10 @@ struct HomeView: View {
                 Text(AppBrand.displayName)
                     .font(.system(.title, design: .rounded, weight: .heavy))
                     .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 
-                Spacer()
+                Spacer(minLength: 8)
                 
                 HStack(spacing: 10) {
                     Button(action: {
@@ -272,7 +275,7 @@ struct HomeView: View {
             }
             
             // Greeting and Avatar
-            HStack {
+            HStack(alignment: .top) {
                 if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
                     Image(uiImage: uiImage)
                         .resizable()
@@ -299,12 +302,18 @@ struct HomeView: View {
                     Text(AppLocalization.string("Let's stay on track today."))
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundColor(.secondary)
+                    if elderMode {
+                        ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                            .padding(.top, 6)
+                    }
                 }
                 .padding(.leading, 8)
+                .fixedSize(horizontal: false, vertical: true)
                 
-                Spacer()
-                
-                ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                if !elderMode {
+                    Spacer()
+                    ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                }
             }
         }
     }
@@ -313,7 +322,7 @@ struct HomeView: View {
         Button {
             showingVisitPack = true
         } label: {
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(Color.mint.opacity(0.15))
@@ -328,11 +337,13 @@ struct HomeView: View {
                     Text(AppLocalization.string("Share a bilingual summary for your clinic visit."))
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
+                Spacer(minLength: 8)
                 Image(systemName: "square.and.arrow.up")
                     .font(.subheadline.weight(.bold))
                     .foregroundColor(.mint)
+                    .padding(.top, 4)
             }
             .padding(16)
             .background(Color.white)
@@ -347,7 +358,7 @@ struct HomeView: View {
         Button {
             selectedTab = .history
         } label: {
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(Color.mint.opacity(0.15))
@@ -359,17 +370,21 @@ struct HomeView: View {
                     Text(AppLocalization.format("%lld complete days in a row", AdherenceStats.consecutiveDayStreak(logs: logs)))
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(AppLocalization.format("Adherence: %lld%%", AdherenceStats.weekSummary(logs: logs).adherencePercent))
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                Spacer()
-                Text(AppLocalization.string("History"))
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundColor(.mint)
+                Spacer(minLength: 8)
+                if !elderMode {
+                    Text(AppLocalization.string("History"))
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundColor(.mint)
+                }
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))
                     .foregroundColor(.secondary)
+                    .padding(.top, 6)
             }
             .padding(16)
             .background(Color.white)
@@ -734,6 +749,7 @@ struct TodayCard: View {
                     Text(AppLocalization.string("Log each reminder time"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     HStack(spacing: 6) {
                         Image(systemName: "clock.fill")
@@ -741,17 +757,20 @@ struct TodayCard: View {
                     }
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 Spacer(minLength: 12)
                 
-                ZStack {
-                    Circle()
-                        .fill(Color.mint.opacity(0.15))
-                        .frame(width: 70, height: 70)
-                    Image(systemName: "pills.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(.mint)
+                if !elderMode {
+                    ZStack {
+                        Circle()
+                            .fill(Color.mint.opacity(0.15))
+                            .frame(width: 70, height: 70)
+                        Image(systemName: "pills.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(.mint)
+                    }
                 }
             }
             
@@ -903,10 +922,11 @@ struct TodayCard: View {
         let secondaryColor = StatsRingPalette.secondaryText(for: reminder)
         
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
                 Circle()
                     .fill(prefersLightText ? Color.white : Color(white: 0.15))
                     .frame(width: 12, height: 12)
+                    .padding(.top, 6)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
@@ -917,7 +937,7 @@ struct TodayCard: View {
                         .foregroundColor(secondaryColor)
                 }
                 
-                Spacer()
+                Spacer(minLength: 8)
                 
                 statusChip(for: record, onSolid: true)
             }
@@ -979,7 +999,7 @@ struct TodayCard: View {
                             }
                         } label: {
                             Text(AppLocalization.string("Take Now"))
-                                .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(minHeight: elderMode ? ElderMode.buttonHeight : 0.0)
@@ -989,9 +1009,9 @@ struct TodayCard: View {
                         }
                         .buttonStyle(.plain)
                         
-                        HStack(spacing: 10) {
+                        if elderMode {
                             snoozeMenu(reminderId: record.id, titleColor: titleColor)
-                            
+                                .frame(maxWidth: .infinity)
                             Button {
                                 activeSkipReminderId = record.id
                                 skippedTime = Date()
@@ -1000,15 +1020,35 @@ struct TodayCard: View {
                                 showingSkipSheet = true
                             } label: {
                                 Text(AppLocalization.string("Skip / Missed"))
-                                    .font(.system(elderMode ? .title3 : .subheadline, design: .rounded, weight: .bold))
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
                                     .foregroundColor(titleColor)
                                     .frame(maxWidth: .infinity)
-                                    .frame(minHeight: elderMode ? ElderMode.buttonHeight : 0.0)
-                                    .padding(.vertical, elderMode ? 0 : 12)
+                                    .frame(minHeight: ElderMode.buttonHeight)
                                     .background(Color.white.opacity(0.55))
                                     .cornerRadius(14)
                             }
                             .buttonStyle(.plain)
+                        } else {
+                            HStack(spacing: 10) {
+                                snoozeMenu(reminderId: record.id, titleColor: titleColor)
+                                
+                                Button {
+                                    activeSkipReminderId = record.id
+                                    skippedTime = Date()
+                                    skipReaction = ""
+                                    skipNotes = ""
+                                    showingSkipSheet = true
+                                } label: {
+                                    Text(AppLocalization.string("Skip / Missed"))
+                                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                        .foregroundColor(titleColor)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.white.opacity(0.55))
+                                        .cornerRadius(14)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                 }
             }
