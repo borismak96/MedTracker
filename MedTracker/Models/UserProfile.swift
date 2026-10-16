@@ -326,9 +326,9 @@ class UserProfile {
     /// Remove deleted medication names from stored history dose records.
     func pruneRemovedMedications(from logs: [MedicationLog]) {
         let active = activeMedicationNames
-        for log in logs {
-            if !log.doseRecords.isEmpty {
-                var records = log.doseRecords
+        for log in logs where log.isStoredInContext {
+            if !log.liveDoseRecords.isEmpty {
+                var records = log.liveDoseRecords
                 for index in records.indices {
                     let filtered = Self.filteredMedicationLines(
                         names: records[index].medicineName,
@@ -338,7 +338,7 @@ class UserProfile {
                     records[index].medicineName = filtered.names
                     records[index].dose = filtered.doses
                 }
-                log.doseRecords = records
+                log.liveDoseRecords = records
                 log.refreshAggregateFlags()
             } else {
                 let filtered = Self.filteredMedicationLines(

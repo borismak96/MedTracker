@@ -2,15 +2,19 @@ import Foundation
 
 enum AdherenceStats {
     static func isComplete(_ log: MedicationLog) -> Bool {
-        if !log.doseRecords.isEmpty {
-            return !log.doseRecords.isEmpty && log.doseRecords.allSatisfy(\.isTaken)
+        guard log.isStoredInContext else { return false }
+        let records = log.liveDoseRecords
+        if !records.isEmpty {
+            return records.allSatisfy(\.isTaken)
         }
         return log.isTaken
     }
     
     static func hasLoggedActivity(_ log: MedicationLog) -> Bool {
-        if !log.doseRecords.isEmpty {
-            return log.doseRecords.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
+        guard log.isStoredInContext else { return false }
+        let records = log.liveDoseRecords
+        if !records.isEmpty {
+            return records.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
         }
         return log.isTaken || log.skippedTime != nil
     }
@@ -18,7 +22,7 @@ enum AdherenceStats {
     /// Consecutive complete days, including today when every dose is taken.
     static func consecutiveDayStreak(logs: [MedicationLog], now: Date = Date(), calendar: Calendar = .current) -> Int {
         let byDay: [Date: MedicationLog] = Dictionary(
-            logs.map { (calendar.startOfDay(for: $0.date), $0) },
+            logs.filter(\.isStoredInContext).map { (calendar.startOfDay(for: $0.date), $0) },
             uniquingKeysWith: { _, latest in latest }
         )
         var day = calendar.startOfDay(for: now)
@@ -64,7 +68,7 @@ enum AdherenceStats {
         
         for offset in 0..<7 {
             guard let date = calendar.date(byAdding: .day, value: offset, to: weekStart) else { continue }
-            let log = logs.first { calendar.isDate($0.date, inSameDayAs: date) }
+            let log = logs.first { $0.isStoredInContext && calendar.isDate($0.date, inSameDayAs: date) }
             let records = log?.sortedDoseRecords ?? []
             let dayTaken = records.filter(\.isTaken).count
             let daySkipped = records.filter(\.isSkipped).count
@@ -146,7 +150,7 @@ enum AdherenceStats {
         
         for offset in (0..<span).reversed() {
             guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
-            let log = logs.first { calendar.isDate($0.date, inSameDayAs: date) }
+            let log = logs.first { $0.isStoredInContext && calendar.isDate($0.date, inSameDayAs: date) }
             let records = log?.sortedDoseRecords ?? []
             let dayTaken: Int
             let daySkipped: Int

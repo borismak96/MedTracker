@@ -50,15 +50,17 @@ struct ContentView: View {
             }
         }
         .onChange(of: activeProfileID) { _, _ in
-            if let profile = ActiveProfileStore.resolve(from: profiles) {
-                HouseholdData.ensureTodayLog(for: profile, logs: logs, context: modelContext)
+            if let profile = ActiveProfileStore.resolve(from: profiles.filter(\.isStoredInContext)) {
+                HouseholdData.ensureTodayLog(for: profile, logs: logs.filter(\.isStoredInContext), context: modelContext)
                 NotificationManager.shared.rescheduleFromStore()
             }
         }
     }
     
     private func initializeData() {
-        HouseholdData.bootstrap(profiles: profiles, logs: logs, context: modelContext)
+        let liveProfiles = profiles.filter(\.isStoredInContext)
+        let liveLogs = logs.filter(\.isStoredInContext)
+        HouseholdData.bootstrap(profiles: liveProfiles, logs: liveLogs, context: modelContext)
         if NotificationPreferences.isEnabled {
             NotificationManager.shared.registerCategories()
         }

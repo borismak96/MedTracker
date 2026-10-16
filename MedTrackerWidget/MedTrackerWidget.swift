@@ -6,7 +6,17 @@ import AppIntents
 // MARK: - Providers
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), log: nil, profile: nil, dayStreak: 0)
+        SimpleEntry(
+            date: Date(),
+            profileDisplayName: nil,
+            medicationCount: 0,
+            dayStreak: 0,
+            isTakenToday: false,
+            hasDueOrSnoozed: false,
+            hasSkippedOrMissed: false,
+            hasBPToday: false,
+            nextDoseDate: nil
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
@@ -17,19 +27,8 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let entry = fetchEntry()
         var nextUpdate = Calendar.current.startOfDay(for: Date()).addingTimeInterval(86400)
-        if let log = entry.log {
-            let now = Date()
-            let upcoming = log.sortedDoseRecords.compactMap { record -> Date? in
-                if let until = record.snoozedUntil, until > now { return until }
-                if record.isOpen {
-                    let scheduled = record.scheduledDate(on: log.date)
-                    return scheduled > now ? scheduled : nil
-                }
-                return nil
-            }
-            if let soonest = upcoming.min(), soonest < nextUpdate {
-                nextUpdate = soonest
-            }
+        if let soonest = entry.nextDoseDate, soonest < nextUpdate {
+            nextUpdate = soonest
         }
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
@@ -50,16 +49,42 @@ struct Provider: TimelineProvider {
         let todayLog = profileLogs.first(where: { Calendar.current.startOfDay(for: $0.date) == todayStart })
         
         let currentStreak = AdherenceStats.consecutiveDayStreak(logs: profileLogs)
+        let records = todayLog?.liveDoseRecords ?? []
+        let now = Date()
+        let logDay = todayLog?.date ?? todayStart
+        let nextDoseDate = records.compactMap { record -> Date? in
+            if let until = record.snoozedUntil, until > now { return until }
+            if record.isOpen {
+                let scheduled = record.scheduledDate(on: logDay)
+                return scheduled > now ? scheduled : nil
+            }
+            return nil
+        }.min()
         
-        return SimpleEntry(date: Date(), log: todayLog, profile: profile, dayStreak: currentStreak)
+        return SimpleEntry(
+            date: Date(),
+            profileDisplayName: profile?.displayName,
+            medicationCount: profile?.medications.count ?? 0,
+            dayStreak: currentStreak,
+            isTakenToday: todayLog?.isTaken ?? false,
+            hasDueOrSnoozed: records.contains { $0.isDue || $0.isSnoozed },
+            hasSkippedOrMissed: todayLog?.skippedTime != nil || records.contains { $0.isSkipped || $0.isMissed },
+            hasBPToday: todayLog?.systolic != nil && todayLog?.diastolic != nil,
+            nextDoseDate: nextDoseDate
+        )
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let log: MedicationLog?
-    let profile: UserProfile?
+    let profileDisplayName: String?
+    let medicationCount: Int
     let dayStreak: Int
+    let isTakenToday: Bool
+    let hasDueOrSnoozed: Bool
+    let hasSkippedOrMissed: Bool
+    let hasBPToday: Bool
+    let nextDoseDate: Date?
 }
 
 // MARK: - 1. Small Widget (Status & Streak)
@@ -68,19 +93,19 @@ struct MedTrackerWidgetEntryView : View {
 
     var body: some View {
         VStack(spacing: 12) {
-            if let log = entry.log, log.isTaken {
+            if entry.isTakenToday {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.green)
                 Text(AppLocalization.string("Taken Today"))
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
-            } else if let log = entry.log, log.doseRecords.contains(where: { $0.isDue || $0.isSnoozed }) {
+            } else if entry.hasDueOrSnoozed {
                 Image(systemName: "bell.badge.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.orange)
                 Text(AppLocalization.string("Due now"))
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
-            } else if let log = entry.log, log.skippedTime != nil || log.doseRecords.contains(where: { $0.isSkipped || $0.isMissed }) {
+            } else if entry.hasSkippedOrMissed {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.red)
@@ -138,15 +163,15 @@ struct MedTrackerMediumWidgetEntryView : View {
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.mint)
                     Spacer()
-                    if let profile = entry.profile {
-                        Text(profile.displayName)
+                    if let name = entry.profileDisplayName {
+                        Text(name)
                             .font(.system(.caption2, design: .rounded, weight: .bold))
                             .foregroundColor(.secondary)
                     }
                 }
                 
-                if let profile = entry.profile, !profile.medications.isEmpty {
-                    Text(AppLocalization.format("%lld medications", profile.medications.count))
+                if entry.medicationCount > 0 {
+                    Text(AppLocalization.format("%lld medications", entry.medicationCount))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 } else {
                     Text(AppLocalization.string("No medications added."))
@@ -165,7 +190,7 @@ struct MedTrackerMediumWidgetEntryView : View {
                     .font(.system(.headline, design: .rounded, weight: .bold))
                     .foregroundColor(.blue)
                 
-                if let log = entry.log, log.systolic != nil, log.diastolic != nil {
+                if entry.hasBPToday {
                     Text(AppLocalization.string("BP recorded today."))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 } else {
@@ -176,7 +201,7 @@ struct MedTrackerMediumWidgetEntryView : View {
                 
                 Spacer()
                 
-                if let log = entry.log, log.isTaken {
+                if entry.isTakenToday {
                     HStack {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
                         Text(AppLocalization.string("Taken")).font(.caption.bold())
@@ -216,7 +241,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            if let log = entry.log, log.isTaken {
+            if entry.isTakenToday {
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 32))
@@ -224,7 +249,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                     Text(AppLocalization.string("Taken Today"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                 }
-            } else if let log = entry.log, log.doseRecords.contains(where: { $0.isDue || $0.isSnoozed }) {
+            } else if entry.hasDueOrSnoozed {
                 VStack(spacing: 6) {
                     Text(AppLocalization.string("Due now"))
                         .font(.system(.caption, design: .rounded, weight: .bold))
@@ -260,7 +285,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                     }
                     .frame(maxHeight: 80)
                 }
-            } else if let log = entry.log, log.skippedTime != nil {
+            } else if entry.hasSkippedOrMissed {
                 VStack(spacing: 8) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 32))

@@ -440,7 +440,7 @@ struct HistoryView: View {
         let isToday = Calendar.current.isDateInToday(selectedDate)
         
         // Prefer persisted per-reminder records (same source as Home).
-        if let log, !log.doseRecords.isEmpty {
+        if let log, log.isStoredInContext, !log.liveDoseRecords.isEmpty {
             let records = log.sortedDoseRecords
             if isToday {
                 return records
@@ -644,7 +644,7 @@ struct HistoryView: View {
     }
     
     func logForDate(_ date: Date) -> MedicationLog? {
-        logs.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        logs.first { $0.isStoredInContext && Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
     
     func changeMonth(by value: Int) {
@@ -696,8 +696,8 @@ struct DayCell: View {
     
     private var doseDotColors: [Color] {
         guard let log = log else { return [] }
-        if !log.doseRecords.isEmpty {
-            let hasActivity = log.doseRecords.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
+        if !log.liveDoseRecords.isEmpty {
+            let hasActivity = log.liveDoseRecords.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
             // Don't treat pending-only past days as activity on the calendar.
             if !hasActivity && !Calendar.current.isDateInToday(date) {
                 return []
@@ -1165,11 +1165,11 @@ struct DailyRecordSheet: View {
             hrReadings.append(HeartRateReading(recordedAt: recordedAt, bpm: bpm))
         }
         
-        targetLog.doseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
+        targetLog.liveDoseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
         targetLog.refreshAggregateFlags()
-        targetLog.bpReadings = readings.sorted { $0.recordedAt < $1.recordedAt }
+        targetLog.liveBPReadings = readings.sorted { $0.recordedAt < $1.recordedAt }
         targetLog.syncLegacyBPFields()
-        targetLog.hrReadings = hrReadings.sorted { $0.recordedAt < $1.recordedAt }
+        targetLog.liveHRReadings = hrReadings.sorted { $0.recordedAt < $1.recordedAt }
         targetLog.syncLegacyHRFields()
         targetLog.mood = mood?.rawValue
         if targetLog.profileId == nil {

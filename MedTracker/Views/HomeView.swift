@@ -45,8 +45,8 @@ struct HomeView: View {
     }
     
     var todayLog: MedicationLog? {
-        let today = Calendar.current.startOfDay(for: Date())
-        return logs.first(where: { Calendar.current.isDate($0.date, inSameDayAs: today) })
+        guard let profile else { return nil }
+        return HouseholdData.todayLog(for: profile, in: allLogs)
     }
     
     var body: some View {
@@ -66,7 +66,6 @@ struct HomeView: View {
                             
                             if let log = todayLog {
                                 TodayCard(
-                                    log: log,
                                     profile: profile,
                                     showingSkipSheet: $showingSkipSheet,
                                     activeSkipReminderId: $activeSkipReminderId,
@@ -74,7 +73,7 @@ struct HomeView: View {
                                     skipReaction: $skipReaction,
                                     skipNotes: $skipNotes
                                 )
-                                .id(profile.id)
+                                .id(log.persistentModelID)
                                 
                                 VitalsCard(
                                     log: log,
@@ -85,6 +84,7 @@ struct HomeView: View {
                                     bpRecordedAt: $bpRecordedAt,
                                     editingBPReadingId: $editingBPReadingId
                                 )
+                                .id(log.persistentModelID)
                                 
                                 HeartRateCard(
                                     log: log,
@@ -94,6 +94,7 @@ struct HomeView: View {
                                     hrRecordedAt: $hrRecordedAt,
                                     editingHRReadingId: $editingHRReadingId
                                 )
+                                .id(log.persistentModelID)
                                 
                                 MoodStatsCard(logs: logs)
                             } else {
@@ -127,21 +128,21 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingSkipSheet) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     skipSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingBPSheet, onDismiss: {
                 editingBPReadingId = nil
             }) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     bpSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingHRSheet, onDismiss: {
                 editingHRReadingId = nil
             }) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     hrSheetContent(for: log)
                 }
             }
@@ -396,7 +397,7 @@ struct HomeView: View {
     }
     
     func skipSheetContent(for log: MedicationLog) -> some View {
-        let reminderTitle = log.doseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
+        let reminderTitle = log.liveDoseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
             ?? AppLocalization.string("Missed Details")
         
         return NavigationView {
@@ -726,7 +727,6 @@ struct HomeView: View {
 }
 
 struct TodayCard: View {
-    @Bindable var log: MedicationLog
     var profile: UserProfile
     @Binding var showingSkipSheet: Bool
     @Binding var activeSkipReminderId: UUID?
@@ -734,11 +734,24 @@ struct TodayCard: View {
     @Binding var skipReaction: String
     @Binding var skipNotes: String
     
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @State private var selectedMood: MoodStatus? = nil
     @State private var remarkText: String = ""
     @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
+    /// Always the in-context @Query row. Never the instance that screenshot seeding just deleted.
+    private var log: MedicationLog? {
+        HouseholdData.todayLog(for: profile, in: allLogs)
+    }
+    
     var body: some View {
+        if let log {
+            cardContent(log: log)
+        }
+    }
+    
+    @ViewBuilder
+    private func cardContent(log: MedicationLog) -> some View {
         VStack(spacing: 20) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -753,7 +766,7 @@ struct TodayCard: View {
                     
                     HStack(spacing: 6) {
                         Image(systemName: "clock.fill")
-                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.doseRecords.count, 1)))
+                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.liveDoseRecords.count, 1)))
                     }
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
@@ -850,7 +863,7 @@ struct TodayCard: View {
     
     @ViewBuilder
     private var dueNowBanner: some View {
-        let due = log.dueOrSnoozedRecords
+        let due = log?.dueOrSnoozedRecords ?? []
         if !due.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 8) {
@@ -882,7 +895,7 @@ struct TodayCard: View {
                         Spacer()
                         Button {
                             withAnimation {
-                                log.markTaken(
+                                log?.markTaken(
                                     reminderId: record.id,
                                     mood: selectedMood?.rawValue,
                                     remark: remarkText.isEmpty ? nil : remarkText,
@@ -990,7 +1003,7 @@ struct TodayCard: View {
                 VStack(spacing: 8) {
                         Button {
                             withAnimation {
-                                log.markTaken(
+                                log?.markTaken(
                                     reminderId: record.id,
                                     mood: selectedMood?.rawValue,
                                     remark: remarkText.isEmpty ? nil : remarkText,
@@ -1094,13 +1107,13 @@ struct TodayCard: View {
     private func snoozeMenu(reminderId: UUID, titleColor: Color) -> some View {
         Menu {
             Button(AppLocalization.string("Snooze 10 min")) {
-                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 10) }
+                withAnimation { log?.markSnoozed(reminderId: reminderId, minutes: 10) }
             }
             Button(AppLocalization.string("Snooze 30 min")) {
-                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 30) }
+                withAnimation { log?.markSnoozed(reminderId: reminderId, minutes: 30) }
             }
             Button(AppLocalization.string("Snooze 1 hour")) {
-                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 60) }
+                withAnimation { log?.markSnoozed(reminderId: reminderId, minutes: 60) }
             }
         } label: {
             Text(AppLocalization.string("Snooze"))
@@ -1116,7 +1129,7 @@ struct TodayCard: View {
     
     private func undoButton(reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
         Button {
-            withAnimation { log.undoDose(reminderId: reminderId) }
+            withAnimation { log?.undoDose(reminderId: reminderId) }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.uturn.backward")
@@ -1139,7 +1152,7 @@ struct TodayCard: View {
 }
 
 struct VitalsCard: View {
-    @Bindable var log: MedicationLog
+    var log: MedicationLog
     @Binding var showingBPSheet: Bool
     @Binding var showingBPChart: Bool
     @Binding var bpSystolic: String
@@ -1152,6 +1165,12 @@ struct VitalsCard: View {
     }
     
     var body: some View {
+        if log.isStoredInContext {
+            vitalsContent
+        }
+    }
+    
+    private var vitalsContent: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
@@ -1287,7 +1306,7 @@ struct VitalsCard: View {
 }
 
 struct HeartRateCard: View {
-    @Bindable var log: MedicationLog
+    var log: MedicationLog
     @Binding var showingHRSheet: Bool
     @Binding var showingHRChart: Bool
     @Binding var hrBPM: String
@@ -1299,6 +1318,12 @@ struct HeartRateCard: View {
     }
     
     var body: some View {
+        if log.isStoredInContext {
+            heartRateContent
+        }
+    }
+    
+    private var heartRateContent: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
@@ -1438,6 +1463,7 @@ struct MoodStatsCard: View {
         let calendar = Calendar.current
         let today = Date()
         return logs.filter {
+            $0.isStoredInContext &&
             calendar.isDate($0.date, equalTo: today, toGranularity: .month)
             && MoodStatus.from(string: $0.mood) != nil
         }

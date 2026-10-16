@@ -66,7 +66,7 @@ struct LogMedicationIntent: AppIntent {
                         notes: nil
                     )
                 }
-            } else if targetLog.doseRecords.isEmpty {
+            } else if targetLog.liveDoseRecords.isEmpty {
                 // Fallback for unexpected empty state
                 applyLegacyUpdate(to: targetLog, profile: profile)
             }
