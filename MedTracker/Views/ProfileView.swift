@@ -417,6 +417,10 @@ struct ProfileForm: View {
                                             .offset(x: 4, y: -4)
                                     }
                                 }
+                                // Badge hangs past the 56pt avatar; keep that overflow
+                                // inside layout so ScrollView / the cell don't clip it.
+                                .padding(.top, 6)
+                                .padding(.trailing, 6)
                                 Text(member.displayName)
                                     .font(.system(.caption, design: .rounded, weight: .bold))
                                     .foregroundColor(.primary)
@@ -450,6 +454,8 @@ struct ProfileForm: View {
                                         .font(.system(size: 20, weight: .bold))
                                         .foregroundColor(.mint)
                                 }
+                                .padding(.top, 6)
+                                .padding(.trailing, 6)
                                 Text(AppLocalization.string("Add Person"))
                                     .font(.system(.caption, design: .rounded, weight: .bold))
                                     .foregroundColor(.mint)
