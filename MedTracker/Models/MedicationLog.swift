@@ -2,6 +2,15 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+extension PersistentModel {
+    /// False after delete, store reset, or when this instance has no ModelContext.
+    /// Transformable attributes (`doseRecords`, `bpReadings`, `hrReadings`) fatal if read while detached.
+    var isStoredInContext: Bool {
+        guard modelContext != nil else { return false }
+        return !isDeleted
+    }
+}
+
 enum MoodStatus: String, CaseIterable {
     case terrible = "Terrible"
     case bad = "Bad"
@@ -93,12 +102,14 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     var dose: String? = nil
     var mood: String? = nil
     var snoozedUntil: Date? = nil
+    /// Set by Undo so the 2-hour miss window does not immediately re-mark the slot missed.
+    var holdOpen: Bool = false
     
     enum CodingKeys: String, CodingKey {
-        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood, snoozedUntil
+        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood, snoozedUntil, holdOpen
     }
     
-    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil, snoozedUntil: Date? = nil) {
+    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil, snoozedUntil: Date? = nil, holdOpen: Bool = false) {
         self.id = id
         self.label = label
         self.hour = hour
@@ -112,6 +123,7 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         self.dose = dose
         self.mood = mood
         self.snoozedUntil = snoozedUntil
+        self.holdOpen = holdOpen
     }
     
     init(from decoder: Decoder) throws {
@@ -129,6 +141,7 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         self.dose = try container.decodeIfPresent(String.self, forKey: .dose)
         self.mood = try container.decodeIfPresent(String.self, forKey: .mood)
         self.snoozedUntil = try container.decodeIfPresent(Date.self, forKey: .snoozedUntil)
+        self.holdOpen = try container.decodeIfPresent(Bool.self, forKey: .holdOpen) ?? false
     }
     
     var doseStatus: DoseRecordStatus {
@@ -177,6 +190,14 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
             return
         }
         
+        // Undo (and any other holdOpen) keeps the slot actionable instead of
+        // immediately flipping back to Missed after the 2-hour window.
+        if holdOpen {
+            status = DoseRecordStatus.due.rawValue
+            snoozedUntil = nil
+            return
+        }
+        
         let dueAnchor = snoozedUntil ?? scheduled
         if evaluationTime >= dueAnchor.addingTimeInterval(missWindow) {
             status = DoseRecordStatus.missed.rawValue
@@ -201,7 +222,13 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     }
     
     var localizedDisplayTitle: String {
-        localizedLabel.isEmpty ? timeDescription : "\(localizedLabel) · \(timeDescription)"
+        displayTitle(chinese: AppLocalization.prefersTraditionalChinese)
+    }
+    
+    func displayTitle(chinese: Bool) -> String {
+        let loc = ReminderSlot.localizedLabel(for: label, chinese: chinese)
+        let time = AppLocalization.shortTime(hour: hour, minute: minute, chinese: chinese)
+        return loc.isEmpty ? time : "\(loc) · \(time)"
     }
 }
 
@@ -422,6 +449,7 @@ class MedicationLog {
     var mood: String?
     
     /// Per-reminder take / skip records for the day.
+    /// Do not read from views if this log may have been deleted — use `liveDoseRecords`.
     var doseRecords: [ReminderDoseRecord] = []
     
     /// Multiple blood-pressure readings for the day.
@@ -429,6 +457,40 @@ class MedicationLog {
     
     /// Multiple heart-rate readings for the day.
     var hrReadings: [HeartRateReading] = []
+    
+    /// Empty when backing data is detached (seed erase, delete, store reset) instead of fataling.
+    var liveDoseRecords: [ReminderDoseRecord] {
+        get {
+            guard isStoredInContext else { return [] }
+            return doseRecords
+        }
+        set {
+            guard isStoredInContext else { return }
+            doseRecords = newValue
+        }
+    }
+    
+    var liveBPReadings: [BloodPressureReading] {
+        get {
+            guard isStoredInContext else { return [] }
+            return bpReadings
+        }
+        set {
+            guard isStoredInContext else { return }
+            bpReadings = newValue
+        }
+    }
+    
+    var liveHRReadings: [HeartRateReading] {
+        get {
+            guard isStoredInContext else { return [] }
+            return hrReadings
+        }
+        set {
+            guard isStoredInContext else { return }
+            hrReadings = newValue
+        }
+    }
     
     /// Household member this day log belongs to. Nil only on pre-migration rows.
     var profileId: UUID? = nil
@@ -461,13 +523,14 @@ class MedicationLog {
     }
     
     var sortedDoseRecords: [ReminderDoseRecord] {
-        doseRecords.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
+        liveDoseRecords.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
     }
     
     var sortedBPReadings: [BloodPressureReading] {
         // Prefer persisted multi-readings; fall back to legacy pair without mutating.
-        if !bpReadings.isEmpty {
-            return bpReadings.sorted { $0.recordedAt < $1.recordedAt }
+        let readings = liveBPReadings
+        if !readings.isEmpty {
+            return readings.sorted { $0.recordedAt < $1.recordedAt }
         }
         if let sys = systolic, let dia = diastolic {
             var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
@@ -484,11 +547,11 @@ class MedicationLog {
     }
     
     var takenDoseCount: Int {
-        doseRecords.filter(\.isTaken).count
+        liveDoseRecords.filter(\.isTaken).count
     }
     
     var pendingDoseCount: Int {
-        doseRecords.filter(\.isOpen).count
+        liveDoseRecords.filter(\.isOpen).count
     }
     
     var dueOrSnoozedRecords: [ReminderDoseRecord] {
@@ -498,12 +561,13 @@ class MedicationLog {
     /// Seeds `bpReadings` from legacy single-pair fields when needed.
     @discardableResult
     func ensureBPReadingsMigrated() -> Bool {
-        guard bpReadings.isEmpty, let sys = systolic, let dia = diastolic else { return false }
+        guard isStoredInContext else { return false }
+        guard liveBPReadings.isEmpty, let sys = systolic, let dia = diastolic else { return false }
         var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
         components.hour = 12
         components.minute = 0
         let recordedAt = Calendar.current.date(from: components) ?? date
-        bpReadings = [
+        liveBPReadings = [
             BloodPressureReading(recordedAt: recordedAt, systolic: sys, diastolic: dia)
         ]
         try? modelContext?.save()
@@ -511,7 +575,8 @@ class MedicationLog {
     }
     
     func syncLegacyBPFields() {
-        if let latest = bpReadings.sorted(by: { $0.recordedAt < $1.recordedAt }).last {
+        guard isStoredInContext else { return }
+        if let latest = liveBPReadings.sorted(by: { $0.recordedAt < $1.recordedAt }).last {
             systolic = latest.systolic
             diastolic = latest.diastolic
         } else {
@@ -521,21 +586,23 @@ class MedicationLog {
     }
     
     func addBP(systolic sys: Int, diastolic dia: Int, recordedAt: Date = Date()) {
+        guard isStoredInContext else { return }
         ensureBPReadingsMigrated()
-        var readings = bpReadings
+        var readings = liveBPReadings
         // If still empty after migration, start from a non-mutating legacy snapshot.
         if readings.isEmpty {
             readings = sortedBPReadings
         }
         readings.append(BloodPressureReading(recordedAt: recordedAt, systolic: sys, diastolic: dia))
-        bpReadings = readings
+        liveBPReadings = readings
         syncLegacyBPFields()
         try? modelContext?.save()
     }
     
     func updateBP(id: UUID, systolic sys: Int, diastolic dia: Int, recordedAt: Date) {
+        guard isStoredInContext else { return }
         ensureBPReadingsMigrated()
-        var readings = bpReadings
+        var readings = liveBPReadings
         if readings.isEmpty {
             readings = sortedBPReadings
         }
@@ -543,18 +610,19 @@ class MedicationLog {
         readings[index].systolic = sys
         readings[index].diastolic = dia
         readings[index].recordedAt = recordedAt
-        bpReadings = readings
+        liveBPReadings = readings
         syncLegacyBPFields()
         try? modelContext?.save()
     }
     
     func removeBP(id: UUID) {
+        guard isStoredInContext else { return }
         ensureBPReadingsMigrated()
-        var readings = bpReadings
+        var readings = liveBPReadings
         if readings.isEmpty {
             readings = sortedBPReadings
         }
-        bpReadings = readings.filter { $0.id != id }
+        liveBPReadings = readings.filter { $0.id != id }
         syncLegacyBPFields()
         try? modelContext?.save()
     }
@@ -565,8 +633,9 @@ class MedicationLog {
     }
     
     var sortedHRReadings: [HeartRateReading] {
-        if !hrReadings.isEmpty {
-            return hrReadings.sorted { $0.recordedAt < $1.recordedAt }
+        let readings = liveHRReadings
+        if !readings.isEmpty {
+            return readings.sorted { $0.recordedAt < $1.recordedAt }
         }
         if let bpm = heartRate {
             var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
@@ -584,18 +653,20 @@ class MedicationLog {
     
     @discardableResult
     func ensureHRReadingsMigrated() -> Bool {
-        guard hrReadings.isEmpty, let bpm = heartRate else { return false }
+        guard isStoredInContext else { return false }
+        guard liveHRReadings.isEmpty, let bpm = heartRate else { return false }
         var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
         components.hour = 12
         components.minute = 0
         let recordedAt = Calendar.current.date(from: components) ?? date
-        hrReadings = [HeartRateReading(recordedAt: recordedAt, bpm: bpm)]
+        liveHRReadings = [HeartRateReading(recordedAt: recordedAt, bpm: bpm)]
         try? modelContext?.save()
         return true
     }
     
     func syncLegacyHRFields() {
-        if let latest = hrReadings.sorted(by: { $0.recordedAt < $1.recordedAt }).last {
+        guard isStoredInContext else { return }
+        if let latest = liveHRReadings.sorted(by: { $0.recordedAt < $1.recordedAt }).last {
             heartRate = latest.bpm
         } else {
             heartRate = nil
@@ -603,38 +674,41 @@ class MedicationLog {
     }
     
     func addHR(bpm: Int, recordedAt: Date = Date()) {
+        guard isStoredInContext else { return }
         ensureHRReadingsMigrated()
-        var readings = hrReadings
+        var readings = liveHRReadings
         if readings.isEmpty {
             readings = sortedHRReadings
         }
         readings.append(HeartRateReading(recordedAt: recordedAt, bpm: bpm))
-        hrReadings = readings
+        liveHRReadings = readings
         syncLegacyHRFields()
         try? modelContext?.save()
     }
     
     func updateHR(id: UUID, bpm: Int, recordedAt: Date) {
+        guard isStoredInContext else { return }
         ensureHRReadingsMigrated()
-        var readings = hrReadings
+        var readings = liveHRReadings
         if readings.isEmpty {
             readings = sortedHRReadings
         }
         guard let index = readings.firstIndex(where: { $0.id == id }) else { return }
         readings[index].bpm = bpm
         readings[index].recordedAt = recordedAt
-        hrReadings = readings
+        liveHRReadings = readings
         syncLegacyHRFields()
         try? modelContext?.save()
     }
     
     func removeHR(id: UUID) {
+        guard isStoredInContext else { return }
         ensureHRReadingsMigrated()
-        var readings = hrReadings
+        var readings = liveHRReadings
         if readings.isEmpty {
             readings = sortedHRReadings
         }
-        hrReadings = readings.filter { $0.id != id }
+        liveHRReadings = readings.filter { $0.id != id }
         syncLegacyHRFields()
         try? modelContext?.save()
     }
@@ -645,11 +719,12 @@ class MedicationLog {
     
     /// Keeps dose rows in sync with reminder slots and migrates legacy day-level status.
     func syncDoseRecords(with profile: UserProfile) {
+        guard isStoredInContext else { return }
         profile.ensureRemindersMigrated()
         let reminders = profile.sortedReminders
         guard !reminders.isEmpty else { return }
         
-        var records = doseRecords
+        var records = liveDoseRecords
         let hadNoRecords = records.isEmpty
         
         if hadNoRecords {
@@ -713,29 +788,31 @@ class MedicationLog {
         // Drop slots that no longer exist in settings (taken/skipped included).
         records.removeAll { !reminderIds.contains($0.id) }
         
-        doseRecords = records.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
+        liveDoseRecords = records.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
         refreshAggregateFlags()
         try? modelContext?.save()
     }
     
     func refreshOccurrenceStates(now: Date = Date()) {
-        guard !doseRecords.isEmpty else { return }
-        var records = doseRecords
+        guard isStoredInContext else { return }
+        guard !liveDoseRecords.isEmpty else { return }
+        var records = liveDoseRecords
         for index in records.indices {
             records[index].refreshOccurrence(on: date, now: now)
         }
-        doseRecords = records
+        liveDoseRecords = records
         refreshAggregateFlags()
         try? modelContext?.save()
     }
     
     func markTaken(reminderId: UUID, mood: String?, remark: String?, medications: [MedicationItem]) {
-        guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
+        guard isStoredInContext else { return }
+        var records = liveDoseRecords
+        guard let index = records.firstIndex(where: { $0.id == reminderId }) else { return }
         let medNames = medications.map(\.name).filter { !$0.isEmpty }
         let medDoses = medications.map(\.dose).filter { !$0.isEmpty }
         
         // Reassign the array so SwiftData persists Codable element updates.
-        var records = doseRecords
         records[index].status = DoseRecordStatus.taken.rawValue
         records[index].takenAt = Date()
         records[index].skippedTime = nil
@@ -745,14 +822,20 @@ class MedicationLog {
         records[index].notes = remark?.isEmpty == false ? remark : nil
         records[index].medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
         records[index].dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
-        doseRecords = records
+        records[index].holdOpen = false
+        liveDoseRecords = records
         refreshAggregateFlags()
         persistAndNotify()
     }
     
+    func markMissed(reminderId: UUID, time: Date = Date()) {
+        markSkipped(reminderId: reminderId, time: time, reaction: nil, notes: nil)
+    }
+    
     func markSkipped(reminderId: UUID, time: Date, reaction: String?, notes: String?) {
-        guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
-        var records = doseRecords
+        guard isStoredInContext else { return }
+        var records = liveDoseRecords
+        guard let index = records.firstIndex(where: { $0.id == reminderId }) else { return }
         records[index].status = DoseRecordStatus.skipped.rawValue
         records[index].skippedTime = time
         records[index].takenAt = nil
@@ -760,26 +843,30 @@ class MedicationLog {
         records[index].physicalReaction = reaction?.isEmpty == false ? reaction : nil
         records[index].notes = notes?.isEmpty == false ? notes : nil
         records[index].mood = nil
-        doseRecords = records
+        records[index].holdOpen = false
+        liveDoseRecords = records
         refreshAggregateFlags()
         persistAndNotify()
     }
     
     func markSnoozed(reminderId: UUID, minutes: Int, from now: Date = Date()) {
-        guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
-        var records = doseRecords
+        guard isStoredInContext else { return }
+        var records = liveDoseRecords
+        guard let index = records.firstIndex(where: { $0.id == reminderId }) else { return }
         records[index].status = DoseRecordStatus.snoozed.rawValue
         records[index].snoozedUntil = now.addingTimeInterval(TimeInterval(minutes * 60))
         records[index].skippedTime = nil
         records[index].takenAt = nil
-        doseRecords = records
+        records[index].holdOpen = false
+        liveDoseRecords = records
         refreshAggregateFlags()
         persistAndNotify()
     }
     
     func undoDose(reminderId: UUID) {
-        guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
-        var records = doseRecords
+        guard isStoredInContext else { return }
+        var records = liveDoseRecords
+        guard let index = records.firstIndex(where: { $0.id == reminderId }) else { return }
         records[index].status = DoseRecordStatus.pending.rawValue
         records[index].takenAt = nil
         records[index].skippedTime = nil
@@ -787,7 +874,8 @@ class MedicationLog {
         records[index].notes = nil
         records[index].mood = nil
         records[index].snoozedUntil = nil
-        doseRecords = records
+        records[index].holdOpen = true
+        liveDoseRecords = records
         refreshOccurrenceStates()
         persistAndNotify()
     }
@@ -798,11 +886,13 @@ class MedicationLog {
     }
     
     func refreshAggregateFlags() {
-        guard !doseRecords.isEmpty else { return }
+        guard isStoredInContext else { return }
+        let records = liveDoseRecords
+        guard !records.isEmpty else { return }
         
-        isTaken = doseRecords.allSatisfy(\.isTaken)
+        isTaken = records.allSatisfy(\.isTaken)
         
-        if let skipped = doseRecords.first(where: { $0.isSkipped || $0.isMissed }) {
+        if let skipped = records.first(where: { $0.isSkipped || $0.isMissed }) {
             skippedTime = skipped.skippedTime
             physicalReaction = skipped.physicalReaction
         } else {
@@ -810,14 +900,14 @@ class MedicationLog {
             physicalReaction = nil
         }
         
-        let takenRecords = doseRecords.filter(\.isTaken)
+        let takenRecords = records.filter(\.isTaken)
         if !takenRecords.isEmpty {
             medicineName = takenRecords.compactMap(\.medicineName).filter { !$0.isEmpty }.joined(separator: "\n")
             dose = takenRecords.compactMap(\.dose).filter { !$0.isEmpty }.joined(separator: "\n")
             notes = takenRecords.compactMap(\.notes).filter { !$0.isEmpty }.joined(separator: "\n")
             mood = takenRecords.compactMap(\.mood).last
-        } else if doseRecords.contains(where: { $0.isSkipped || $0.isMissed }) {
-            let skippedRecords = doseRecords.filter { $0.isSkipped || $0.isMissed }
+        } else if records.contains(where: { $0.isSkipped || $0.isMissed }) {
+            let skippedRecords = records.filter { $0.isSkipped || $0.isMissed }
             notes = skippedRecords.compactMap(\.notes).filter { !$0.isEmpty }.joined(separator: "\n")
             medicineName = nil
             dose = nil

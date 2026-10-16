@@ -15,6 +15,7 @@ struct ContentView: View {
     
     @State private var selectedTab: AppTab = .today
     @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -36,6 +37,7 @@ struct ContentView: View {
                 }
                 .tag(AppTab.profile)
         }
+        .modifier(ElderDynamicType(enabled: elderMode))
         .onAppear {
             initializeData()
         }
@@ -48,15 +50,17 @@ struct ContentView: View {
             }
         }
         .onChange(of: activeProfileID) { _, _ in
-            if let profile = ActiveProfileStore.resolve(from: profiles) {
-                HouseholdData.ensureTodayLog(for: profile, logs: logs, context: modelContext)
+            if let profile = ActiveProfileStore.resolve(from: profiles.filter(\.isStoredInContext)) {
+                HouseholdData.ensureTodayLog(for: profile, logs: logs.filter(\.isStoredInContext), context: modelContext)
                 NotificationManager.shared.rescheduleFromStore()
             }
         }
     }
     
     private func initializeData() {
-        HouseholdData.bootstrap(profiles: profiles, logs: logs, context: modelContext)
+        let liveProfiles = profiles.filter(\.isStoredInContext)
+        let liveLogs = logs.filter(\.isStoredInContext)
+        HouseholdData.bootstrap(profiles: liveProfiles, logs: liveLogs, context: modelContext)
         if NotificationPreferences.isEnabled {
             NotificationManager.shared.registerCategories()
         }
@@ -66,4 +70,17 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .modelContainer(for: [MedicationLog.self, UserProfile.self], inMemory: true)
+}
+
+private struct ElderDynamicType: ViewModifier {
+    var enabled: Bool
+    
+    func body(content: Content) -> some View {
+        if enabled {
+            // One step below Accessibility sizes so cards, tabs, and pills still fit.
+            content.dynamicTypeSize(.xxLarge)
+        } else {
+            content
+        }
+    }
 }

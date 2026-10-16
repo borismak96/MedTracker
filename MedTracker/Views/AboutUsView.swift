@@ -23,7 +23,7 @@ struct AboutUsView: View {
                                 .font(.system(.title, design: .rounded, weight: .heavy))
                                 .foregroundColor(.primary)
                             
-                            Text(AppLocalization.string("Version 1.1"))
+                            Text(AppLocalization.string("Version 1.2"))
                                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                                 .foregroundColor(.secondary)
                         }

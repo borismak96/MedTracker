@@ -87,7 +87,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
                 for dayOffset in 0...1 {
                     guard let day = calendar.date(byAdding: .day, value: dayOffset, to: calendar.startOfDay(for: now)) else { continue }
                     let log = logs.first { $0.belongs(to: profile) && calendar.isDate($0.date, inSameDayAs: day) }
-                    let record = log?.doseRecords.first { $0.id == reminder.id }
+                    let record = log?.liveDoseRecords.first { $0.id == reminder.id }
                     if let record, !record.isOpen { continue }
                     
                     let scheduled = reminderScheduledDate(reminder, on: day, calendar: calendar)

@@ -7,6 +7,7 @@ struct HomeView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     @State private var showingSkipSheet = false
     @State private var skipNotes = ""
@@ -31,6 +32,7 @@ struct HomeView: View {
     @State private var showingHRChart = false
     @State private var showingMedicalCard = false
     @State private var showingSetupGuide = false
+    @State private var showingVisitPack = false
     
     var profile: UserProfile? {
         _ = activeProfileID
@@ -43,8 +45,8 @@ struct HomeView: View {
     }
     
     var todayLog: MedicationLog? {
-        let today = Calendar.current.startOfDay(for: Date())
-        return logs.first(where: { Calendar.current.isDate($0.date, inSameDayAs: today) })
+        guard let profile else { return nil }
+        return HouseholdData.todayLog(for: profile, in: allLogs)
     }
     
     var body: some View {
@@ -58,11 +60,12 @@ struct HomeView: View {
                             headerSection(profile: profile)
                                 .padding(.top, 10)
                             
+                            clinicPackCard
+                            
                             historyTeaser
                             
                             if let log = todayLog {
                                 TodayCard(
-                                    log: log,
                                     profile: profile,
                                     showingSkipSheet: $showingSkipSheet,
                                     activeSkipReminderId: $activeSkipReminderId,
@@ -70,7 +73,7 @@ struct HomeView: View {
                                     skipReaction: $skipReaction,
                                     skipNotes: $skipNotes
                                 )
-                                .id(profile.id)
+                                .id(log.persistentModelID)
                                 
                                 VitalsCard(
                                     log: log,
@@ -81,6 +84,7 @@ struct HomeView: View {
                                     bpRecordedAt: $bpRecordedAt,
                                     editingBPReadingId: $editingBPReadingId
                                 )
+                                .id(log.persistentModelID)
                                 
                                 HeartRateCard(
                                     log: log,
@@ -90,6 +94,7 @@ struct HomeView: View {
                                     hrRecordedAt: $hrRecordedAt,
                                     editingHRReadingId: $editingHRReadingId
                                 )
+                                .id(log.persistentModelID)
                                 
                                 MoodStatsCard(logs: logs)
                             } else {
@@ -123,21 +128,21 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingSkipSheet) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     skipSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingBPSheet, onDismiss: {
                 editingBPReadingId = nil
             }) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     bpSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingHRSheet, onDismiss: {
                 editingHRReadingId = nil
             }) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     hrSheetContent(for: log)
                 }
             }
@@ -158,6 +163,21 @@ struct HomeView: View {
                                 .font(.system(.body, design: .rounded, weight: .bold))
                             }
                         }
+                }
+            }
+            .sheet(isPresented: $showingVisitPack) {
+                if let profile {
+                    NavigationView {
+                        VisitPackView(profile: profile, logs: logs)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button(AppLocalization.string("Done")) {
+                                        showingVisitPack = false
+                                    }
+                                    .font(.system(.body, design: .rounded, weight: .bold))
+                                }
+                            }
+                    }
                 }
             }
             .alert(
@@ -203,14 +223,16 @@ struct HomeView: View {
     }
     
     func headerSection(profile: UserProfile) -> some View {
-        VStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 20) {
             // App Title and Notification Bell
             HStack {
                 Text(AppBrand.displayName)
                     .font(.system(.title, design: .rounded, weight: .heavy))
                     .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 
-                Spacer()
+                Spacer(minLength: 8)
                 
                 HStack(spacing: 10) {
                     Button(action: {
@@ -224,6 +246,18 @@ struct HomeView: View {
                             .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                     }
                     .accessibilityLabel(AppLocalization.string("How to Set Up"))
+                    
+                    Button(action: {
+                        showingVisitPack = true
+                    }) {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.mint)
+                            .padding(12)
+                            .background(Circle().fill(Color.white))
+                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    }
+                    .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
                     
                     Button(action: {
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -242,7 +276,7 @@ struct HomeView: View {
             }
             
             // Greeting and Avatar
-            HStack {
+            HStack(alignment: .top) {
                 if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
                     Image(uiImage: uiImage)
                         .resizable()
@@ -269,43 +303,92 @@ struct HomeView: View {
                     Text(AppLocalization.string("Let's stay on track today."))
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundColor(.secondary)
+                    if elderMode {
+                        ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                            .padding(.top, 6)
+                    }
                 }
                 .padding(.leading, 8)
+                .fixedSize(horizontal: false, vertical: true)
                 
-                Spacer()
+                Spacer(minLength: 0)
                 
-                ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                if !elderMode {
+                    ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var clinicPackCard: some View {
+        Button {
+            showingVisitPack = true
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mint.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "doc.text.fill")
+                        .foregroundColor(.mint)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(AppLocalization.string("Clinic Visit Pack"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text(AppLocalization.string("Share a bilingual summary for your clinic visit."))
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "square.and.arrow.up")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(.mint)
+                    .padding(.top, 4)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(22)
+            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
     }
     
     private var historyTeaser: some View {
         Button {
             selectedTab = .history
         } label: {
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.orange.opacity(0.15))
+                        .fill(Color.mint.opacity(0.15))
                         .frame(width: 44, height: 44)
-                    Image(systemName: "flame.fill")
-                        .foregroundColor(.orange)
+                    Image(systemName: "calendar")
+                        .foregroundColor(.mint)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(AppLocalization.format("%lld day streak", AdherenceStats.consecutiveDayStreak(logs: logs)))
+                    Text(AppLocalization.format("%lld complete days in a row", AdherenceStats.consecutiveDayStreak(logs: logs)))
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
-                    Text(AppLocalization.string("Weekly Summary"))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(AppLocalization.format("Adherence: %lld%%", AdherenceStats.weekSummary(logs: logs).adherencePercent))
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                Spacer()
-                Text(AppLocalization.string("History"))
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    .foregroundColor(.mint)
+                Spacer(minLength: 8)
+                if !elderMode {
+                    Text(AppLocalization.string("History"))
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundColor(.mint)
+                }
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))
                     .foregroundColor(.secondary)
+                    .padding(.top, 6)
             }
             .padding(16)
             .background(Color.white)
@@ -317,7 +400,7 @@ struct HomeView: View {
     }
     
     func skipSheetContent(for log: MedicationLog) -> some View {
-        let reminderTitle = log.doseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
+        let reminderTitle = log.liveDoseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
             ?? AppLocalization.string("Missed Details")
         
         return NavigationView {
@@ -647,7 +730,6 @@ struct HomeView: View {
 }
 
 struct TodayCard: View {
-    @Bindable var log: MedicationLog
     var profile: UserProfile
     @Binding var showingSkipSheet: Bool
     @Binding var activeSkipReminderId: UUID?
@@ -655,10 +737,24 @@ struct TodayCard: View {
     @Binding var skipReaction: String
     @Binding var skipNotes: String
     
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @State private var selectedMood: MoodStatus? = nil
     @State private var remarkText: String = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
+    
+    /// Always the in-context @Query row. Never the instance that screenshot seeding just deleted.
+    private var log: MedicationLog? {
+        HouseholdData.todayLog(for: profile, in: allLogs)
+    }
     
     var body: some View {
+        if let log {
+            cardContent(log: log)
+        }
+    }
+    
+    @ViewBuilder
+    private func cardContent(log: MedicationLog) -> some View {
         VStack(spacing: 20) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -669,24 +765,28 @@ struct TodayCard: View {
                     Text(AppLocalization.string("Log each reminder time"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     HStack(spacing: 6) {
                         Image(systemName: "clock.fill")
-                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.doseRecords.count, 1)))
+                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.liveDoseRecords.count, 1)))
                     }
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 Spacer(minLength: 12)
                 
-                ZStack {
-                    Circle()
-                        .fill(Color.mint.opacity(0.15))
-                        .frame(width: 70, height: 70)
-                    Image(systemName: "pills.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(.mint)
+                if !elderMode {
+                    ZStack {
+                        Circle()
+                            .fill(Color.mint.opacity(0.15))
+                            .frame(width: 70, height: 70)
+                        Image(systemName: "pills.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(.mint)
+                    }
                 }
             }
             
@@ -725,6 +825,7 @@ struct TodayCard: View {
                     let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
                         ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
                     doseSlotCard(
+                        log: log,
                         record: record,
                         color: StatsRingPalette.color(for: reminder),
                         prefersLightText: StatsRingPalette.prefersLightText(for: reminder)
@@ -766,7 +867,7 @@ struct TodayCard: View {
     
     @ViewBuilder
     private var dueNowBanner: some View {
-        let due = log.dueOrSnoozedRecords
+        let due = log?.dueOrSnoozedRecords ?? []
         if !due.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 8) {
@@ -798,7 +899,7 @@ struct TodayCard: View {
                         Spacer()
                         Button {
                             withAnimation {
-                                log.markTaken(
+                                log?.markTaken(
                                     reminderId: record.id,
                                     mood: selectedMood?.rawValue,
                                     remark: remarkText.isEmpty ? nil : remarkText,
@@ -829,7 +930,7 @@ struct TodayCard: View {
     }
     
     @ViewBuilder
-    private func doseSlotCard(record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
+    private func doseSlotCard(log: MedicationLog, record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
         let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
             ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
         let meds = profile.medications(for: reminder)
@@ -838,10 +939,11 @@ struct TodayCard: View {
         let secondaryColor = StatsRingPalette.secondaryText(for: reminder)
         
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
                 Circle()
                     .fill(prefersLightText ? Color.white : Color(white: 0.15))
                     .frame(width: 12, height: 12)
+                    .padding(.top, 6)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
@@ -852,7 +954,7 @@ struct TodayCard: View {
                         .foregroundColor(secondaryColor)
                 }
                 
-                Spacer()
+                Spacer(minLength: 8)
                 
                 statusChip(for: record, onSolid: true)
             }
@@ -895,7 +997,7 @@ struct TodayCard: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-                undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
+                undoButton(log: log, reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else {
                 if record.isSnoozed, let until = record.snoozedUntil {
                     Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
@@ -903,46 +1005,68 @@ struct TodayCard: View {
                         .foregroundColor(secondaryColor)
                 }
                 VStack(spacing: 8) {
-                    Button {
-                        withAnimation {
-                            log.markTaken(
-                                reminderId: record.id,
-                                mood: selectedMood?.rawValue,
-                                remark: remarkText.isEmpty ? nil : remarkText,
-                                medications: meds
-                            )
-                        }
-                    } label: {
-                        Text(AppLocalization.string("Take Now"))
-                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(accent)
-                            .cornerRadius(14)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    HStack(spacing: 10) {
-                        snoozeMenu(reminderId: record.id, titleColor: titleColor)
-                        
                         Button {
-                            activeSkipReminderId = record.id
-                            skippedTime = Date()
-                            skipReaction = ""
-                            skipNotes = ""
-                            showingSkipSheet = true
+                            withAnimation {
+                                log.markTaken(
+                                    reminderId: record.id,
+                                    mood: selectedMood?.rawValue,
+                                    remark: remarkText.isEmpty ? nil : remarkText,
+                                    medications: meds
+                                )
+                            }
                         } label: {
-                            Text(AppLocalization.string("Skip / Missed"))
+                            Text(AppLocalization.string("Take Now"))
                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                .foregroundColor(titleColor)
+                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.55))
+                                .frame(minHeight: elderMode ? ElderMode.buttonHeight : 0.0)
+                                .padding(.vertical, elderMode ? 0 : 12)
+                                .background(accent)
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                    }
+                        
+                        if elderMode {
+                            snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor)
+                                .frame(maxWidth: .infinity)
+                            Button {
+                                activeSkipReminderId = record.id
+                                skippedTime = Date()
+                                skipReaction = ""
+                                skipNotes = ""
+                                showingSkipSheet = true
+                            } label: {
+                                Text(AppLocalization.string("Skip / Missed"))
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(titleColor)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: ElderMode.buttonHeight)
+                                    .background(Color.white.opacity(0.55))
+                                    .cornerRadius(14)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            HStack(spacing: 10) {
+                                snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor)
+                                
+                                Button {
+                                    activeSkipReminderId = record.id
+                                    skippedTime = Date()
+                                    skipReaction = ""
+                                    skipNotes = ""
+                                    showingSkipSheet = true
+                                } label: {
+                                    Text(AppLocalization.string("Skip / Missed"))
+                                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                        .foregroundColor(titleColor)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.white.opacity(0.55))
+                                        .cornerRadius(14)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                 }
             }
         }
@@ -984,7 +1108,7 @@ struct TodayCard: View {
             .cornerRadius(10)
     }
     
-    private func snoozeMenu(reminderId: UUID, titleColor: Color) -> some View {
+    private func snoozeMenu(log: MedicationLog, reminderId: UUID, titleColor: Color) -> some View {
         Menu {
             Button(AppLocalization.string("Snooze 10 min")) {
                 withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 10) }
@@ -1007,7 +1131,7 @@ struct TodayCard: View {
         .accessibilityLabel(AppLocalization.string("Snooze"))
     }
     
-    private func undoButton(reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
+    private func undoButton(log: MedicationLog, reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
         Button {
             withAnimation { log.undoDose(reminderId: reminderId) }
         } label: {
@@ -1032,7 +1156,7 @@ struct TodayCard: View {
 }
 
 struct VitalsCard: View {
-    @Bindable var log: MedicationLog
+    var log: MedicationLog
     @Binding var showingBPSheet: Bool
     @Binding var showingBPChart: Bool
     @Binding var bpSystolic: String
@@ -1045,6 +1169,12 @@ struct VitalsCard: View {
     }
     
     var body: some View {
+        if log.isStoredInContext {
+            vitalsContent
+        }
+    }
+    
+    private var vitalsContent: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
@@ -1180,7 +1310,7 @@ struct VitalsCard: View {
 }
 
 struct HeartRateCard: View {
-    @Bindable var log: MedicationLog
+    var log: MedicationLog
     @Binding var showingHRSheet: Bool
     @Binding var showingHRChart: Bool
     @Binding var hrBPM: String
@@ -1192,6 +1322,12 @@ struct HeartRateCard: View {
     }
     
     var body: some View {
+        if log.isStoredInContext {
+            heartRateContent
+        }
+    }
+    
+    private var heartRateContent: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
@@ -1331,6 +1467,7 @@ struct MoodStatsCard: View {
         let calendar = Calendar.current
         let today = Date()
         return logs.filter {
+            $0.isStoredInContext &&
             calendar.isDate($0.date, equalTo: today, toGranularity: .month)
             && MoodStatus.from(string: $0.mood) != nil
         }

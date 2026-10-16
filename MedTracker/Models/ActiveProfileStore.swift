@@ -66,11 +66,34 @@ enum NotificationPreferences {
     }
 }
 
+enum ElderMode {
+    static let enabledKey = "isElderModeEnabled"
+    
+    static var isEnabled: Bool {
+        AppLocalization.sharedDefaults.bool(forKey: enabledKey)
+    }
+    
+    static let titleSize: Double = 32
+    static let headlineSize: Double = 24
+    static let bodySize: Double = 22
+    static let buttonHeight: Double = 52
+    static let minTap: Double = 44
+}
+
 enum HouseholdData {
     static let maxProfiles = 8
     
     static func logs(for profile: UserProfile, in logs: [MedicationLog]) -> [MedicationLog] {
-        logs.filter { $0.belongs(to: profile) }
+        logs.filter { $0.isStoredInContext && $0.belongs(to: profile) }
+    }
+    
+    static func todayLog(for profile: UserProfile, in logs: [MedicationLog], now: Date = Date()) -> MedicationLog? {
+        let today = Calendar.current.startOfDay(for: now)
+        return logs.first {
+            $0.isStoredInContext &&
+            $0.belongs(to: profile) &&
+            Calendar.current.isDate($0.date, inSameDayAs: today)
+        }
     }
     
     static func bootstrap(profiles: [UserProfile], logs: [MedicationLog], context: ModelContext) {
@@ -98,7 +121,7 @@ enum HouseholdData {
         }
         
         let primary = ordered[0]
-        for log in logs where log.profileId == nil {
+        for log in logs where log.isStoredInContext && log.profileId == nil {
             log.profileId = primary.id
         }
         
@@ -110,10 +133,13 @@ enum HouseholdData {
     @discardableResult
     static func ensureTodayLog(for profile: UserProfile, logs: [MedicationLog], context: ModelContext) -> MedicationLog {
         let today = Calendar.current.startOfDay(for: Date())
-        let fresh = (try? context.fetch(FetchDescriptor<MedicationLog>())) ?? logs
-        if let existing = fresh.first(where: { $0.belongs(to: profile) && Calendar.current.isDate($0.date, inSameDayAs: today) }) {
+        // Prefer a live context fetch so @Query snapshots from a seed erase/reinsert
+        // are not reused after their backing data has detached.
+        let fetched = (try? context.fetch(FetchDescriptor<MedicationLog>())) ?? logs
+        if let existing = todayLog(for: profile, in: fetched) {
             existing.syncDoseRecords(with: profile)
             existing.refreshOccurrenceStates()
+            try? context.save()
             return existing
         }
         let log = MedicationLog(date: today, profileId: profile.id)
@@ -139,7 +165,10 @@ enum HouseholdData {
     
     static func deleteProfile(_ profile: UserProfile, logs: [MedicationLog], remaining: [UserProfile], context: ModelContext) {
         guard remaining.count > 1 else { return }
-        for log in logs where log.belongs(to: profile) {
+        for log in logs where log.isStoredInContext && log.belongs(to: profile) {
+            _ = log.liveDoseRecords
+            _ = log.liveBPReadings
+            _ = log.liveHRReadings
             context.delete(log)
         }
         let next = remaining.first { $0.id != profile.id }

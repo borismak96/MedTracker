@@ -14,6 +14,7 @@ struct HistoryView: View {
     @State private var currentMonth: Date = Date()
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     @State private var editingDateWrapper: DateWrapper? = nil
+    @State private var showingVisitPack = false
     
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
@@ -47,6 +48,17 @@ struct HistoryView: View {
                             .foregroundColor(.primary)
                         Spacer()
                         if let profile {
+                            Button {
+                                showingVisitPack = true
+                            } label: {
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.mint)
+                                    .padding(10)
+                                    .background(Circle().fill(Color.white))
+                                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                            }
+                            .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
                             ProfileSwitcher(profiles: profiles, active: profile, compact: true)
                         }
                     }
@@ -88,6 +100,21 @@ struct HistoryView: View {
                     DailyRecordSheet(date: dateWrapper.date, profile: profile)
                 }
             }
+            .sheet(isPresented: $showingVisitPack) {
+                if let profile {
+                    NavigationView {
+                        VisitPackView(profile: profile, logs: logs)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button(AppLocalization.string("Done")) {
+                                        showingVisitPack = false
+                                    }
+                                    .font(.system(.body, design: .rounded, weight: .bold))
+                                }
+                            }
+                    }
+                }
+            }
             .onAppear {
                 syncSelectedDateDoseRecords()
             }
@@ -123,14 +150,14 @@ struct HistoryView: View {
                 }
                 Spacer()
                 HStack(spacing: 6) {
-                    Image(systemName: "flame.fill")
-                        .foregroundColor(.orange)
-                    Text(AppLocalization.format("%lld day streak", streak))
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.mint)
+                    Text(AppLocalization.format("%lld complete days in a row", streak))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.orange.opacity(0.15))
+                .background(Color.mint.opacity(0.12))
                 .cornerRadius(12)
             }
             
@@ -413,7 +440,7 @@ struct HistoryView: View {
         let isToday = Calendar.current.isDateInToday(selectedDate)
         
         // Prefer persisted per-reminder records (same source as Home).
-        if let log, !log.doseRecords.isEmpty {
+        if let log, log.isStoredInContext, !log.liveDoseRecords.isEmpty {
             let records = log.sortedDoseRecords
             if isToday {
                 return records
@@ -617,7 +644,7 @@ struct HistoryView: View {
     }
     
     func logForDate(_ date: Date) -> MedicationLog? {
-        logs.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        logs.first { $0.isStoredInContext && Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
     
     func changeMonth(by value: Int) {
@@ -669,8 +696,8 @@ struct DayCell: View {
     
     private var doseDotColors: [Color] {
         guard let log = log else { return [] }
-        if !log.doseRecords.isEmpty {
-            let hasActivity = log.doseRecords.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
+        if !log.liveDoseRecords.isEmpty {
+            let hasActivity = log.liveDoseRecords.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
             // Don't treat pending-only past days as activity on the calendar.
             if !hasActivity && !Calendar.current.isDateInToday(date) {
                 return []
@@ -1138,11 +1165,11 @@ struct DailyRecordSheet: View {
             hrReadings.append(HeartRateReading(recordedAt: recordedAt, bpm: bpm))
         }
         
-        targetLog.doseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
+        targetLog.liveDoseRecords = updated.sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
         targetLog.refreshAggregateFlags()
-        targetLog.bpReadings = readings.sorted { $0.recordedAt < $1.recordedAt }
+        targetLog.liveBPReadings = readings.sorted { $0.recordedAt < $1.recordedAt }
         targetLog.syncLegacyBPFields()
-        targetLog.hrReadings = hrReadings.sorted { $0.recordedAt < $1.recordedAt }
+        targetLog.liveHRReadings = hrReadings.sorted { $0.recordedAt < $1.recordedAt }
         targetLog.syncLegacyHRFields()
         targetLog.mood = mood?.rawValue
         if targetLog.profileId == nil {
