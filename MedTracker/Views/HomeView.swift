@@ -223,7 +223,7 @@ struct HomeView: View {
     }
     
     func headerSection(profile: UserProfile) -> some View {
-        VStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 20) {
             // App Title and Notification Bell
             HStack {
                 Text(AppBrand.displayName)
@@ -311,12 +311,15 @@ struct HomeView: View {
                 .padding(.leading, 8)
                 .fixedSize(horizontal: false, vertical: true)
                 
+                Spacer(minLength: 0)
+                
                 if !elderMode {
-                    Spacer()
                     ProfileSwitcher(profiles: profiles, active: profile, compact: true)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var clinicPackCard: some View {
