@@ -102,12 +102,14 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     var dose: String? = nil
     var mood: String? = nil
     var snoozedUntil: Date? = nil
+    /// Set by Undo so the 2-hour miss window does not immediately re-mark the slot missed.
+    var holdOpen: Bool = false
     
     enum CodingKeys: String, CodingKey {
-        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood, snoozedUntil
+        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood, snoozedUntil, holdOpen
     }
     
-    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil, snoozedUntil: Date? = nil) {
+    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil, snoozedUntil: Date? = nil, holdOpen: Bool = false) {
         self.id = id
         self.label = label
         self.hour = hour
@@ -121,6 +123,7 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         self.dose = dose
         self.mood = mood
         self.snoozedUntil = snoozedUntil
+        self.holdOpen = holdOpen
     }
     
     init(from decoder: Decoder) throws {
@@ -138,6 +141,7 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         self.dose = try container.decodeIfPresent(String.self, forKey: .dose)
         self.mood = try container.decodeIfPresent(String.self, forKey: .mood)
         self.snoozedUntil = try container.decodeIfPresent(Date.self, forKey: .snoozedUntil)
+        self.holdOpen = try container.decodeIfPresent(Bool.self, forKey: .holdOpen) ?? false
     }
     
     var doseStatus: DoseRecordStatus {
@@ -183,6 +187,14 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         
         if evaluationTime < scheduled {
             status = DoseRecordStatus.pending.rawValue
+            return
+        }
+        
+        // Undo (and any other holdOpen) keeps the slot actionable instead of
+        // immediately flipping back to Missed after the 2-hour window.
+        if holdOpen {
+            status = DoseRecordStatus.due.rawValue
+            snoozedUntil = nil
             return
         }
         
@@ -810,6 +822,7 @@ class MedicationLog {
         records[index].notes = remark?.isEmpty == false ? remark : nil
         records[index].medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
         records[index].dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
+        records[index].holdOpen = false
         liveDoseRecords = records
         refreshAggregateFlags()
         persistAndNotify()
@@ -830,6 +843,7 @@ class MedicationLog {
         records[index].physicalReaction = reaction?.isEmpty == false ? reaction : nil
         records[index].notes = notes?.isEmpty == false ? notes : nil
         records[index].mood = nil
+        records[index].holdOpen = false
         liveDoseRecords = records
         refreshAggregateFlags()
         persistAndNotify()
@@ -843,6 +857,7 @@ class MedicationLog {
         records[index].snoozedUntil = now.addingTimeInterval(TimeInterval(minutes * 60))
         records[index].skippedTime = nil
         records[index].takenAt = nil
+        records[index].holdOpen = false
         liveDoseRecords = records
         refreshAggregateFlags()
         persistAndNotify()
@@ -859,6 +874,7 @@ class MedicationLog {
         records[index].notes = nil
         records[index].mood = nil
         records[index].snoozedUntil = nil
+        records[index].holdOpen = true
         liveDoseRecords = records
         refreshOccurrenceStates()
         persistAndNotify()

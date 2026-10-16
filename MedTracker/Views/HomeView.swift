@@ -825,6 +825,7 @@ struct TodayCard: View {
                     let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
                         ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
                     doseSlotCard(
+                        log: log,
                         record: record,
                         color: StatsRingPalette.color(for: reminder),
                         prefersLightText: StatsRingPalette.prefersLightText(for: reminder)
@@ -929,7 +930,7 @@ struct TodayCard: View {
     }
     
     @ViewBuilder
-    private func doseSlotCard(record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
+    private func doseSlotCard(log: MedicationLog, record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
         let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
             ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
         let meds = profile.medications(for: reminder)
@@ -996,7 +997,7 @@ struct TodayCard: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-                undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
+                undoButton(log: log, reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else {
                 if record.isSnoozed, let until = record.snoozedUntil {
                     Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
@@ -1006,7 +1007,7 @@ struct TodayCard: View {
                 VStack(spacing: 8) {
                         Button {
                             withAnimation {
-                                log?.markTaken(
+                                log.markTaken(
                                     reminderId: record.id,
                                     mood: selectedMood?.rawValue,
                                     remark: remarkText.isEmpty ? nil : remarkText,
@@ -1026,7 +1027,7 @@ struct TodayCard: View {
                         .buttonStyle(.plain)
                         
                         if elderMode {
-                            snoozeMenu(reminderId: record.id, titleColor: titleColor)
+                            snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor)
                                 .frame(maxWidth: .infinity)
                             Button {
                                 activeSkipReminderId = record.id
@@ -1046,7 +1047,7 @@ struct TodayCard: View {
                             .buttonStyle(.plain)
                         } else {
                             HStack(spacing: 10) {
-                                snoozeMenu(reminderId: record.id, titleColor: titleColor)
+                                snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor)
                                 
                                 Button {
                                     activeSkipReminderId = record.id
@@ -1107,16 +1108,16 @@ struct TodayCard: View {
             .cornerRadius(10)
     }
     
-    private func snoozeMenu(reminderId: UUID, titleColor: Color) -> some View {
+    private func snoozeMenu(log: MedicationLog, reminderId: UUID, titleColor: Color) -> some View {
         Menu {
             Button(AppLocalization.string("Snooze 10 min")) {
-                withAnimation { log?.markSnoozed(reminderId: reminderId, minutes: 10) }
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 10) }
             }
             Button(AppLocalization.string("Snooze 30 min")) {
-                withAnimation { log?.markSnoozed(reminderId: reminderId, minutes: 30) }
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 30) }
             }
             Button(AppLocalization.string("Snooze 1 hour")) {
-                withAnimation { log?.markSnoozed(reminderId: reminderId, minutes: 60) }
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 60) }
             }
         } label: {
             Text(AppLocalization.string("Snooze"))
@@ -1130,9 +1131,9 @@ struct TodayCard: View {
         .accessibilityLabel(AppLocalization.string("Snooze"))
     }
     
-    private func undoButton(reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
+    private func undoButton(log: MedicationLog, reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
         Button {
-            withAnimation { log?.undoDose(reminderId: reminderId) }
+            withAnimation { log.undoDose(reminderId: reminderId) }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.uturn.backward")
