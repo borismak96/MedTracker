@@ -213,7 +213,7 @@ struct ProfileForm: View {
                 
                 Toggle(isOn: $elderMode) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(AppLocalization.string("樂齡 Mode"))
+                        Text(AppLocalization.string("Elder Mode"))
                             .font(.system(.body, design: .rounded, weight: .semibold))
                         Text(AppLocalization.string("Larger text and high-contrast buttons for easier tapping."))
                             .font(.system(.caption, design: .rounded))

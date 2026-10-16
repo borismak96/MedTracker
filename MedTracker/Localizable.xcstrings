@@ -5637,13 +5637,32 @@
         }
       }
     },
-    "樂齡 Mode" : {
+    "Elder Mode" : {
+      "comment" : "Profile settings toggle. English: Elder Mode. Traditional Chinese keeps 樂齡 branding.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "樂齡 Mode"
+            "value" : "Elder Mode"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "樂齡模式"
+          }
+        }
+      }
+    },
+    "樂齡 Mode" : {
+      "comment" : "Legacy key; English UI should look up Elder Mode.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elder Mode"
           }
         },
         "zh-Hant" : {
