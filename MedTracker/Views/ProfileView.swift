@@ -274,7 +274,7 @@ struct ProfileForm: View {
                 }
                 
                 NavigationLink(destination: VisitPackView(profile: profile, logs: logs)) {
-                    Label(AppLocalization.string("Clinic Visit Pack"), systemImage: "doc.text.fill")
+                    Label(AppLocalization.string("Medication List"), systemImage: "doc.text.fill")
                 }
                 
                 Button(action: { showExportConfirm = true }) {
