@@ -9,10 +9,12 @@ enum AppTab: Hashable {
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [UserProfile]
     @Query private var logs: [MedicationLog]
     
     @State private var selectedTab: AppTab = .today
+    @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -37,27 +39,27 @@ struct ContentView: View {
         .onAppear {
             initializeData()
         }
-    }
-    
-    private func initializeData() {
-        // Initialize UserProfile if empty
-        if profiles.isEmpty {
-            modelContext.insert(UserProfile())
-        }
-        
-        // Generate up to 30 days of logs if missing
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        for i in 0..<31 {
-            if let date = calendar.date(byAdding: .day, value: -i, to: today) {
-                if !logs.contains(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-                    modelContext.insert(MedicationLog(date: date))
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                initializeData()
+                if NotificationPreferences.isEnabled {
+                    NotificationManager.shared.rescheduleFromStore()
                 }
             }
         }
-        
-        try? modelContext.save()
+        .onChange(of: activeProfileID) { _, _ in
+            if let profile = ActiveProfileStore.resolve(from: profiles) {
+                HouseholdData.ensureTodayLog(for: profile, logs: logs, context: modelContext)
+                NotificationManager.shared.rescheduleFromStore()
+            }
+        }
+    }
+    
+    private func initializeData() {
+        HouseholdData.bootstrap(profiles: profiles, logs: logs, context: modelContext)
+        if NotificationPreferences.isEnabled {
+            NotificationManager.shared.registerCategories()
+        }
     }
 }
 

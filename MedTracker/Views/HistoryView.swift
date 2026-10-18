@@ -8,7 +8,8 @@ struct DateWrapper: Identifiable {
 
 struct HistoryView: View {
     @Query private var profiles: [UserProfile]
-    @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
+    @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
     
     @State private var currentMonth: Date = Date()
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
@@ -16,7 +17,23 @@ struct HistoryView: View {
     
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
-    var profile: UserProfile? { profiles.first }
+    var profile: UserProfile? {
+        _ = activeProfileID
+        return ActiveProfileStore.resolve(from: profiles)
+    }
+    
+    private var logs: [MedicationLog] {
+        guard let profile else { return [] }
+        return HouseholdData.logs(for: profile, in: allLogs)
+    }
+    
+    private var weekSummary: AdherenceStats.WeekSummary {
+        AdherenceStats.weekSummary(logs: logs)
+    }
+    
+    private var streak: Int {
+        AdherenceStats.consecutiveDayStreak(logs: logs)
+    }
     
     var body: some View {
         NavigationView {
@@ -29,6 +46,9 @@ struct HistoryView: View {
                             .font(.system(.title, design: .rounded, weight: .heavy))
                             .foregroundColor(.primary)
                         Spacer()
+                        if let profile {
+                            ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
@@ -36,6 +56,8 @@ struct HistoryView: View {
                     
                     ScrollView {
                         VStack(spacing: 24) {
+                            weeklySummaryCard
+                            
                             VStack(spacing: 20) {
                                 monthHeader
                                 weekdayHeader
@@ -84,7 +106,94 @@ struct HistoryView: View {
         // so new users don't see Pending on days they never tracked.
         guard Calendar.current.isDateInToday(selectedDate) else { return }
         log.syncDoseRecords(with: profile)
+        log.refreshOccurrenceStates()
         try? log.modelContext?.save()
+    }
+    
+    private var weeklySummaryCard: some View {
+        let summary = weekSummary
+        return VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(AppLocalization.string("This Week"))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundColor(.secondary)
+                    Text(AppLocalization.string("Weekly Summary"))
+                        .font(.system(.title3, design: .rounded, weight: .bold))
+                }
+                Spacer()
+                HStack(spacing: 6) {
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.orange)
+                    Text(AppLocalization.format("%lld day streak", streak))
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.orange.opacity(0.15))
+                .cornerRadius(12)
+            }
+            
+            HStack(spacing: 10) {
+                weekStat(value: "\(summary.takenDoses)", label: AppLocalization.string("Taken"), color: .green)
+                weekStat(value: "\(summary.skippedDoses)", label: AppLocalization.string("Skipped"), color: .orange)
+                weekStat(value: "\(summary.missedDoses)", label: AppLocalization.string("Missed"), color: .red)
+                weekStat(value: "\(summary.adherencePercent)%", label: AppLocalization.string("Adherence"), color: .mint)
+            }
+            
+            HStack(spacing: 6) {
+                ForEach(Array(summary.dayStatuses.enumerated()), id: \.offset) { _, day in
+                    VStack(spacing: 6) {
+                        Text(weekdayLetter(day.date))
+                            .font(.system(.caption2, design: .rounded, weight: .bold))
+                            .foregroundColor(.secondary)
+                        Circle()
+                            .fill(weekDotColor(day.complete, hasActivity: day.hasActivity, isFuture: day.date > Calendar.current.startOfDay(for: Date())))
+                            .frame(width: 12, height: 12)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            
+            Text(AppLocalization.format("Complete days this week: %lld", summary.completeDays))
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .foregroundColor(.secondary)
+        }
+        .padding(24)
+        .background(Color.white)
+        .cornerRadius(30)
+        .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+    }
+    
+    private func weekStat(value: String, label: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(.headline, design: .rounded, weight: .heavy))
+                .foregroundColor(color)
+            Text(label)
+                .font(.system(.caption2, design: .rounded, weight: .semibold))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(color.opacity(0.1))
+        .cornerRadius(14)
+    }
+    
+    private func weekdayLetter(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = AppLocalization.locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEE")
+        return formatter.string(from: date)
+    }
+    
+    private func weekDotColor(_ complete: Bool, hasActivity: Bool, isFuture: Bool) -> Color {
+        if isFuture { return Color(UIColor.systemGray5) }
+        if complete { return .green }
+        if hasActivity { return .orange }
+        return Color(UIColor.systemGray4)
     }
     
     var monthHeader: some View {
@@ -199,9 +308,9 @@ struct HistoryView: View {
                     }
                 }
                 
-                Text(AppLocalization.format("%lld taken · %lld skipped · %lld pending", doseRecords.filter(\.isTaken).count,
+                Text(AppLocalization.format("%lld taken · %lld skipped · %lld missed", doseRecords.filter(\.isTaken).count,
                               doseRecords.filter(\.isSkipped).count,
-                              doseRecords.filter(\.isPending).count))
+                              doseRecords.filter(\.isMissed).count))
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .foregroundColor(.secondary)
             }
@@ -310,7 +419,7 @@ struct HistoryView: View {
                 return records
             }
             // Past days: only show doses the user actually took or skipped.
-            return records.filter { $0.isTaken || $0.isSkipped }
+            return records.filter { $0.isTaken || $0.isSkipped || $0.isMissed }
         }
         
         guard let profile else { return [] }
@@ -347,7 +456,7 @@ struct HistoryView: View {
                         physicalReaction: skipped ? log.physicalReaction : nil,
                         notes: skipped ? log.notes : nil
                     )
-                }.filter { $0.isTaken || $0.isSkipped }
+                }.filter { $0.isTaken || $0.isSkipped || $0.isMissed }
             }
             return []
         }
@@ -409,11 +518,15 @@ struct HistoryView: View {
             statusIcon = "checkmark.circle.fill"
         } else if record.isSkipped {
             statusTitle = AppLocalization.string("Skipped")
+            statusColor = .orange
+            statusIcon = "forward.circle.fill"
+        } else if record.isMissed {
+            statusTitle = AppLocalization.string("Missed")
             statusColor = .red
             statusIcon = "xmark.circle.fill"
         } else {
-            statusTitle = AppLocalization.string("Pending")
-            statusColor = .orange
+            statusTitle = AppLocalization.string("Scheduled")
+            statusColor = .mint
             statusIcon = "clock.fill"
         }
         
@@ -478,7 +591,7 @@ struct HistoryView: View {
                 }
             }
             
-            if record.isSkipped, let skipped = record.skippedTime {
+            if (record.isSkipped || record.isMissed), let skipped = record.skippedTime {
                 Text(AppLocalization.format("Missed at %@", skipped.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
                     .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundColor(secondaryColor)
@@ -557,15 +670,17 @@ struct DayCell: View {
     private var doseDotColors: [Color] {
         guard let log = log else { return [] }
         if !log.doseRecords.isEmpty {
-            let hasActivity = log.doseRecords.contains { $0.isTaken || $0.isSkipped }
+            let hasActivity = log.doseRecords.contains { $0.isTaken || $0.isSkipped || $0.isMissed }
             // Don't treat pending-only past days as activity on the calendar.
             if !hasActivity && !Calendar.current.isDateInToday(date) {
                 return []
             }
             return log.sortedDoseRecords.prefix(3).map { record in
                 if record.isTaken { return .green }
-                if record.isSkipped { return .red }
-                return .orange.opacity(0.35)
+                if record.isMissed { return .red }
+                if record.isSkipped { return .orange }
+                if record.isDue || record.isSnoozed { return .orange }
+                return .mint.opacity(0.45)
             }
         }
         if log.isTaken { return [.green] }
@@ -583,20 +698,22 @@ struct DailyRecordSheet: View {
     @Query private var allLogs: [MedicationLog]
     
     var log: MedicationLog? {
-        allLogs.first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) })
+        allLogs.first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) && $0.belongs(to: profile) })
     }
     
     enum SlotStatus: String, CaseIterable, Identifiable {
         case pending
         case taken
+        case skipped
         case missed
         
         var id: String { rawValue }
         
         var localizedLabel: String {
             switch self {
-            case .pending: return AppLocalization.string("Pending")
+            case .pending: return AppLocalization.string("Scheduled")
             case .taken: return AppLocalization.string("Taken")
+            case .skipped: return AppLocalization.string("Skipped")
             case .missed: return AppLocalization.string("Missed")
             }
         }
@@ -860,8 +977,9 @@ struct DailyRecordSheet: View {
             get: {
                 switch draft.wrappedValue.doseStatus {
                 case .taken: return .taken
-                case .skipped: return .missed
-                case .pending: return .pending
+                case .skipped: return .skipped
+                case .missed: return .missed
+                case .pending, .due, .snoozed: return .pending
                 }
             },
             set: { newValue in
@@ -870,14 +988,22 @@ struct DailyRecordSheet: View {
                     draft.wrappedValue.status = DoseRecordStatus.pending.rawValue
                     draft.wrappedValue.takenAt = nil
                     draft.wrappedValue.skippedTime = nil
+                    draft.wrappedValue.snoozedUntil = nil
                 case .taken:
                     draft.wrappedValue.status = DoseRecordStatus.taken.rawValue
                     draft.wrappedValue.takenAt = draft.wrappedValue.takenAt ?? date
                     draft.wrappedValue.skippedTime = nil
                     draft.wrappedValue.physicalReaction = nil
-                case .missed:
+                    draft.wrappedValue.snoozedUntil = nil
+                case .skipped:
                     draft.wrappedValue.status = DoseRecordStatus.skipped.rawValue
                     draft.wrappedValue.takenAt = nil
+                    draft.wrappedValue.snoozedUntil = nil
+                    draft.wrappedValue.skippedTime = draft.wrappedValue.skippedTime ?? date
+                case .missed:
+                    draft.wrappedValue.status = DoseRecordStatus.missed.rawValue
+                    draft.wrappedValue.takenAt = nil
+                    draft.wrappedValue.snoozedUntil = nil
                     draft.wrappedValue.skippedTime = draft.wrappedValue.skippedTime ?? date
                 }
             }
@@ -902,7 +1028,7 @@ struct DailyRecordSheet: View {
                 .padding(10)
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(10)
-            } else if draft.wrappedValue.isSkipped {
+            } else if draft.wrappedValue.isSkipped || draft.wrappedValue.isMissed {
                 DatePicker(AppLocalization.string("Time"),
                     selection: Binding(
                         get: { draft.wrappedValue.skippedTime ?? date },
@@ -964,12 +1090,12 @@ struct DailyRecordSheet: View {
     }
     
     func saveRecord() {
-        let targetLog = log ?? MedicationLog(date: date)
+        let targetLog = log ?? MedicationLog(date: date, profileId: profile.id)
         let hasVitals = !bpDrafts.isEmpty
             || (!newSystolic.isEmpty && !newDiastolic.isEmpty)
             || !hrDrafts.isEmpty
             || !newHRBPM.isEmpty
-        let hasDoseActivity = doseDrafts.contains { !$0.isPending }
+        let hasDoseActivity = doseDrafts.contains { !$0.isPending && !$0.isDue && !$0.isSnoozed }
         
         if log == nil && (hasDoseActivity || hasVitals || mood != nil) {
             modelContext.insert(targetLog)
@@ -1019,8 +1145,12 @@ struct DailyRecordSheet: View {
         targetLog.hrReadings = hrReadings.sorted { $0.recordedAt < $1.recordedAt }
         targetLog.syncLegacyHRFields()
         targetLog.mood = mood?.rawValue
+        if targetLog.profileId == nil {
+            targetLog.profileId = profile.id
+        }
         
         try? modelContext.save()
+        NotificationManager.shared.rescheduleFromStore()
         dismiss()
     }
 }

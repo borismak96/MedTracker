@@ -153,7 +153,12 @@ class UserProfile {
     var medicationName: String = ""
     var dose: String = ""
     
-    init(name: String = "", ageRange: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil, medications: [MedicationItem] = [], reminders: [ReminderSlot] = []) {
+    /// Stable on-device household member id (lightweight-migrated with a default).
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var sortOrder: Int = 0
+    
+    init(name: String = "", ageRange: String = "", targetTimeHour: Int = 10, targetTimeMinute: Int = 0, profileImageData: Data? = nil, medications: [MedicationItem] = [], reminders: [ReminderSlot] = [], id: UUID = UUID(), createdAt: Date = Date(), sortOrder: Int = 0) {
         self.name = name
         self.ageRange = ageRange
         self.targetTimeHour = targetTimeHour
@@ -161,6 +166,15 @@ class UserProfile {
         self.profileImageData = profileImageData
         self.medications = medications
         self.reminders = reminders
+        self.id = id
+        self.createdAt = createdAt
+        self.sortOrder = sortOrder
+    }
+    
+    /// Empty names show as “Me” so the first profile is usable without setup.
+    var displayName: String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? AppLocalization.string("Me") : trimmed
     }
     
     /// Ensures at least one reminder exists (migrates from legacy single time).

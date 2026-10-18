@@ -4215,6 +4215,482 @@
         }
       },
       "extractionState": "manual"
+    },
+    "Adherence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adherence"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遵從率"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Add a family member to keep medicines, reminders, and history separate — all on this device.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a family member to keep medicines, reminders, and history separate — all on this device."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增家人後，藥物、提醒與紀錄會分開存放，全部只在這部裝置上。"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Add Person": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Person"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增成員"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "All data for this person will be removed from this device.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All data for this person will be removed from this device."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此對象的藥物、提醒與紀錄將從本機刪除。"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Complete days this week: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete days this week: %lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週完成 %lld 天"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Delete Profile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Profile"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除對象"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Delete \"%@\"?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete \"%@\"?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除「%@」？"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Due": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "該服用"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Due now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在該服用"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Family member": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Family member"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家人"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Follow-up reminder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow-up reminder"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "補提醒"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Household": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Household"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家庭成員"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Me": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Profiles stay on this iPhone. No account needed.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profiles stay on this iPhone. No account needed."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有資料只存在這部 iPhone，無需登入。"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Reminders include Taken and Snooze actions.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders include Taken and Snooze actions."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知可直接標記已服用，或延後 10／30／60 分鐘。"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Scheduled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scheduled"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已排程"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Snooze": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snooze"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍後提醒"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Snooze 10 min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snooze 10 min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "延後 10 分鐘"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Snooze 30 min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snooze 30 min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "延後 30 分鐘"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Snooze 1 hour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snooze 1 hour"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "延後 1 小時"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Snoozed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snoozed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已延後"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Snoozed until %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snoozed until %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "延後至 %@"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Still time to take %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still time to take %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別忘了服用 %@"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Switch Profile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch Profile"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切換對象"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Version 1.1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version 1.1"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 1.1"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Weekly Summary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly Summary"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週摘要"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "Who is this for?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Who is this for?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這是誰的藥盒？"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "%lld taken · %lld skipped · %lld missed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld taken · %lld skipped · %lld missed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已服用 %lld · 已跳過 %lld · 錯過 %lld"
+          }
+        }
+      },
+      "extractionState": "manual"
     }
   },
   "version": "1.1"

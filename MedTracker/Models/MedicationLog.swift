@@ -54,10 +54,29 @@ enum MoodStatus: String, CaseIterable {
     }
 }
 
+enum DoseTiming {
+    /// Follow-up notification if the dose is still open.
+    static let followUpDelay: TimeInterval = 30 * 60
+    /// After this window a due/snoozed dose becomes missed.
+    static let missWindow: TimeInterval = 2 * 60 * 60
+    static let snoozeMinutes = [10, 30, 60]
+}
+
 enum DoseRecordStatus: String, Codable {
     case pending
+    case due
+    case snoozed
     case taken
     case skipped
+    case missed
+    
+    /// Still waiting on the person — not finished.
+    var isOpen: Bool {
+        switch self {
+        case .pending, .due, .snoozed: return true
+        case .taken, .skipped, .missed: return false
+        }
+    }
 }
 
 struct ReminderDoseRecord: Codable, Identifiable, Hashable {
@@ -73,12 +92,13 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     var medicineName: String? = nil
     var dose: String? = nil
     var mood: String? = nil
+    var snoozedUntil: Date? = nil
     
     enum CodingKeys: String, CodingKey {
-        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood
+        case id, label, hour, minute, status, takenAt, skippedTime, physicalReaction, notes, medicineName, dose, mood, snoozedUntil
     }
     
-    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil) {
+    init(id: UUID, label: String, hour: Int, minute: Int, status: String = DoseRecordStatus.pending.rawValue, takenAt: Date? = nil, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, mood: String? = nil, snoozedUntil: Date? = nil) {
         self.id = id
         self.label = label
         self.hour = hour
@@ -91,6 +111,7 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         self.medicineName = medicineName
         self.dose = dose
         self.mood = mood
+        self.snoozedUntil = snoozedUntil
     }
     
     init(from decoder: Decoder) throws {
@@ -107,6 +128,7 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
         self.medicineName = try container.decodeIfPresent(String.self, forKey: .medicineName)
         self.dose = try container.decodeIfPresent(String.self, forKey: .dose)
         self.mood = try container.decodeIfPresent(String.self, forKey: .mood)
+        self.snoozedUntil = try container.decodeIfPresent(Date.self, forKey: .snoozedUntil)
     }
     
     var doseStatus: DoseRecordStatus {
@@ -116,6 +138,55 @@ struct ReminderDoseRecord: Codable, Identifiable, Hashable {
     var isTaken: Bool { doseStatus == .taken }
     var isSkipped: Bool { doseStatus == .skipped }
     var isPending: Bool { doseStatus == .pending }
+    var isDue: Bool { doseStatus == .due }
+    var isSnoozed: Bool { doseStatus == .snoozed }
+    var isMissed: Bool { doseStatus == .missed }
+    var isOpen: Bool { doseStatus.isOpen }
+    
+    func scheduledDate(on day: Date, calendar: Calendar = .current) -> Date {
+        var components = calendar.dateComponents([.year, .month, .day], from: day)
+        components.hour = hour
+        components.minute = minute
+        components.second = 0
+        return calendar.date(from: components) ?? day
+    }
+    
+    /// Moves pending → due → missed (or snoozed) without touching taken/skipped.
+    mutating func refreshOccurrence(on day: Date, now: Date = Date(), missWindow: TimeInterval = DoseTiming.missWindow) {
+        guard isOpen else { return }
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: day)
+        let scheduled = scheduledDate(on: start, calendar: calendar)
+        
+        let evaluationTime: Date
+        if calendar.isDateInToday(start) {
+            evaluationTime = now
+        } else if start < calendar.startOfDay(for: now) {
+            evaluationTime = calendar.date(byAdding: .day, value: 1, to: start)?.addingTimeInterval(-1) ?? now
+        } else {
+            evaluationTime = now
+        }
+        
+        if let until = snoozedUntil, until > evaluationTime {
+            status = DoseRecordStatus.snoozed.rawValue
+            return
+        }
+        
+        if evaluationTime < scheduled {
+            status = DoseRecordStatus.pending.rawValue
+            return
+        }
+        
+        let dueAnchor = snoozedUntil ?? scheduled
+        if evaluationTime >= dueAnchor.addingTimeInterval(missWindow) {
+            status = DoseRecordStatus.missed.rawValue
+            skippedTime = skippedTime ?? evaluationTime
+            snoozedUntil = nil
+            return
+        }
+        
+        status = DoseRecordStatus.due.rawValue
+    }
     
     var timeDescription: String {
         AppLocalization.shortTime(hour: hour, minute: minute)
@@ -359,7 +430,10 @@ class MedicationLog {
     /// Multiple heart-rate readings for the day.
     var hrReadings: [HeartRateReading] = []
     
-    init(id: UUID = UUID(), date: Date, isTaken: Bool = false, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, systolic: Int? = nil, diastolic: Int? = nil, heartRate: Int? = nil, mood: String? = nil, doseRecords: [ReminderDoseRecord] = [], bpReadings: [BloodPressureReading] = [], hrReadings: [HeartRateReading] = []) {
+    /// Household member this day log belongs to. Nil only on pre-migration rows.
+    var profileId: UUID? = nil
+    
+    init(id: UUID = UUID(), date: Date, isTaken: Bool = false, skippedTime: Date? = nil, physicalReaction: String? = nil, notes: String? = nil, medicineName: String? = nil, dose: String? = nil, systolic: Int? = nil, diastolic: Int? = nil, heartRate: Int? = nil, mood: String? = nil, doseRecords: [ReminderDoseRecord] = [], bpReadings: [BloodPressureReading] = [], hrReadings: [HeartRateReading] = [], profileId: UUID? = nil) {
         self.id = id
         self.date = date
         self.isTaken = isTaken
@@ -375,6 +449,15 @@ class MedicationLog {
         self.doseRecords = doseRecords
         self.bpReadings = bpReadings
         self.hrReadings = hrReadings
+        self.profileId = profileId
+    }
+    
+    func belongs(to profile: UserProfile) -> Bool {
+        belongs(to: profile.id)
+    }
+    
+    func belongs(to profileID: UUID) -> Bool {
+        profileId == profileID
     }
     
     var sortedDoseRecords: [ReminderDoseRecord] {
@@ -405,7 +488,11 @@ class MedicationLog {
     }
     
     var pendingDoseCount: Int {
-        doseRecords.filter(\.isPending).count
+        doseRecords.filter(\.isOpen).count
+    }
+    
+    var dueOrSnoozedRecords: [ReminderDoseRecord] {
+        sortedDoseRecords.filter { $0.isDue || $0.isSnoozed }
     }
     
     /// Seeds `bpReadings` from legacy single-pair fields when needed.
@@ -631,6 +718,17 @@ class MedicationLog {
         try? modelContext?.save()
     }
     
+    func refreshOccurrenceStates(now: Date = Date()) {
+        guard !doseRecords.isEmpty else { return }
+        var records = doseRecords
+        for index in records.indices {
+            records[index].refreshOccurrence(on: date, now: now)
+        }
+        doseRecords = records
+        refreshAggregateFlags()
+        try? modelContext?.save()
+    }
+    
     func markTaken(reminderId: UUID, mood: String?, remark: String?, medications: [MedicationItem]) {
         guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
         let medNames = medications.map(\.name).filter { !$0.isEmpty }
@@ -642,13 +740,14 @@ class MedicationLog {
         records[index].takenAt = Date()
         records[index].skippedTime = nil
         records[index].physicalReaction = nil
+        records[index].snoozedUntil = nil
         records[index].mood = mood
         records[index].notes = remark?.isEmpty == false ? remark : nil
         records[index].medicineName = medNames.isEmpty ? nil : medNames.joined(separator: "\n")
         records[index].dose = medDoses.isEmpty ? nil : medDoses.joined(separator: "\n")
         doseRecords = records
         refreshAggregateFlags()
-        try? modelContext?.save()
+        persistAndNotify()
     }
     
     func markSkipped(reminderId: UUID, time: Date, reaction: String?, notes: String?) {
@@ -657,12 +756,25 @@ class MedicationLog {
         records[index].status = DoseRecordStatus.skipped.rawValue
         records[index].skippedTime = time
         records[index].takenAt = nil
+        records[index].snoozedUntil = nil
         records[index].physicalReaction = reaction?.isEmpty == false ? reaction : nil
         records[index].notes = notes?.isEmpty == false ? notes : nil
         records[index].mood = nil
         doseRecords = records
         refreshAggregateFlags()
-        try? modelContext?.save()
+        persistAndNotify()
+    }
+    
+    func markSnoozed(reminderId: UUID, minutes: Int, from now: Date = Date()) {
+        guard let index = doseRecords.firstIndex(where: { $0.id == reminderId }) else { return }
+        var records = doseRecords
+        records[index].status = DoseRecordStatus.snoozed.rawValue
+        records[index].snoozedUntil = now.addingTimeInterval(TimeInterval(minutes * 60))
+        records[index].skippedTime = nil
+        records[index].takenAt = nil
+        doseRecords = records
+        refreshAggregateFlags()
+        persistAndNotify()
     }
     
     func undoDose(reminderId: UUID) {
@@ -674,9 +786,15 @@ class MedicationLog {
         records[index].physicalReaction = nil
         records[index].notes = nil
         records[index].mood = nil
+        records[index].snoozedUntil = nil
         doseRecords = records
-        refreshAggregateFlags()
+        refreshOccurrenceStates()
+        persistAndNotify()
+    }
+    
+    private func persistAndNotify() {
         try? modelContext?.save()
+        NotificationManager.shared.rescheduleFromStore()
     }
     
     func refreshAggregateFlags() {
@@ -684,7 +802,7 @@ class MedicationLog {
         
         isTaken = doseRecords.allSatisfy(\.isTaken)
         
-        if let skipped = doseRecords.first(where: \.isSkipped) {
+        if let skipped = doseRecords.first(where: { $0.isSkipped || $0.isMissed }) {
             skippedTime = skipped.skippedTime
             physicalReaction = skipped.physicalReaction
         } else {
@@ -698,8 +816,8 @@ class MedicationLog {
             dose = takenRecords.compactMap(\.dose).filter { !$0.isEmpty }.joined(separator: "\n")
             notes = takenRecords.compactMap(\.notes).filter { !$0.isEmpty }.joined(separator: "\n")
             mood = takenRecords.compactMap(\.mood).last
-        } else if doseRecords.contains(where: \.isSkipped) {
-            let skippedRecords = doseRecords.filter(\.isSkipped)
+        } else if doseRecords.contains(where: { $0.isSkipped || $0.isMissed }) {
+            let skippedRecords = doseRecords.filter { $0.isSkipped || $0.isMissed }
             notes = skippedRecords.compactMap(\.notes).filter { !$0.isEmpty }.joined(separator: "\n")
             medicineName = nil
             dose = nil

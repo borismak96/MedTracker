@@ -39,6 +39,12 @@
 		FBF419714E9A58DAC18B824C /* SharedDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97FF95AC4323101CF487683 /* SharedDatabase.swift */; };
 		G1E2N3E4R5A6T7E8D9L0C1 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
 		G1E2N3E4R5A6T7E8D9L0C2 /* GeneratedLocalizations.swift in Sources */ = {isa = PBXBuildFile; fileRef = G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */; };
+		HH0000000000000000000002 /* ActiveProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000001 /* ActiveProfileStore.swift */; };
+		HH0000000000000000000003 /* ActiveProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000001 /* ActiveProfileStore.swift */; };
+		HH0000000000000000000005 /* AdherenceStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000004 /* AdherenceStats.swift */; };
+		HH0000000000000000000006 /* AdherenceStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000004 /* AdherenceStats.swift */; };
+		HH0000000000000000000008 /* ProfileSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = HH0000000000000000000007 /* ProfileSwitcher.swift */; };
+		NM0000000000000000000003 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0000000000000000000001 /* NotificationManager.swift */; };
 		M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */; };
 		MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */; };
 		MODEL0022C41D8E0006BEED4 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF22C41D8E0006BEED4 /* UserProfile.swift */; };
@@ -108,6 +114,9 @@
 		F4280982BE33AEDE0AE52768 /* MedicalCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicalCardView.swift; sourceTree = "<group>"; };
 		F6B28B383D1C077F6A60E93C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		G1E2N3E4R5A6T7E8D9L0C0 /* GeneratedLocalizations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedLocalizations.swift; sourceTree = "<group>"; };
+		HH0000000000000000000001 /* ActiveProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveProfileStore.swift; sourceTree = "<group>"; };
+		HH0000000000000000000004 /* AdherenceStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdherenceStats.swift; sourceTree = "<group>"; };
+		HH0000000000000000000007 /* ProfileSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSwitcher.swift; sourceTree = "<group>"; };
 		M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodFaceView.swift; sourceTree = "<group>"; };
 		MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationLog.swift; sourceTree = "<group>"; };
 		MODELREF22C41D8E0006BEED4 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
@@ -219,6 +228,8 @@
 			children = (
 				MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */,
 				MODELREF22C41D8E0006BEED4 /* UserProfile.swift */,
+				HH0000000000000000000001 /* ActiveProfileStore.swift */,
+				HH0000000000000000000004 /* AdherenceStats.swift */,
 				A97FF95AC4323101CF487683 /* SharedDatabase.swift */,
 			);
 			path = Models;
@@ -234,6 +245,7 @@
 				VIEWREF12C41D8E0006BEED4 /* HomeView.swift */,
 				VIEWREF22C41D8E0006BEED4 /* HistoryView.swift */,
 				VIEWREF32C41D8E0006BEED4 /* ProfileView.swift */,
+				HH0000000000000000000007 /* ProfileSwitcher.swift */,
 				A9B8C7D6E5F4039281706A5B /* MedicationsSettingsView.swift */,
 				R8E7M6I5N4D3E2R1S0E9T8I6 /* RemindersSettingsView.swift */,
 				S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */,
@@ -356,6 +368,9 @@
 				BP0000000000000000000002 /* BloodPressureChartView.swift in Sources */,
 				HR0000000000000000000004 /* HeartRateChartView.swift in Sources */,
 				NM0000000000000000000002 /* NotificationManager.swift in Sources */,
+				HH0000000000000000000002 /* ActiveProfileStore.swift in Sources */,
+				HH0000000000000000000005 /* AdherenceStats.swift in Sources */,
+				HH0000000000000000000008 /* ProfileSwitcher.swift in Sources */,
 				9B851C832C41D8DF006BEED4 /* ContentView.swift in Sources */,
 				MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */,
 				MODEL0022C41D8E0006BEED4 /* UserProfile.swift in Sources */,
@@ -394,6 +409,9 @@
 				G1E2N3E4R5A6T7E8D9L0C2 /* GeneratedLocalizations.swift in Sources */,
 				6CB1B24A1E5FBA5726CC0101 /* MedicationLog.swift in Sources */,
 				CEFB41C1302E4A56AF536BA7 /* UserProfile.swift in Sources */,
+				HH0000000000000000000003 /* ActiveProfileStore.swift in Sources */,
+				HH0000000000000000000006 /* AdherenceStats.swift in Sources */,
+				NM0000000000000000000003 /* NotificationManager.swift in Sources */,
 				6E959A76DC0FC9BB4A6C58CD /* SharedDatabase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -430,12 +448,12 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = 7F99P68Z67;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -454,12 +472,12 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = 7F99P68Z67;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -600,13 +618,14 @@
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7F99P68Z67;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "PillPal sends time-sensitive reminders when it is time to take medication, including follow-up and snooze alerts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -617,7 +636,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
 				PRODUCT_NAME = PillPal;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -636,13 +655,14 @@
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7F99P68Z67;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "PillPal sends time-sensitive reminders when it is time to take medication, including follow-up and snooze alerts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -653,7 +673,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
 				PRODUCT_NAME = PillPal;
 				PROVISIONING_PROFILE_SPECIFIER = "";

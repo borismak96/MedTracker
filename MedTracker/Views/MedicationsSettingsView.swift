@@ -3,9 +3,9 @@ import SwiftData
 
 struct MedicationsSettingsView: View {
     @Bindable var profile: UserProfile
-    @Query private var logs: [MedicationLog]
-    @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
-    @AppStorage("isNotificationSoundEnabled") private var isNotificationSoundEnabled = true
+    @Query private var allLogs: [MedicationLog]
+    @AppStorage("isNotificationEnabled", store: AppLocalization.sharedDefaults) private var isNotificationEnabled = false
+    @AppStorage("isNotificationSoundEnabled", store: AppLocalization.sharedDefaults) private var isNotificationSoundEnabled = true
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -91,7 +91,7 @@ struct MedicationsSettingsView: View {
             profile.ensureRemindersMigrated()
         }
         .onChange(of: profile.medications) { _, _ in
-            profile.pruneRemovedMedications(from: logs)
+            profile.pruneRemovedMedications(from: allLogs.filter { $0.belongs(to: profile) })
             updateNotificationIfNeeded()
             try? profile.modelContext?.save()
         }
@@ -145,9 +145,7 @@ struct MedicationsSettingsView: View {
     private func updateNotificationIfNeeded() {
         guard isNotificationEnabled else { return }
         profile.ensureRemindersMigrated()
-        NotificationManager.shared.scheduleReminders(profile.sortedReminders, playSound: isNotificationSoundEnabled) { reminder in
-            profile.medications(for: reminder)
-        }
+        NotificationManager.shared.rescheduleFromStore()
     }
 }
 

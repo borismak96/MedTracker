@@ -3,8 +3,10 @@ import SwiftData
 
 struct HomeView: View {
     @Binding var selectedTab: AppTab
+    @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
-    @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
+    @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
     
     @State private var showingSkipSheet = false
     @State private var skipNotes = ""
@@ -30,7 +32,15 @@ struct HomeView: View {
     @State private var showingMedicalCard = false
     @State private var showingSetupGuide = false
     
-    var profile: UserProfile? { profiles.first }
+    var profile: UserProfile? {
+        _ = activeProfileID
+        return ActiveProfileStore.resolve(from: profiles)
+    }
+    
+    var logs: [MedicationLog] {
+        guard let profile else { return [] }
+        return HouseholdData.logs(for: profile, in: allLogs)
+    }
     
     var todayLog: MedicationLog? {
         let today = Calendar.current.startOfDay(for: Date())
@@ -48,6 +58,8 @@ struct HomeView: View {
                             headerSection(profile: profile)
                                 .padding(.top, 10)
                             
+                            historyTeaser
+                            
                             if let log = todayLog {
                                 TodayCard(
                                     log: log,
@@ -58,6 +70,7 @@ struct HomeView: View {
                                     skipReaction: $skipReaction,
                                     skipNotes: $skipNotes
                                 )
+                                .id(profile.id)
                                 
                                 VitalsCard(
                                     log: log,
@@ -79,6 +92,9 @@ struct HomeView: View {
                                 )
                                 
                                 MoodStatsCard(logs: logs)
+                            } else {
+                                ProgressView()
+                                    .padding(.top, 30)
                             }
                         } else {
                             ProgressView()
@@ -171,7 +187,10 @@ struct HomeView: View {
                 Text(hrAlertCategory?.localizedAdvice ?? "")
             }
             .onAppear {
-                profile?.ensureRemindersMigrated()
+                refreshActiveDay()
+            }
+            .onChange(of: activeProfileID) { _, _ in
+                refreshActiveDay()
             }
             .onChange(of: selectedTab) { _, newTab in
                 if newTab != .today, showingMedicalCard {
@@ -254,8 +273,47 @@ struct HomeView: View {
                 .padding(.leading, 8)
                 
                 Spacer()
+                
+                ProfileSwitcher(profiles: profiles, active: profile, compact: true)
             }
         }
+    }
+    
+    private var historyTeaser: some View {
+        Button {
+            selectedTab = .history
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.orange)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(AppLocalization.format("%lld day streak", AdherenceStats.consecutiveDayStreak(logs: logs)))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text(AppLocalization.string("Weekly Summary"))
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Text(AppLocalization.string("History"))
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                    .foregroundColor(.mint)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.secondary)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(22)
+            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("History"))
     }
     
     func skipSheetContent(for log: MedicationLog) -> some View {
@@ -577,6 +635,15 @@ struct HomeView: View {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
+    
+    private func refreshActiveDay() {
+        guard let profile else { return }
+        profile.ensureRemindersMigrated()
+        HouseholdData.ensureTodayLog(for: profile, logs: logs, context: modelContext)
+        if NotificationPreferences.isEnabled {
+            NotificationManager.shared.rescheduleFromStore()
+        }
+    }
 }
 
 struct TodayCard: View {
@@ -623,7 +690,7 @@ struct TodayCard: View {
                 }
             }
             
-            if log.sortedDoseRecords.contains(where: \.isPending) {
+            if log.sortedDoseRecords.contains(where: \.isOpen) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(AppLocalization.string("How are you feeling today?"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
@@ -650,6 +717,8 @@ struct TodayCard: View {
                         .cornerRadius(12)
                 }
             }
+            
+            dueNowBanner
             
             VStack(spacing: 12) {
                 ForEach(log.sortedDoseRecords) { record in
@@ -683,12 +752,79 @@ struct TodayCard: View {
         .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         .onAppear {
             log.syncDoseRecords(with: profile)
+            log.refreshOccurrenceStates()
         }
         .onChange(of: profile.reminders) { _, _ in
             log.syncDoseRecords(with: profile)
+            log.refreshOccurrenceStates()
         }
         .onChange(of: profile.medications) { _, _ in
             log.syncDoseRecords(with: profile)
+            log.refreshOccurrenceStates()
+        }
+    }
+    
+    @ViewBuilder
+    private var dueNowBanner: some View {
+        let due = log.dueOrSnoozedRecords
+        if !due.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bell.badge.fill")
+                        .foregroundColor(.orange)
+                    Text(AppLocalization.string("Due now"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                    Spacer()
+                }
+                
+                ForEach(due) { record in
+                    let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
+                        ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
+                    let meds = profile.medications(for: reminder)
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            if record.isSnoozed, let until = record.snoozedUntil {
+                                Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text(record.timeDescription)
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Button {
+                            withAnimation {
+                                log.markTaken(
+                                    reminderId: record.id,
+                                    mood: selectedMood?.rawValue,
+                                    remark: remarkText.isEmpty ? nil : remarkText,
+                                    medications: meds
+                                )
+                            }
+                        } label: {
+                            Text(AppLocalization.string("Take Now"))
+                                .font(.system(.caption, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.mint)
+                                .cornerRadius(10)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(12)
+                    .background(Color.orange.opacity(0.12))
+                    .cornerRadius(14)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.08))
+            .cornerRadius(20)
         }
     }
     
@@ -748,7 +884,12 @@ struct TodayCard: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-            } else if record.isSkipped {
+            } else if record.isSkipped || record.isMissed {
+                if record.isSnoozed, let until = record.snoozedUntil {
+                    Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundColor(secondaryColor)
+                }
                 if let reaction = record.physicalReaction, !reaction.isEmpty {
                     Text(AppLocalization.format("Reaction: %@", reaction))
                         .font(.system(.caption, design: .rounded))
@@ -756,7 +897,12 @@ struct TodayCard: View {
                 }
                 undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else {
-                HStack(spacing: 10) {
+                if record.isSnoozed, let until = record.snoozedUntil {
+                    Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundColor(secondaryColor)
+                }
+                VStack(spacing: 8) {
                     Button {
                         withAnimation {
                             log.markTaken(
@@ -777,22 +923,26 @@ struct TodayCard: View {
                     }
                     .buttonStyle(.plain)
                     
-                    Button {
-                        activeSkipReminderId = record.id
-                        skippedTime = Date()
-                        skipReaction = ""
-                        skipNotes = ""
-                        showingSkipSheet = true
-                    } label: {
-                        Text(AppLocalization.string("Skip / Missed"))
-                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundColor(titleColor)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.55))
-                            .cornerRadius(14)
+                    HStack(spacing: 10) {
+                        snoozeMenu(reminderId: record.id, titleColor: titleColor)
+                        
+                        Button {
+                            activeSkipReminderId = record.id
+                            skippedTime = Date()
+                            skipReaction = ""
+                            skipNotes = ""
+                            showingSkipSheet = true
+                        } label: {
+                            Text(AppLocalization.string("Skip / Missed"))
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(titleColor)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.55))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -811,9 +961,18 @@ struct TodayCard: View {
         } else if record.isSkipped {
             title = AppLocalization.string("Skipped")
             tint = .red
-        } else {
-            title = AppLocalization.string("Pending")
+        } else if record.isMissed {
+            title = AppLocalization.string("Missed")
+            tint = .red
+        } else if record.isSnoozed {
+            title = AppLocalization.string("Snoozed")
             tint = .orange
+        } else if record.isDue {
+            title = AppLocalization.string("Due")
+            tint = .orange
+        } else {
+            title = AppLocalization.string("Scheduled")
+            tint = .mint
         }
         
         return Text(title)
@@ -823,6 +982,29 @@ struct TodayCard: View {
             .padding(.vertical, 5)
             .background(onSolid ? Color.white.opacity(0.92) : tint.opacity(0.15))
             .cornerRadius(10)
+    }
+    
+    private func snoozeMenu(reminderId: UUID, titleColor: Color) -> some View {
+        Menu {
+            Button(AppLocalization.string("Snooze 10 min")) {
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 10) }
+            }
+            Button(AppLocalization.string("Snooze 30 min")) {
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 30) }
+            }
+            Button(AppLocalization.string("Snooze 1 hour")) {
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 60) }
+            }
+        } label: {
+            Text(AppLocalization.string("Snooze"))
+                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                .foregroundColor(titleColor)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.white.opacity(0.55))
+                .cornerRadius(14)
+        }
+        .accessibilityLabel(AppLocalization.string("Snooze"))
     }
     
     private func undoButton(reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
