@@ -46,9 +46,6 @@ struct VisitPackView: View {
             Text(AppLocalization.format("Prepared for %@", snapshot.profileName))
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundColor(.secondary)
-            Text(AppLocalization.string("Uses only records already on this iPhone. Nothing is uploaded."))
-                .font(.system(.caption, design: .rounded))
-                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
