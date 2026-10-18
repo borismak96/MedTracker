@@ -5337,6 +5337,24 @@
         }
       }
     },
+    "Version %@ (%@)" : {
+      "comment" : "App marketing version and build number, e.g. Version 1.2.1 (17).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %1$@ (%2$@)"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %1$@ (%2$@)"
+          }
+        }
+      }
+    },
     "Version 1.0" : {
       "comment" : "The version of the app.",
       "extractionState" : "stale",
@@ -5374,7 +5392,7 @@
       }
     },
     "Version 1.2" : {
-      "extractionState" : "manual",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
