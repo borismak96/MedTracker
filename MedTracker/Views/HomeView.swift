@@ -257,7 +257,7 @@ struct HomeView: View {
                             .background(Circle().fill(Color.white))
                             .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                     }
-                    .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
+                    .accessibilityLabel(AppLocalization.string("Medication List"))
                     
                     Button(action: {
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -335,10 +335,10 @@ struct HomeView: View {
                         .foregroundColor(.mint)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(AppLocalization.string("Clinic Visit Pack"))
+                    Text(AppLocalization.string("Medication List"))
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
-                    Text(AppLocalization.string("Share a bilingual summary for your clinic visit."))
+                    Text(AppLocalization.string("Share a bilingual medication summary for your clinic visit."))
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -355,7 +355,7 @@ struct HomeView: View {
             .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
+        .accessibilityLabel(AppLocalization.string("Medication List"))
     }
     
     private var historyTeaser: some View {

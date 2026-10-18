@@ -58,7 +58,7 @@ struct HistoryView: View {
                                     .background(Circle().fill(Color.white))
                                     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                             }
-                            .accessibilityLabel(AppLocalization.string("Clinic Visit Pack"))
+                            .accessibilityLabel(AppLocalization.string("Medication List"))
                             ProfileSwitcher(profiles: profiles, active: profile, compact: true)
                         }
                     }

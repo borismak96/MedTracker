@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// On-device clinic summary for the active household profile (no upload).
+/// On-device medication list for the active household profile (no upload).
 struct VisitPackSnapshot {
     var profileName: String
     var generatedAt: Date
@@ -95,7 +95,7 @@ enum VisitPackPDF {
         let fileStamp = DateFormatter()
         fileStamp.locale = Locale(identifier: "en_US_POSIX")
         fileStamp.dateFormat = "yyyy-MM-dd"
-        let fileName = "PillPal_VisitPack_\(fileStamp.string(from: snapshot.generatedAt)).pdf"
+        let fileName = "PillPal_MedicationList_\(fileStamp.string(from: snapshot.generatedAt)).pdf"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
@@ -174,7 +174,7 @@ enum VisitPackPDF {
                     let headerH: CGFloat = 88
                     drawRoundedRect(CGRect(x: margin, y: y, width: contentWidth, height: headerH), fill: mint)
                     _ = drawText(
-                        L("Clinic Visit Pack", chinese: chinese),
+                        L("Medication List", chinese: chinese),
                         font: .systemFont(ofSize: 22, weight: .heavy),
                         color: .white,
                         in: CGRect(x: margin + 18, y: y + 16, width: contentWidth - 36, height: 28)
@@ -187,7 +187,7 @@ enum VisitPackPDF {
                     )
                     y += headerH + 12
                     
-                    let disclaimer = L("Visit pack disclaimer", chinese: chinese)
+                    let disclaimer = L("Medication list disclaimer", chinese: chinese)
                     let discFont = UIFont.systemFont(ofSize: 11, weight: .medium)
                     let discH = ceil((disclaimer as NSString).boundingRect(
                         with: CGSize(width: contentWidth - 32, height: .greatestFiniteMagnitude),
@@ -399,7 +399,7 @@ enum VisitPackPDF {
             }
             return url
         } catch {
-            print("Visit pack PDF failed: \(error)")
+            print("Medication list PDF failed: \(error)")
             return nil
         }
     }
