@@ -32,7 +32,7 @@ struct VisitPackView: View {
                 .padding(.bottom, 32)
             }
         }
-        .navigationTitle(AppLocalization.string("Clinic Visit Pack"))
+        .navigationTitle(AppLocalization.string("Medication List"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             previewChinese = AppLocalization.prefersTraditionalChinese
@@ -41,7 +41,7 @@ struct VisitPackView: View {
     
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(AppLocalization.string("Clinic-ready summary"))
+            Text(AppLocalization.string("Clinic medication summary"))
                 .font(.system(.title3, design: .rounded, weight: .bold))
             Text(AppLocalization.format("Prepared for %@", snapshot.profileName))
                 .font(.system(.subheadline, design: .rounded))
@@ -58,7 +58,7 @@ struct VisitPackView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "info.circle.fill")
                 .foregroundColor(.orange)
-            Text(AppLocalization.string("Visit pack disclaimer"))
+            Text(AppLocalization.string("Medication list disclaimer"))
                 .font(.system(.caption, design: .rounded, weight: .semibold))
                 .foregroundColor(.primary)
         }

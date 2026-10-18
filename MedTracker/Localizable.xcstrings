@@ -1112,36 +1112,19 @@
         }
       }
     },
-    "Clinic Visit Pack" : {
+    "Clinic medication summary" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clinic Visit Pack"
+            "value" : "Clinic medication summary"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "覆診單"
-          }
-        }
-      }
-    },
-    "Clinic-ready summary" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clinic-ready summary"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "覆診用摘要"
+            "value" : "看診用藥摘要"
           }
         }
       }
@@ -2538,6 +2521,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "藥物詳情"
+          }
+        }
+      }
+    },
+    "Medication List" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medication List"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "藥單"
           }
         }
       }
@@ -4166,19 +4166,19 @@
         }
       }
     },
-    "Share a bilingual summary for your clinic visit." : {
+    "Share a bilingual medication summary for your clinic visit." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Share a bilingual summary for your clinic visit."
+            "value" : "Share a bilingual medication summary for your clinic visit."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "分享雙語摘要，方便覆診時給醫生參考。"
+            "value" : "分享雙語用藥摘要，方便看診時給醫生參考。"
           }
         }
       }
@@ -5452,7 +5452,7 @@
         }
       }
     },
-    "Visit pack disclaimer" : {
+    "Medication list disclaimer" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
