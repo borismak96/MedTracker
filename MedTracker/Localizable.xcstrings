@@ -3458,13 +3458,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Optional. Encodes only the fields you choose. Works offline."
+            "value" : "Optional. Encodes only the fields you choose. Scanning opens a Medical Card page. Details stay in the QR, not on a server."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "選用功能。只會編碼你選擇的欄位，可離線使用。"
+            "value" : "選用功能。只會編碼你選擇的欄位。掃描後會開啟醫療卡頁面。資料留在 QR 內，不會上傳到伺服器。"
           }
         }
       }
@@ -4038,6 +4038,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已儲存！"
+          }
+        }
+      }
+    },
+    "Scan with Camera or another phone to open this Medical Card." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scan with Camera or another phone to open this Medical Card."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用相機或其他手機掃描即可開啟此醫療卡。"
           }
         }
       }

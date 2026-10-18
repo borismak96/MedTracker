@@ -212,7 +212,7 @@ struct MedicalCardView: View {
                 }
                 .font(.system(.subheadline, design: .rounded))
                 
-                if let payload = qrPayload, let image = OfflineQRCode.image(from: payload) {
+                if let payload = MedicalCardQR.qrString(for: profile), let image = OfflineQRCode.image(from: payload) {
                     Image(uiImage: image)
                         .interpolation(.none)
                         .resizable()
@@ -220,6 +220,12 @@ struct MedicalCardView: View {
                         .frame(width: 200, height: 200)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
+                        .accessibilityLabel(AppLocalization.string("Scan with Camera or another phone to open this Medical Card."))
+                    Text(AppLocalization.string("Scan with Camera or another phone to open this Medical Card."))
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
                     Text(AppLocalization.string("Keep this QR private. It is generated on this iPhone."))
                         .font(.system(.caption2, design: .rounded))
                         .foregroundColor(.secondary)
@@ -230,48 +236,6 @@ struct MedicalCardView: View {
                 }
             }
         }
-    }
-    
-    private var qrPayload: String? {
-        guard profile.showMedicalCardQR else { return nil }
-        var lines: [String] = []
-        lines.append("PillPal Medical Card")
-        lines.append(AppLocalization.string("Not an official medical ID"))
-        if profile.qrIncludeName {
-            lines.append("\(AppLocalization.string("Name")): \(profile.displayName)")
-        }
-        if profile.qrIncludeAllergies {
-            lines.append("\(AppLocalization.string("Allergies")): \(profile.hasAllergies ? profile.trimmedAllergies : AppLocalization.string("Not recorded yet"))")
-        }
-        if profile.qrIncludeICE {
-            if profile.hasEmergencyContact {
-                var ice = profile.trimmedICEName
-                if !profile.trimmedICERelation.isEmpty {
-                    ice += ice.isEmpty ? profile.trimmedICERelation : " (\(profile.trimmedICERelation))"
-                }
-                if !profile.trimmedICEPhone.isEmpty {
-                    ice += ice.isEmpty ? profile.trimmedICEPhone : " · \(profile.trimmedICEPhone)"
-                }
-                lines.append("\(AppLocalization.string("Emergency Contact")): \(ice)")
-            } else {
-                lines.append("\(AppLocalization.string("Emergency Contact")): \(AppLocalization.string("Not recorded yet"))")
-            }
-        }
-        if profile.qrIncludeMedications {
-            let meds = profile.activeMedications
-            if meds.isEmpty {
-                lines.append("\(AppLocalization.string("Current Medications")): \(AppLocalization.string("No medications added."))")
-            } else {
-                lines.append("\(AppLocalization.string("Current Medications")):")
-                for med in meds {
-                    let dose = med.dose.isEmpty ? "" : " · \(med.dose)"
-                    lines.append("- \(med.name)\(dose)")
-                }
-            }
-        }
-        let body = lines.dropFirst(2)
-        guard body.contains(where: { !$0.isEmpty }) else { return nil }
-        return lines.joined(separator: "\n")
     }
     
     private func cardSection<Content: View>(title: String, icon: String, tint: Color, @ViewBuilder content: () -> Content) -> some View {
