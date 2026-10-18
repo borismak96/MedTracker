@@ -2136,23 +2136,6 @@
         }
       }
     },
-    "Include in QR" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Include in QR"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "編碼到 QR"
-          }
-        }
-      }
-    },
     "Information for Reference Only" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2199,23 +2182,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "持續按時服藥，延續你的連續紀錄。"
-          }
-        }
-      }
-    },
-    "Keep this QR private. It is generated on this iPhone." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keep this QR private. It is generated on this iPhone."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請妥善保管此 QR，它只在這部 iPhone 上產生。"
           }
         }
       }
@@ -3282,23 +3248,6 @@
         }
       }
     },
-    "Offline QR" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline QR"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "離線 QR"
-          }
-        }
-      }
-    },
     "OK" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3448,23 +3397,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打開個人檔案 → 提醒時間。新增一個或多個每日鬧鐘（早上、下午、晚上或自訂）。"
-          }
-        }
-      }
-    },
-    "Optional. Encodes only the fields you choose. Works offline." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Optional. Encodes only the fields you choose. Scanning opens a Medical Card page. Details stay in the QR, not on a server."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "選用功能。只會編碼你選擇的欄位。掃描後會開啟醫療卡頁面。資料留在 QR 內，不會上傳到伺服器。"
           }
         }
       }
@@ -4042,23 +3974,6 @@
         }
       }
     },
-    "Scan with Camera or another phone to open this Medical Card." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scan with Camera or another phone to open this Medical Card."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用相機或其他手機掃描即可開啟此醫療卡。"
-          }
-        }
-      }
-    },
     "Schedule" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4196,23 +4111,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享 PDF"
-          }
-        }
-      }
-    },
-    "Show QR on this card" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show QR on this card"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在卡片上顯示 QR"
           }
         }
       }
@@ -5180,23 +5078,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "二"
-          }
-        }
-      }
-    },
-    "Turn on at least one field to encode." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Turn on at least one field to encode."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請至少選擇一個要編碼的欄位。"
           }
         }
       }

@@ -129,8 +129,6 @@ struct MedicalCardView: View {
                         }
                     }
                     
-                    qrSection
-                    
                     Button {
                         showingEditor = true
                     } label: {
@@ -152,11 +150,6 @@ struct MedicalCardView: View {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 8)
         .padding(16)
-        .onChange(of: profile.showMedicalCardQR) { _, _ in try? profile.modelContext?.save() }
-        .onChange(of: profile.qrIncludeName) { _, _ in try? profile.modelContext?.save() }
-        .onChange(of: profile.qrIncludeAllergies) { _, _ in try? profile.modelContext?.save() }
-        .onChange(of: profile.qrIncludeICE) { _, _ in try? profile.modelContext?.save() }
-        .onChange(of: profile.qrIncludeMedications) { _, _ in try? profile.modelContext?.save() }
         .sheet(isPresented: $showingEditor) {
             NavigationView {
                 MedicalCardEditor(profile: profile)
@@ -185,57 +178,6 @@ struct MedicalCardView: View {
         .padding(12)
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
-    }
-    
-    private var qrSection: some View {
-        cardSection(title: AppLocalization.string("Offline QR"), icon: "qrcode", tint: .primary) {
-            Toggle(isOn: $profile.showMedicalCardQR) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(AppLocalization.string("Show QR on this card"))
-                        .font(.system(.subheadline, design: .rounded, weight: .bold))
-                    Text(AppLocalization.string("Optional. Encodes only the fields you choose. Works offline."))
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .tint(.mint)
-            
-            if profile.showMedicalCardQR {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(AppLocalization.string("Include in QR"))
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundColor(.secondary)
-                    Toggle(AppLocalization.string("Name"), isOn: $profile.qrIncludeName)
-                    Toggle(AppLocalization.string("Allergies"), isOn: $profile.qrIncludeAllergies)
-                    Toggle(AppLocalization.string("Emergency Contact"), isOn: $profile.qrIncludeICE)
-                    Toggle(AppLocalization.string("Current Medications"), isOn: $profile.qrIncludeMedications)
-                }
-                .font(.system(.subheadline, design: .rounded))
-                
-                if let payload = MedicalCardQR.qrString(for: profile), let image = OfflineQRCode.image(from: payload) {
-                    Image(uiImage: image)
-                        .interpolation(.none)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200, height: 200)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 8)
-                        .accessibilityLabel(AppLocalization.string("Scan with Camera or another phone to open this Medical Card."))
-                    Text(AppLocalization.string("Scan with Camera or another phone to open this Medical Card."))
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                    Text(AppLocalization.string("Keep this QR private. It is generated on this iPhone."))
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                } else {
-                    emptyPrompt(AppLocalization.string("Turn on at least one field to encode."))
-                }
-            }
-        }
     }
     
     private func cardSection<Content: View>(title: String, icon: String, tint: Color, @ViewBuilder content: () -> Content) -> some View {
