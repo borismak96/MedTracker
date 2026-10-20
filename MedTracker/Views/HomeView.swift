@@ -8,6 +8,11 @@ struct HomeView: View {
     @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
     @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
+    private var stackedHeader: Bool {
+        elderMode || dynamicTypeSize.prefersStackedLayout
+    }
     
     @State private var showingSkipSheet = false
     @State private var skipNotes = ""
@@ -224,102 +229,129 @@ struct HomeView: View {
     
     func headerSection(profile: UserProfile) -> some View {
         VStack(alignment: .leading, spacing: 20) {
-            // App Title and Notification Bell
-            HStack {
-                Text(AppBrand.displayName)
-                    .font(.system(.title, design: .rounded, weight: .heavy))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                
-                Spacer(minLength: 8)
-                
-                HStack(spacing: 10) {
-                    Button(action: {
-                        showingSetupGuide = true
-                    }) {
-                        Image(systemName: "info.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.mint)
-                            .padding(12)
-                            .background(Circle().fill(Color.white))
-                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    }
-                    .accessibilityLabel(AppLocalization.string("How to Set Up"))
-                    
-                    Button(action: {
-                        showingVisitPack = true
-                    }) {
-                        Image(systemName: "doc.text.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.mint)
-                            .padding(12)
-                            .background(Circle().fill(Color.white))
-                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    }
-                    .accessibilityLabel(AppLocalization.string("Medication List"))
-                    
-                    Button(action: {
-                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                            showingMedicalCard = true
-                        }
-                    }) {
-                        Image(systemName: "person.text.rectangle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.mint)
-                            .padding(12)
-                            .background(Circle().fill(Color.white))
-                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    }
-                    .accessibilityLabel(AppLocalization.string("Medical Card"))
+            if stackedHeader {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(AppBrand.displayName)
+                        .font(.system(.title, design: .rounded, weight: .heavy))
+                        .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    headerUtilityButtons
+                }
+            } else {
+                HStack(alignment: .center) {
+                    Text(AppBrand.displayName)
+                        .font(.system(.title, design: .rounded, weight: .heavy))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    Spacer(minLength: 8)
+                    headerUtilityButtons
                 }
             }
             
-            // Greeting and Avatar
-            HStack(alignment: .top) {
-                if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 50, height: 50)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 50, height: 50)
-                        .foregroundStyle(.white, Color.mint)
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    if profile.name.isEmpty {
-                        Text(AppLocalization.string("Hello, Friend!"))
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                    } else {
-                        Text(AppLocalization.format("Hello, %@!", profile.name))
-                            .font(.system(.title2, design: .rounded, weight: .bold))
+            // Greeting and Avatar — stacked at 樂齡 / Accessibility sizes so the greeting never clips.
+            if stackedHeader {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top, spacing: 12) {
+                        headerAvatar(profile)
+                        greetingCopy(profile)
                     }
-                    Text(AppLocalization.string("Let's stay on track today."))
-                        .font(.system(.subheadline, design: .rounded))
-                        .foregroundColor(.secondary)
-                    if elderMode {
-                        ProfileSwitcher(profiles: profiles, active: profile, compact: true)
-                            .padding(.top, 6)
-                    }
+                    ProfileSwitcher(profiles: profiles, active: profile, compact: false)
                 }
-                .padding(.leading, 8)
-                .fixedSize(horizontal: false, vertical: true)
-                
-                Spacer(minLength: 0)
-                
-                if !elderMode {
+            } else {
+                HStack(alignment: .top) {
+                    headerAvatar(profile)
+                    greetingCopy(profile)
+                        .padding(.leading, 8)
+                    Spacer(minLength: 0)
                     ProfileSwitcher(profiles: profiles, active: profile, compact: true)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var headerUtilityButtons: some View {
+        HStack(spacing: 10) {
+            Button(action: {
+                showingSetupGuide = true
+            }) {
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.mint)
+                    .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            }
+            .accessibilityLabel(AppLocalization.string("How to Set Up"))
+            
+            Button(action: {
+                showingVisitPack = true
+            }) {
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.mint)
+                    .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            }
+            .accessibilityLabel(AppLocalization.string("Medication List"))
+            
+            Button(action: {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    showingMedicalCard = true
+                }
+            }) {
+                Image(systemName: "person.text.rectangle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.mint)
+                    .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            }
+            .accessibilityLabel(AppLocalization.string("Medical Card"))
+        }
+        .accessibilityElement(children: .contain)
+    }
+    
+    @ViewBuilder
+    private func headerAvatar(_ profile: UserProfile) -> some View {
+        if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .frame(width: 50, height: 50)
+                .foregroundStyle(.white, Color.mint)
+                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .accessibilityHidden(true)
+        }
+    }
+    
+    private func greetingCopy(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if profile.name.isEmpty {
+                Text(AppLocalization.string("Hello, Friend!"))
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(AppLocalization.format("Hello, %@!", profile.name))
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text(AppLocalization.string("Let's stay on track today."))
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
     
     private var clinicPackCard: some View {
@@ -380,7 +412,7 @@ struct HomeView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer(minLength: 8)
-                if !elderMode {
+                if !stackedHeader {
                     Text(AppLocalization.string("History"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                         .foregroundColor(.mint)
@@ -423,6 +455,7 @@ struct HomeView: View {
                                 DatePicker("", selection: $skippedTime, displayedComponents: .hourAndMinute)
                                     .labelsHidden()
                                     .tint(.mint)
+                                    .accessibilityLabel(AppLocalization.string("Time"))
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
@@ -463,12 +496,15 @@ struct HomeView: View {
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
+                                .frame(minHeight: ElderMode.buttonHeight)
                                 .padding(.vertical, 16)
                                 .background(Color.mint)
                                 .cornerRadius(20)
                                 .shadow(color: Color.mint.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(AppLocalization.string("Save"))
+                        .accessibilityHint(AppLocalization.string("Skip / Missed"))
                         .padding(.top, 4)
                     }
                     .padding(.horizontal, 20)
@@ -741,6 +777,11 @@ struct TodayCard: View {
     @State private var selectedMood: MoodStatus? = nil
     @State private var remarkText: String = ""
     @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
+    private var stackedControls: Bool {
+        elderMode || dynamicTypeSize.prefersStackedLayout
+    }
     
     /// Always the in-context @Query row. Never the instance that screenshot seeding just deleted.
     private var log: MedicationLog? {
@@ -761,6 +802,7 @@ struct TodayCard: View {
                     Text(AppLocalization.string("Today's Medication"))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
+                        .accessibilityAddTraits(.isHeader)
                     
                     Text(AppLocalization.string("Log each reminder time"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
@@ -778,7 +820,7 @@ struct TodayCard: View {
                 
                 Spacer(minLength: 12)
                 
-                if !elderMode {
+                if !stackedControls {
                     ZStack {
                         Circle()
                             .fill(Color.mint.opacity(0.15))
@@ -787,6 +829,7 @@ struct TodayCard: View {
                             .font(.system(size: 30))
                             .foregroundColor(.mint)
                     }
+                    .accessibilityHidden(true)
                 }
             }
             
@@ -806,6 +849,8 @@ struct TodayCard: View {
                                 MoodFaceChip(mood: mood, isSelected: selectedMood == mood)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(AppLocalization.string(mood.rawValue))
+                            .accessibilityAddTraits(selectedMood == mood ? [.isSelected] : [])
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -863,6 +908,9 @@ struct TodayCard: View {
             log.syncDoseRecords(with: profile)
             log.refreshOccurrenceStates()
         }
+        .onDisappear {
+            MedicationSpeech.shared.stop()
+        }
     }
     
     @ViewBuilder
@@ -882,21 +930,23 @@ struct TodayCard: View {
                     let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
                         ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
                     let meds = profile.medications(for: reminder)
-                    HStack(spacing: 10) {
+                    HStack(alignment: .top, spacing: 10) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .fixedSize(horizontal: false, vertical: true)
                             if record.isSnoozed, let until = record.snoozedUntil {
                                 Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             } else {
                                 Text(record.timeDescription)
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
                             }
                         }
-                        Spacer()
+                        Spacer(minLength: 8)
                         Button {
                             withAnimation {
                                 log?.markTaken(
@@ -912,10 +962,12 @@ struct TodayCard: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
+                                .frame(minHeight: stackedControls ? ElderMode.minTap : 0)
                                 .background(Color.mint)
                                 .cornerRadius(10)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(AppLocalization.format("Take now: %@", record.localizedDisplayTitle))
                     }
                     .padding(12)
                     .background(Color.orange.opacity(0.12))
@@ -949,6 +1001,7 @@ struct TodayCard: View {
                     Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(titleColor)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(record.timeDescription)
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(secondaryColor)
@@ -964,18 +1017,33 @@ struct TodayCard: View {
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(secondaryColor)
             } else {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: stackedControls ? 12 : 8) {
                     ForEach(meds) { med in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(titleColor.opacity(0.9))
-                            if !med.remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                Text(med.remark)
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundColor(secondaryColor)
+                        let photoSize: CGFloat = stackedControls ? 64 : 40
+                        HStack(alignment: .top, spacing: 10) {
+                            MedicationPhotoView(data: med.photoData, size: photoSize)
+                                .accessibilityLabel(med.hasPhoto
+                                    ? AppLocalization.format("Photo of %@", med.name)
+                                    : AppLocalization.string("Medication photo"))
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(titleColor.opacity(0.9))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if !med.remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    Text(med.remark)
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(secondaryColor)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                if elderMode, !med.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    SpeakMedicationButton(name: med.name, dose: med.dose, large: true)
+                                }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .accessibilityElement(children: .contain)
                     }
                 }
             }
@@ -1019,15 +1087,16 @@ struct TodayCard: View {
                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .frame(minHeight: elderMode ? ElderMode.buttonHeight : 0.0)
-                                .padding(.vertical, elderMode ? 0 : 12)
+                                .frame(minHeight: stackedControls ? ElderMode.buttonHeight : 0.0)
+                                .padding(.vertical, stackedControls ? 0 : 12)
                                 .background(accent)
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(AppLocalization.format("Take now: %@", record.localizedDisplayTitle))
                         
-                        if elderMode {
-                            snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor)
+                        if stackedControls {
+                            snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor, large: true)
                                 .frame(maxWidth: .infinity)
                             Button {
                                 activeSkipReminderId = record.id
@@ -1045,9 +1114,10 @@ struct TodayCard: View {
                                     .cornerRadius(14)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(AppLocalization.format("Skip or missed: %@", record.localizedDisplayTitle))
                         } else {
                             HStack(spacing: 10) {
-                                snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor)
+                                snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor, large: false)
                                 
                                 Button {
                                     activeSkipReminderId = record.id
@@ -1065,6 +1135,7 @@ struct TodayCard: View {
                                         .cornerRadius(14)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel(AppLocalization.format("Skip or missed: %@", record.localizedDisplayTitle))
                             }
                         }
                 }
@@ -1106,9 +1177,10 @@ struct TodayCard: View {
             .padding(.vertical, 5)
             .background(onSolid ? Color.white.opacity(0.92) : tint.opacity(0.15))
             .cornerRadius(10)
+            .accessibilityLabel(title)
     }
     
-    private func snoozeMenu(log: MedicationLog, reminderId: UUID, titleColor: Color) -> some View {
+    private func snoozeMenu(log: MedicationLog, reminderId: UUID, titleColor: Color, large: Bool) -> some View {
         Menu {
             Button(AppLocalization.string("Snooze 10 min")) {
                 withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 10) }
@@ -1124,11 +1196,13 @@ struct TodayCard: View {
                 .font(.system(.subheadline, design: .rounded, weight: .bold))
                 .foregroundColor(titleColor)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .frame(minHeight: large ? ElderMode.buttonHeight : 0)
+                .padding(.vertical, large ? 0 : 12)
                 .background(Color.white.opacity(0.55))
                 .cornerRadius(14)
         }
         .accessibilityLabel(AppLocalization.string("Snooze"))
+        .accessibilityHint(AppLocalization.string("Postpone this dose by 10 minutes, 30 minutes, or 1 hour."))
     }
     
     private func undoButton(log: MedicationLog, reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
@@ -1152,6 +1226,7 @@ struct TodayCard: View {
             .cornerRadius(14)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("Undo"))
     }
 }
 

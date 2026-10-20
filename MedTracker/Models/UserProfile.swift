@@ -101,17 +101,20 @@ struct MedicationItem: Codable, Identifiable, Hashable {
     var remark: String = ""
     /// Reminder slot IDs this medicine should alert for. Empty = all reminders.
     var reminderIds: [UUID] = []
+    /// Optional on-device identification photo (JPEG). Never synced.
+    var photoData: Data? = nil
     
     enum CodingKeys: String, CodingKey {
-        case id, name, dose, remark, reminderIds
+        case id, name, dose, remark, reminderIds, photoData
     }
     
-    init(id: UUID = UUID(), name: String = "", dose: String = "1", remark: String = "", reminderIds: [UUID] = []) {
+    init(id: UUID = UUID(), name: String = "", dose: String = "1", remark: String = "", reminderIds: [UUID] = [], photoData: Data? = nil) {
         self.id = id
         self.name = name
         self.dose = dose
         self.remark = remark
         self.reminderIds = reminderIds
+        self.photoData = photoData
     }
     
     init(from decoder: Decoder) throws {
@@ -121,7 +124,10 @@ struct MedicationItem: Codable, Identifiable, Hashable {
         self.dose = try container.decodeIfPresent(String.self, forKey: .dose) ?? "1"
         self.remark = try container.decodeIfPresent(String.self, forKey: .remark) ?? ""
         self.reminderIds = try container.decodeIfPresent([UUID].self, forKey: .reminderIds) ?? []
+        self.photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
     }
+    
+    var hasPhoto: Bool { photoData != nil }
 }
 
 enum AgeRange: String, CaseIterable, Identifiable {

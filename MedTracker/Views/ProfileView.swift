@@ -215,12 +215,17 @@ struct ProfileForm: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(AppLocalization.string("Elder Mode"))
                             .font(.system(.body, design: .rounded, weight: .semibold))
+                            .fixedSize(horizontal: false, vertical: true)
                         Text(AppLocalization.string("Larger text and high-contrast buttons for easier tapping."))
                             .font(.system(.caption, design: .rounded))
                             .foregroundColor(elderMode ? Color(red: 0.20, green: 0.20, blue: 0.22) : Color.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .tint(.mint)
+                .accessibilityLabel(AppLocalization.string("Elder Mode"))
+                .accessibilityHint(AppLocalization.string("Larger text and high-contrast buttons for easier tapping."))
+                .accessibilityValue(AppLocalization.string(elderMode ? "On" : "Off"))
             }
             
             Section(header: Text(AppLocalization.string("Reminders"))) {
@@ -245,9 +250,10 @@ struct ProfileForm: View {
                     }
                 }
                 
-                Text(AppLocalization.string("Reminders include Taken and Snooze actions."))
+                Text(AppLocalization.string("Reminders include Take, Snooze, and Skip actions. A follow-up is sent if a dose is still open."))
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 if isNotificationEnabled {
                     Toggle(isOn: $isNotificationSoundEnabled) {

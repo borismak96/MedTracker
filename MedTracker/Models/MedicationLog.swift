@@ -64,11 +64,17 @@ enum MoodStatus: String, CaseIterable {
 }
 
 enum DoseTiming {
-    /// Follow-up notification if the dose is still open.
-    static let followUpDelay: TimeInterval = 30 * 60
+    /// Default follow-up if the dose is still open (overridable in NotificationPreferences).
+    static let defaultFollowUpMinutes = 20
     /// After this window a due/snoozed dose becomes missed.
     static let missWindow: TimeInterval = 2 * 60 * 60
     static let snoozeMinutes = [10, 30, 60]
+    /// Single snooze used from the notification action.
+    static let notificationSnoozeMinutes = 15
+    
+    static var followUpDelay: TimeInterval {
+        TimeInterval(NotificationPreferences.followUpMinutes * 60)
+    }
 }
 
 enum DoseRecordStatus: String, Codable {

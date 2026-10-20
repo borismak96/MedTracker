@@ -1,3 +1,5 @@
 /* Localized app name under the Home Screen icon */
 "CFBundleDisplayName" = "藥伴伴";
-"NSPhotoLibraryUsageDescription" = "藥伴伴僅在您選擇個人照片時使用相簿。照片只會儲存在本裝置。";
+"NSPhotoLibraryUsageDescription" = "藥伴伴在您選擇個人照片或藥物辨識照片時使用相簿。照片只會儲存在本裝置。";
+"NSCameraUsageDescription" = "藥伴伴僅在您拍攝藥物辨識照片時使用相機。照片只會儲存在本裝置。";
+"NSUserNotificationsUsageDescription" = "藥伴伴會在服藥時間傳送即時提醒，並提供服用、稍後提醒、跳過與補提醒。";

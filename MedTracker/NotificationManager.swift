@@ -7,10 +7,15 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
     
     static let categoryIdentifier = "PILLPAL_DOSE_REMINDER"
-    static let takenAction = "TAKEN"
-    static let snooze10Action = "SNOOZE_10"
-    static let snooze30Action = "SNOOZE_30"
-    static let snooze60Action = "SNOOZE_60"
+    static let takeAction = "TAKE"
+    static let snoozeAction = "SNOOZE"
+    static let skipAction = "SKIP"
+    
+    /// Legacy identifiers so already-delivered banners still update dose state.
+    static let legacyTakenAction = "TAKEN"
+    static let legacySnooze10Action = "SNOOZE_10"
+    static let legacySnooze30Action = "SNOOZE_30"
+    static let legacySnooze60Action = "SNOOZE_60"
     
     private override init() {
         super.init()
@@ -18,40 +23,47 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     
     func requestPermission(completion: @escaping (Bool) -> Void) {
         registerCategories()
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            if let error = error {
-                print("Notification permission error: \(error)")
-            }
-            DispatchQueue.main.async {
-                completion(granted)
+        let center = UNUserNotificationCenter.current()
+        center.getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async { completion(true) }
+            case .denied:
+                DispatchQueue.main.async { completion(false) }
+            case .notDetermined:
+                center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+                    if let error {
+                        print("Notification permission error: \(error)")
+                    }
+                    DispatchQueue.main.async {
+                        completion(granted)
+                    }
+                }
+            @unknown default:
+                DispatchQueue.main.async { completion(false) }
             }
         }
     }
     
     func registerCategories() {
-        let taken = UNNotificationAction(
-            identifier: Self.takenAction,
-            title: AppLocalization.string("Taken"),
+        let take = UNNotificationAction(
+            identifier: Self.takeAction,
+            title: AppLocalization.string("Take"),
             options: []
         )
-        let snooze10 = UNNotificationAction(
-            identifier: Self.snooze10Action,
-            title: AppLocalization.string("Snooze 10 min"),
+        let snooze = UNNotificationAction(
+            identifier: Self.snoozeAction,
+            title: AppLocalization.string("Snooze"),
             options: []
         )
-        let snooze30 = UNNotificationAction(
-            identifier: Self.snooze30Action,
-            title: AppLocalization.string("Snooze 30 min"),
-            options: []
-        )
-        let snooze60 = UNNotificationAction(
-            identifier: Self.snooze60Action,
-            title: AppLocalization.string("Snooze 1 hour"),
-            options: []
+        let skip = UNNotificationAction(
+            identifier: Self.skipAction,
+            title: AppLocalization.string("Skip"),
+            options: [.destructive]
         )
         let category = UNNotificationCategory(
             identifier: Self.categoryIdentifier,
-            actions: [taken, snooze10, snooze30, snooze60],
+            actions: [take, snooze, skip],
             intentIdentifiers: [],
             options: [.customDismissAction]
         )
@@ -59,6 +71,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
     
     /// Rebuilds today's and tomorrow's dose + follow-up + snooze notifications for every profile.
+    /// No-ops cleanly when permission is denied or reminders are turned off.
     func rescheduleFromStore() {
         registerCategories()
         let center = UNUserNotificationCenter.current()
@@ -69,6 +82,126 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             return
         }
         
+        Task {
+            let settings = await center.notificationSettings()
+            let allowed: Set<UNAuthorizationStatus> = [.authorized, .provisional, .ephemeral]
+            guard allowed.contains(settings.authorizationStatus) else {
+                center.removeAllPendingNotificationRequests()
+                await MainActor.run {
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
+                return
+            }
+            await MainActor.run {
+                self.scheduleAllPending()
+            }
+        }
+    }
+    
+    /// Legacy single-profile helper — rebuilds from the shared store so every profile stays in sync.
+    func scheduleReminders(_ reminders: [ReminderSlot], playSound: Bool = true, medicationsForReminder: (ReminderSlot) -> [MedicationItem]) {
+        rescheduleFromStore()
+    }
+    
+    /// Legacy single-alarm helper (kept for compatibility).
+    func scheduleNotification(hour: Int, minute: Int, title: String, body: String, playSound: Bool = true) {
+        rescheduleFromStore()
+    }
+    
+    func cancelNotifications() {
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        print("All notifications cancelled")
+    }
+    
+    // MARK: - UNUserNotificationCenterDelegate
+    
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list, .badge])
+    }
+    
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        Task { @MainActor in
+            await handle(response)
+            completionHandler()
+        }
+    }
+    
+    @MainActor
+    private func handle(_ response: UNNotificationResponse) async {
+        let info = response.notification.request.content.userInfo
+        guard let profileRaw = info["profileId"] as? String,
+              let reminderRaw = info["reminderId"] as? String,
+              let profileId = UUID(uuidString: profileRaw),
+              let reminderId = UUID(uuidString: reminderRaw) else { return }
+        
+        let dayStamp = (info["day"] as? TimeInterval)
+            ?? (info["day"] as? Double)
+        let day = Date(timeIntervalSince1970: dayStamp ?? Date().timeIntervalSince1970)
+        let dayStart = Calendar.current.startOfDay(for: day)
+        
+        let context = ModelContext(SharedDatabase.shared.container)
+        let profiles = (try? context.fetch(FetchDescriptor<UserProfile>())) ?? []
+        guard let profile = profiles.first(where: { $0.id == profileId }) else { return }
+        
+        let logs = (try? context.fetch(FetchDescriptor<MedicationLog>())) ?? []
+        let targetLog: MedicationLog
+        if let existing = logs.first(where: { $0.belongs(to: profile) && Calendar.current.isDate($0.date, inSameDayAs: dayStart) }) {
+            existing.syncDoseRecords(with: profile)
+            targetLog = existing
+        } else {
+            let created = MedicationLog(date: dayStart, profileId: profile.id)
+            context.insert(created)
+            created.syncDoseRecords(with: profile)
+            targetLog = created
+        }
+        
+        let reminder = profile.sortedReminders.first(where: { $0.id == reminderId })
+        let meds = reminder.map { profile.medications(for: $0) } ?? []
+        
+        switch response.actionIdentifier {
+        case Self.takeAction, Self.legacyTakenAction:
+            targetLog.markTaken(reminderId: reminderId, mood: nil, remark: nil, medications: meds)
+        case Self.snoozeAction:
+            targetLog.markSnoozed(reminderId: reminderId, minutes: DoseTiming.notificationSnoozeMinutes)
+        case Self.legacySnooze10Action:
+            targetLog.markSnoozed(reminderId: reminderId, minutes: 10)
+        case Self.legacySnooze30Action:
+            targetLog.markSnoozed(reminderId: reminderId, minutes: 30)
+        case Self.legacySnooze60Action:
+            targetLog.markSnoozed(reminderId: reminderId, minutes: 60)
+        case Self.skipAction:
+            targetLog.markSkipped(reminderId: reminderId, time: Date(), reaction: nil, notes: nil)
+        default:
+            break
+        }
+        
+        try? context.save()
+        // markTaken / markSkipped / markSnoozed already reschedule; default tap only needs a widget refresh.
+        if response.actionIdentifier == UNNotificationDefaultActionIdentifier
+            || response.actionIdentifier == UNNotificationDismissActionIdentifier {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+    
+    // MARK: - Private
+    
+    private enum Kind: String {
+        case dose
+        case followUp
+        case snooze
+    }
+    
+    @MainActor
+    private func scheduleAllPending() {
+        let center = UNUserNotificationCenter.current()
         let context = ModelContext(SharedDatabase.shared.container)
         let profiles = ((try? context.fetch(FetchDescriptor<UserProfile>())) ?? [])
             .sorted { $0.sortOrder < $1.sortOrder }
@@ -133,101 +266,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         WidgetCenter.shared.reloadAllTimelines()
     }
     
-    /// Legacy single-profile helper — rebuilds from the shared store so every profile stays in sync.
-    func scheduleReminders(_ reminders: [ReminderSlot], playSound: Bool = true, medicationsForReminder: (ReminderSlot) -> [MedicationItem]) {
-        rescheduleFromStore()
-    }
-    
-    /// Legacy single-alarm helper (kept for compatibility).
-    func scheduleNotification(hour: Int, minute: Int, title: String, body: String, playSound: Bool = true) {
-        rescheduleFromStore()
-    }
-    
-    func cancelNotifications() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        print("All notifications cancelled")
-    }
-    
-    // MARK: - UNUserNotificationCenterDelegate
-    
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-    ) {
-        completionHandler([.banner, .sound, .list, .badge])
-    }
-    
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
-        Task { @MainActor in
-            await handle(response)
-            completionHandler()
-        }
-    }
-    
-    @MainActor
-    private func handle(_ response: UNNotificationResponse) async {
-        let info = response.notification.request.content.userInfo
-        guard let profileRaw = info["profileId"] as? String,
-              let reminderRaw = info["reminderId"] as? String,
-              let profileId = UUID(uuidString: profileRaw),
-              let reminderId = UUID(uuidString: reminderRaw),
-              let dayStamp = info["day"] as? TimeInterval else { return }
-        
-        let day = Date(timeIntervalSince1970: dayStamp)
-        let dayStart = Calendar.current.startOfDay(for: day)
-        let context = ModelContext(SharedDatabase.shared.container)
-        let profiles = (try? context.fetch(FetchDescriptor<UserProfile>())) ?? []
-        guard let profile = profiles.first(where: { $0.id == profileId }) else { return }
-        
-        let logs = (try? context.fetch(FetchDescriptor<MedicationLog>())) ?? []
-        let targetLog: MedicationLog
-        if let existing = logs.first(where: { $0.belongs(to: profile) && Calendar.current.isDate($0.date, inSameDayAs: dayStart) }) {
-            existing.syncDoseRecords(with: profile)
-            targetLog = existing
-        } else {
-            let created = MedicationLog(date: dayStart, profileId: profile.id)
-            context.insert(created)
-            created.syncDoseRecords(with: profile)
-            targetLog = created
-        }
-        
-        let reminder = profile.sortedReminders.first(where: { $0.id == reminderId })
-        let meds = reminder.map { profile.medications(for: $0) } ?? []
-        
-        switch response.actionIdentifier {
-        case Self.takenAction:
-            targetLog.markTaken(reminderId: reminderId, mood: nil, remark: nil, medications: meds)
-        case Self.snooze10Action:
-            targetLog.markSnoozed(reminderId: reminderId, minutes: 10)
-        case Self.snooze30Action:
-            targetLog.markSnoozed(reminderId: reminderId, minutes: 30)
-        case Self.snooze60Action:
-            targetLog.markSnoozed(reminderId: reminderId, minutes: 60)
-        default:
-            break
-        }
-        
-        try? context.save()
-        // markTaken already reschedules; default tap only needs a widget refresh.
-        if response.actionIdentifier == UNNotificationDefaultActionIdentifier
-            || response.actionIdentifier == UNNotificationDismissActionIdentifier {
-            WidgetCenter.shared.reloadAllTimelines()
-        }
-    }
-    
-    // MARK: - Private
-    
-    private enum Kind: String {
-        case dose
-        case followUp
-        case snooze
-    }
-    
     private func reminderScheduledDate(_ reminder: ReminderSlot, on day: Date, calendar: Calendar) -> Date {
         var components = calendar.dateComponents([.year, .month, .day], from: day)
         components.hour = reminder.hour
@@ -246,18 +284,32 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         multipleProfiles: Bool,
         isFollowUp: Bool
     ) {
+        let interval = fireDate.timeIntervalSinceNow
+        guard interval > 15 else { return }
+        
+        let meds = profile.medications(for: reminder)
+        let medNames = meds.map(\.name).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        let slotTitle = reminder.localizedDisplayTitle
+        
         let content = UNMutableNotificationContent()
         if multipleProfiles {
             content.title = "\(AppBrand.displayName) · \(profile.displayName)"
+        } else if isFollowUp {
+            content.title = AppLocalization.string("Follow-up reminder")
         } else {
-            content.title = isFollowUp
-                ? AppLocalization.string("Follow-up reminder")
-                : AppLocalization.string("Medication Reminder")
+            content.title = AppLocalization.string("Medication Reminder")
         }
         
-        content.body = isFollowUp
-            ? AppLocalization.string("Still time for your medication.")
-            : AppLocalization.string("Time for your medication.")
+        if medNames.isEmpty {
+            content.body = isFollowUp
+                ? AppLocalization.string("Still time for your medication.")
+                : AppLocalization.string("Time for your medication.")
+        } else {
+            let list = medNames.joined(separator: ", ")
+            content.body = isFollowUp
+                ? AppLocalization.format("Still time to take %@", list)
+                : "\(slotTitle) · \(list)"
+        }
         
         content.categoryIdentifier = Self.categoryIdentifier
         content.threadIdentifier = profile.id.uuidString
@@ -276,8 +328,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
         
         let identifier = "\(kind.rawValue)-\(profile.id.uuidString)-\(reminder.id.uuidString)-\(dayKey(day))"
-        let interval = fireDate.timeIntervalSinceNow
-        guard interval > 15 else { return }
         let trigger: UNNotificationTrigger
         if interval < 12 * 60 * 60 {
             trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)

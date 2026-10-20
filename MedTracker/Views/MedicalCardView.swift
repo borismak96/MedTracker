@@ -6,20 +6,28 @@ struct MedicalCardView: View {
     @Binding var isShowing: Bool
     
     @State private var showingEditor = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
+    
+    private var stackedLayout: Bool {
+        elderMode || dynamicTypeSize.prefersStackedLayout
+    }
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
+            HStack(alignment: .center, spacing: 12) {
                 Text(AppLocalization.string("Medical Card"))
                     .font(.system(.title2, design: .rounded, weight: .bold))
                     .foregroundColor(.white)
-                Spacer()
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
                 Button {
                     showingEditor = true
                 } label: {
                     Image(systemName: "pencil.circle.fill")
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.9))
+                        .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
                 }
                 .accessibilityLabel(AppLocalization.string("Edit Medical Card"))
                 
@@ -31,8 +39,9 @@ struct MedicalCardView: View {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.8))
+                        .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
                 }
-                .accessibilityLabel(AppLocalization.string("Done"))
+                .accessibilityLabel(AppLocalization.string("Close Medical Card"))
             }
             .padding()
             .background(Color.mint)
@@ -57,13 +66,15 @@ struct MedicalCardView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(profile.displayName)
                                 .font(.system(.title3, design: .rounded, weight: .bold))
+                                .fixedSize(horizontal: false, vertical: true)
                             if profile.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text(AppLocalization.string("Add a name in Profile"))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        Spacer()
+                        Spacer(minLength: 0)
                     }
                     
                     disclaimerBanner
@@ -107,23 +118,27 @@ struct MedicalCardView: View {
                         } else {
                             VStack(spacing: 10) {
                                 ForEach(activeMeds) { med in
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "pills.fill")
-                                            .foregroundColor(.mint)
-                                        VStack(alignment: .leading, spacing: 2) {
+                                    HStack(alignment: .top, spacing: 12) {
+                                        MedicationPhotoView(data: med.photoData, size: stackedLayout ? 56 : 40)
+                                        VStack(alignment: .leading, spacing: 4) {
                                             Text(med.name)
                                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                .fixedSize(horizontal: false, vertical: true)
                                             if !med.dose.isEmpty {
                                                 Text(med.dose)
                                                     .font(.system(.caption, design: .rounded, weight: .medium))
                                                     .foregroundColor(.secondary)
                                             }
+                                            if elderMode, !med.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                                SpeakMedicationButton(name: med.name, dose: med.dose, large: true)
+                                            }
                                         }
-                                        Spacer()
+                                        Spacer(minLength: 0)
                                     }
                                     .padding(10)
                                     .background(Color(UIColor.secondarySystemBackground))
                                     .cornerRadius(12)
+                                    .accessibilityElement(children: .contain)
                                 }
                             }
                         }
@@ -150,6 +165,9 @@ struct MedicalCardView: View {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 8)
         .padding(16)
+        .onDisappear {
+            MedicationSpeech.shared.stop()
+        }
         .sheet(isPresented: $showingEditor) {
             NavigationView {
                 MedicalCardEditor(profile: profile)
@@ -178,6 +196,7 @@ struct MedicalCardView: View {
         .padding(12)
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
+        .accessibilityElement(children: .combine)
     }
     
     private func cardSection<Content: View>(title: String, icon: String, tint: Color, @ViewBuilder content: () -> Content) -> some View {
@@ -191,6 +210,7 @@ struct MedicalCardView: View {
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
     }
     
     private func emptyPrompt(_ text: String) -> some View {

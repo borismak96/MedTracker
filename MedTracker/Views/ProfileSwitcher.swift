@@ -31,7 +31,8 @@ struct ProfileSwitcher: View {
                     .font(.system(size: compact ? 12 : 13, weight: .bold))
                 Text(active.displayName)
                     .font(.system(compact ? .caption : .subheadline, design: .rounded, weight: .bold))
-                    .lineLimit(1)
+                    .lineLimit(compact ? 1 : 2)
+                    .minimumScaleFactor(0.8)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10, weight: .bold))
             }
@@ -42,5 +43,6 @@ struct ProfileSwitcher: View {
             .clipShape(Capsule())
         }
         .accessibilityLabel(AppLocalization.string("Switch Profile"))
+        .accessibilityValue(active.displayName)
     }
 }

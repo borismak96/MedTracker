@@ -44,9 +44,7 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 initializeData()
-                if NotificationPreferences.isEnabled {
-                    NotificationManager.shared.rescheduleFromStore()
-                }
+                NotificationManager.shared.rescheduleFromStore()
             }
         }
         .onChange(of: activeProfileID) { _, _ in
@@ -61,9 +59,7 @@ struct ContentView: View {
         let liveProfiles = profiles.filter(\.isStoredInContext)
         let liveLogs = logs.filter(\.isStoredInContext)
         HouseholdData.bootstrap(profiles: liveProfiles, logs: liveLogs, context: modelContext)
-        if NotificationPreferences.isEnabled {
-            NotificationManager.shared.registerCategories()
-        }
+        NotificationManager.shared.registerCategories()
     }
 }
 
@@ -77,10 +73,17 @@ private struct ElderDynamicType: ViewModifier {
     
     func body(content: Content) -> some View {
         if enabled {
-            // One step below Accessibility sizes so cards, tabs, and pills still fit.
-            content.dynamicTypeSize(.xxLarge)
+            // Floor at xxLarge for 樂齡; allow Accessibility 1–3 (~200–310%) so text can wrap instead of clip.
+            content.dynamicTypeSize(.xxLarge ... .accessibility3)
         } else {
             content
         }
+    }
+}
+
+extension DynamicTypeSize {
+    /// Stacked, wrapping layouts for VoiceOver / Larger Text at ~200% and above.
+    var prefersStackedLayout: Bool {
+        isAccessibilitySize
     }
 }

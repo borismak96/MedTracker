@@ -43,6 +43,7 @@ enum ActiveProfileStore {
 enum NotificationPreferences {
     static let enabledKey = "isNotificationEnabled"
     static let soundKey = "isNotificationSoundEnabled"
+    static let followUpMinutesKey = "followUpReminderMinutes"
     
     static func migrateIfNeeded() {
         let group = AppLocalization.sharedDefaults
@@ -63,6 +64,13 @@ enum NotificationPreferences {
     static var playSound: Bool {
         if AppLocalization.sharedDefaults.object(forKey: soundKey) == nil { return true }
         return AppLocalization.sharedDefaults.bool(forKey: soundKey)
+    }
+    
+    /// Minutes after the scheduled (or snoozed) fire time to send one follow-up. Default 20.
+    static var followUpMinutes: Int {
+        let stored = AppLocalization.sharedDefaults.object(forKey: followUpMinutesKey) as? Int
+        let minutes = stored ?? DoseTiming.defaultFollowUpMinutes
+        return min(max(minutes, 10), 60)
     }
 }
 

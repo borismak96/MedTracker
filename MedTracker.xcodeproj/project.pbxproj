@@ -47,6 +47,7 @@
 		HR0000000000000000000002 /* HeartRateCategoryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000001 /* HeartRateCategoryBadge.swift */; };
 		HR0000000000000000000004 /* HeartRateChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HR0000000000000000000003 /* HeartRateChartView.swift */; };
 		M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */; };
+		MS0000000000000000000002 /* MedicationIdentityViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = MS0000000000000000000001 /* MedicationIdentityViews.swift */; };
 		MODEL0012C41D8E0006BEED4 /* MedicationLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */; };
 		MODEL0022C41D8E0006BEED4 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELREF22C41D8E0006BEED4 /* UserProfile.swift */; };
 		NM0000000000000000000002 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0000000000000000000001 /* NotificationManager.swift */; };
@@ -124,6 +125,7 @@
 		HR0000000000000000000001 /* HeartRateCategoryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateCategoryBadge.swift; sourceTree = "<group>"; };
 		HR0000000000000000000003 /* HeartRateChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateChartView.swift; sourceTree = "<group>"; };
 		M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodFaceView.swift; sourceTree = "<group>"; };
+		MS0000000000000000000001 /* MedicationIdentityViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationIdentityViews.swift; sourceTree = "<group>"; };
 		MODELREF12C41D8E0006BEED4 /* MedicationLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationLog.swift; sourceTree = "<group>"; };
 		MODELREF22C41D8E0006BEED4 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		NM0000000000000000000001 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
@@ -261,6 +263,7 @@
 				S3T4U5P6G7U8I9D0E1V2W3X3 /* SetupGuideView.swift */,
 				S3T4U5R6I7N8G9V0I1E2W3X4 /* StatsRingViews.swift */,
 				M0O1D2F3A4C5E6V7I8E9W1 /* MoodFaceView.swift */,
+				MS0000000000000000000001 /* MedicationIdentityViews.swift */,
 				B0P1C2A3T4E5G6O7R8Y9B1 /* BloodPressureCategoryBadge.swift */,
 				HR0000000000000000000001 /* HeartRateCategoryBadge.swift */,
 				F00ECB7CBA45FAC04C556F57 /* AboutUsView.swift */,
@@ -396,6 +399,7 @@
 				S3T4U5P6G7U8I9D0E1V2W3X4 /* SetupGuideView.swift in Sources */,
 				S3T4U5R6I7N8G9V0I1E2W3X5 /* StatsRingViews.swift in Sources */,
 				M0O1D2F3A4C5E6V7I8E9W0 /* MoodFaceView.swift in Sources */,
+				MS0000000000000000000002 /* MedicationIdentityViews.swift in Sources */,
 				B0P1C2A3T4E5G6O7R8Y9B0 /* BloodPressureCategoryBadge.swift in Sources */,
 				HR0000000000000000000002 /* HeartRateCategoryBadge.swift in Sources */,
 				9B851C812C41D8DF006BEED4 /* MedTrackerApp.swift in Sources */,
@@ -462,11 +466,11 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 18;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -485,11 +489,11 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = MedTrackerWidget/MedTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 18;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MedTrackerWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal.MedTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -634,14 +638,15 @@
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PillPal uses your photo library only when you choose a profile picture. Photos stay on this device.";
-				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "PillPal sends time-sensitive reminders when it is time to take medication, including follow-up and snooze alerts.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PillPal uses the camera only when you photograph a medication for identification. Photos stay on this device.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PillPal uses your photo library when you choose a profile picture or a medication photo for identification. Photos stay on this device.";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "PillPal sends time-sensitive reminders when it is time to take medication, including Take, Snooze, Skip, and follow-up alerts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -652,7 +657,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
 				PRODUCT_NAME = PillPal;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -671,14 +676,15 @@
 				CODE_SIGN_ENTITLEMENTS = MedTracker/MedTracker.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_ASSET_PATHS = "\"MedTracker/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PillPal;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PillPal uses your photo library only when you choose a profile picture. Photos stay on this device.";
-				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "PillPal sends time-sensitive reminders when it is time to take medication, including follow-up and snooze alerts.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PillPal uses the camera only when you photograph a medication for identification. Photos stay on this device.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PillPal uses your photo library when you choose a profile picture or a medication photo for identification. Photos stay on this device.";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "PillPal sends time-sensitive reminders when it is time to take medication, including Take, Snooze, Skip, and follow-up alerts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -689,7 +695,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.borismak.PillPal;
 				PRODUCT_NAME = PillPal;
 				PROVISIONING_PROFILE_SPECIFIER = "";
