@@ -1017,28 +1017,26 @@ struct TodayCard: View {
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(secondaryColor)
             } else {
-                VStack(alignment: .leading, spacing: stackedControls ? 12 : 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(meds) { med in
-                        let photoSize: CGFloat = stackedControls ? 64 : 40
-                        HStack(alignment: .top, spacing: 10) {
-                            MedicationPhotoView(data: med.photoData, size: photoSize)
+                        HStack(alignment: .center, spacing: 12) {
+                            MedicationPhotoView(data: med.photoData, size: stackedControls ? 44 : 40)
                                 .accessibilityLabel(med.hasPhoto
                                     ? AppLocalization.format("Photo of %@", med.name)
                                     : AppLocalization.string("Medication photo"))
                             
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
                                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                                     .foregroundColor(titleColor.opacity(0.9))
+                                    .multilineTextAlignment(.leading)
                                     .fixedSize(horizontal: false, vertical: true)
                                 if !med.remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                     Text(med.remark)
                                         .font(.system(.caption, design: .rounded))
                                         .foregroundColor(secondaryColor)
+                                        .multilineTextAlignment(.leading)
                                         .fixedSize(horizontal: false, vertical: true)
-                                }
-                                if elderMode, !med.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    SpeakMedicationButton(name: med.name, dose: med.dose, large: true)
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)

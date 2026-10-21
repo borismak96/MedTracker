@@ -143,7 +143,9 @@ struct ProfileForm: View {
             
             Section(header: Text(AppLocalization.string("Medical Card"))) {
                 TextField(AppLocalization.string("Allergies (e.g. penicillin)"), text: $profile.allergies, axis: .vertical)
-                    .lineLimit(2...4)
+                    .lineLimit(1...6)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 TextField(AppLocalization.string("ICE Name"), text: $profile.emergencyContactName)
                 TextField(AppLocalization.string("Relationship"), text: $profile.emergencyContactRelation)
                 TextField(AppLocalization.string("ICE Phone"), text: $profile.emergencyContactPhone)

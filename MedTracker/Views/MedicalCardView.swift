@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct MedicalCardView: View {
     @Bindable var profile: UserProfile
@@ -116,26 +117,26 @@ struct MedicalCardView: View {
                         if activeMeds.isEmpty {
                             emptyPrompt(AppLocalization.string("No medications added."))
                         } else {
-                            VStack(spacing: 10) {
+                            VStack(spacing: 8) {
                                 ForEach(activeMeds) { med in
-                                    HStack(alignment: .top, spacing: 12) {
-                                        MedicationPhotoView(data: med.photoData, size: stackedLayout ? 56 : 40)
-                                        VStack(alignment: .leading, spacing: 4) {
+                                    HStack(alignment: .center, spacing: 12) {
+                                        MedicationPhotoView(data: med.photoData, size: stackedLayout ? 44 : 40)
+                                        VStack(alignment: .leading, spacing: 2) {
                                             Text(med.name)
                                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                                .multilineTextAlignment(.leading)
                                                 .fixedSize(horizontal: false, vertical: true)
                                             if !med.dose.isEmpty {
                                                 Text(med.dose)
                                                     .font(.system(.caption, design: .rounded, weight: .medium))
                                                     .foregroundColor(.secondary)
-                                            }
-                                            if elderMode, !med.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                                SpeakMedicationButton(name: med.name, dose: med.dose, large: true)
+                                                    .multilineTextAlignment(.leading)
                                             }
                                         }
-                                        Spacer(minLength: 0)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     }
-                                    .padding(10)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 10)
                                     .background(Color(UIColor.secondarySystemBackground))
                                     .cornerRadius(12)
                                     .accessibilityElement(children: .contain)
@@ -238,24 +239,51 @@ struct MedicalCardEditor: View {
                 }
                 
                 Section(header: Text(AppLocalization.string("Personal Info"))) {
-                    TextField(AppLocalization.string("Name"), text: $profile.name)
+                    medicalCardTextField(AppLocalization.string("Name"), text: $profile.name)
                 }
                 
                 Section(header: Text(AppLocalization.string("Allergies"))) {
-                    TextField(AppLocalization.string("Allergies (e.g. penicillin)"), text: $profile.allergies, axis: .vertical)
-                        .lineLimit(3...6)
+                    medicalCardTextField(
+                        AppLocalization.string("Allergies (e.g. penicillin)"),
+                        text: $profile.allergies,
+                        grows: true
+                    )
                 }
                 
                 Section(header: Text(AppLocalization.string("Emergency Contact"))) {
-                    TextField(AppLocalization.string("ICE Name"), text: $profile.emergencyContactName)
-                    TextField(AppLocalization.string("Relationship"), text: $profile.emergencyContactRelation)
-                    TextField(AppLocalization.string("ICE Phone"), text: $profile.emergencyContactPhone)
-                        .keyboardType(.phonePad)
+                    medicalCardTextField(AppLocalization.string("ICE Name"), text: $profile.emergencyContactName)
+                    medicalCardTextField(AppLocalization.string("Relationship"), text: $profile.emergencyContactRelation)
+                    medicalCardTextField(
+                        AppLocalization.string("ICE Phone"),
+                        text: $profile.emergencyContactPhone,
+                        keyboardType: .phonePad
+                    )
                 }
             }
             .scrollContentBackground(.hidden)
         }
         .navigationTitle(AppLocalization.string("Edit Medical Card"))
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    /// Left-aligned, vertically centered in the row. Short values sit mid-field instead of at the top edge.
+    private func medicalCardTextField(
+        _ title: String,
+        text: Binding<String>,
+        grows: Bool = false,
+        keyboardType: UIKeyboardType = .default
+    ) -> some View {
+        Group {
+            if grows {
+                TextField(title, text: text, axis: .vertical)
+                    .lineLimit(1...6)
+            } else {
+                TextField(title, text: text)
+            }
+        }
+        .font(.system(.body, design: .rounded))
+        .keyboardType(keyboardType)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
     }
 }
