@@ -166,9 +166,6 @@ struct MedicalCardView: View {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 8)
         .padding(16)
-        .onDisappear {
-            MedicationSpeech.shared.stop()
-        }
         .sheet(isPresented: $showingEditor) {
             NavigationView {
                 MedicalCardEditor(profile: profile)

@@ -5711,23 +5711,6 @@
         }
       }
     },
-    "%@, dose %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@, dose %2$@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@，劑量 %2$@"
-          }
-        }
-      }
-    },
     "Take now: %@" : {
       "extractionState" : "manual",
       "localizations" : {

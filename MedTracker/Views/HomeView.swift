@@ -908,9 +908,6 @@ struct TodayCard: View {
             log.syncDoseRecords(with: profile)
             log.refreshOccurrenceStates()
         }
-        .onDisappear {
-            MedicationSpeech.shared.stop()
-        }
     }
     
     @ViewBuilder

@@ -1,5 +1,3 @@
-import AVFoundation
-import PhotosUI
 import SwiftUI
 import UIKit
 
@@ -116,65 +114,5 @@ struct CameraPicker: UIViewControllerRepresentable {
             }
             dismiss()
         }
-    }
-}
-
-/// Optional Elder Mode read-aloud of a medication name and dose.
-final class MedicationSpeech: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
-    static let shared = MedicationSpeech()
-    
-    private let synthesizer = AVSpeechSynthesizer()
-    @Published private(set) var speakingKey: String?
-    
-    private override init() {
-        super.init()
-        synthesizer.delegate = self
-    }
-    
-    func speak(name: String, dose: String) {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
-        let trimmedDose = dose.trimmingCharacters(in: .whitespacesAndNewlines)
-        let spoken: String
-        if trimmedDose.isEmpty {
-            spoken = trimmedName
-        } else {
-            spoken = AppLocalization.format("%@, dose %@", trimmedName, trimmedDose)
-        }
-        
-        synthesizer.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: spoken)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.88
-        utterance.pitchMultiplier = 1.0
-        utterance.voice = preferredVoice()
-        speakingKey = trimmedName
-        synthesizer.speak(utterance)
-    }
-    
-    func stop() {
-        synthesizer.stopSpeaking(at: .immediate)
-        speakingKey = nil
-    }
-    
-    func isSpeaking(_ name: String) -> Bool {
-        speakingKey == name.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
-    private func preferredVoice() -> AVSpeechSynthesisVoice? {
-        if AppLocalization.prefersTraditionalChinese {
-            return AVSpeechSynthesisVoice(language: "zh-TW")
-                ?? AVSpeechSynthesisVoice(language: "zh-HK")
-                ?? AVSpeechSynthesisVoice(language: "zh-Hant")
-        }
-        return AVSpeechSynthesisVoice(language: "en-US")
-            ?? AVSpeechSynthesisVoice(language: "en-GB")
-    }
-    
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async { self.speakingKey = nil }
-    }
-    
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async { self.speakingKey = nil }
     }
 }
