@@ -3,8 +3,16 @@ import SwiftData
 
 struct HomeView: View {
     @Binding var selectedTab: AppTab
+    @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
-    @Query(sort: \MedicationLog.date, order: .reverse) private var logs: [MedicationLog]
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
+    @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
+    private var stackedHeader: Bool {
+        elderMode || dynamicTypeSize.prefersStackedLayout
+    }
     
     @State private var showingSkipSheet = false
     @State private var skipNotes = ""
@@ -29,12 +37,21 @@ struct HomeView: View {
     @State private var showingHRChart = false
     @State private var showingMedicalCard = false
     @State private var showingSetupGuide = false
+    @State private var showingVisitPack = false
     
-    var profile: UserProfile? { profiles.first }
+    var profile: UserProfile? {
+        _ = activeProfileID
+        return ActiveProfileStore.resolve(from: profiles)
+    }
+    
+    var logs: [MedicationLog] {
+        guard let profile else { return [] }
+        return HouseholdData.logs(for: profile, in: allLogs)
+    }
     
     var todayLog: MedicationLog? {
-        let today = Calendar.current.startOfDay(for: Date())
-        return logs.first(where: { Calendar.current.isDate($0.date, inSameDayAs: today) })
+        guard let profile else { return nil }
+        return HouseholdData.todayLog(for: profile, in: allLogs)
     }
     
     var body: some View {
@@ -48,9 +65,12 @@ struct HomeView: View {
                             headerSection(profile: profile)
                                 .padding(.top, 10)
                             
+                            clinicPackCard
+                            
+                            historyTeaser
+                            
                             if let log = todayLog {
                                 TodayCard(
-                                    log: log,
                                     profile: profile,
                                     showingSkipSheet: $showingSkipSheet,
                                     activeSkipReminderId: $activeSkipReminderId,
@@ -58,6 +78,7 @@ struct HomeView: View {
                                     skipReaction: $skipReaction,
                                     skipNotes: $skipNotes
                                 )
+                                .id(log.persistentModelID)
                                 
                                 VitalsCard(
                                     log: log,
@@ -68,6 +89,7 @@ struct HomeView: View {
                                     bpRecordedAt: $bpRecordedAt,
                                     editingBPReadingId: $editingBPReadingId
                                 )
+                                .id(log.persistentModelID)
                                 
                                 HeartRateCard(
                                     log: log,
@@ -77,8 +99,12 @@ struct HomeView: View {
                                     hrRecordedAt: $hrRecordedAt,
                                     editingHRReadingId: $editingHRReadingId
                                 )
+                                .id(log.persistentModelID)
                                 
                                 MoodStatsCard(logs: logs)
+                            } else {
+                                ProgressView()
+                                    .padding(.top, 30)
                             }
                         } else {
                             ProgressView()
@@ -107,21 +133,21 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingSkipSheet) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     skipSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingBPSheet, onDismiss: {
                 editingBPReadingId = nil
             }) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     bpSheetContent(for: log)
                 }
             }
             .sheet(isPresented: $showingHRSheet, onDismiss: {
                 editingHRReadingId = nil
             }) {
-                if let log = todayLog {
+                if let log = todayLog, log.isStoredInContext {
                     hrSheetContent(for: log)
                 }
             }
@@ -142,6 +168,21 @@ struct HomeView: View {
                                 .font(.system(.body, design: .rounded, weight: .bold))
                             }
                         }
+                }
+            }
+            .sheet(isPresented: $showingVisitPack) {
+                if let profile {
+                    NavigationView {
+                        VisitPackView(profile: profile, logs: logs)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button(AppLocalization.string("Done")) {
+                                        showingVisitPack = false
+                                    }
+                                    .font(.system(.body, design: .rounded, weight: .bold))
+                                }
+                            }
+                    }
                 }
             }
             .alert(
@@ -171,7 +212,10 @@ struct HomeView: View {
                 Text(hrAlertCategory?.localizedAdvice ?? "")
             }
             .onAppear {
-                profile?.ensureRemindersMigrated()
+                refreshActiveDay()
+            }
+            .onChange(of: activeProfileID) { _, _ in
+                refreshActiveDay()
             }
             .onChange(of: selectedTab) { _, newTab in
                 if newTab != .today, showingMedicalCard {
@@ -184,82 +228,211 @@ struct HomeView: View {
     }
     
     func headerSection(profile: UserProfile) -> some View {
-        VStack(spacing: 20) {
-            // App Title and Notification Bell
-            HStack {
-                Text(AppBrand.displayName)
-                    .font(.system(.title, design: .rounded, weight: .heavy))
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                HStack(spacing: 10) {
-                    Button(action: {
-                        showingSetupGuide = true
-                    }) {
-                        Image(systemName: "info.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.mint)
-                            .padding(12)
-                            .background(Circle().fill(Color.white))
-                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    }
-                    .accessibilityLabel(AppLocalization.string("How to Set Up"))
-                    
-                    Button(action: {
-                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                            showingMedicalCard = true
-                        }
-                    }) {
-                        Image(systemName: "person.text.rectangle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.mint)
-                            .padding(12)
-                            .background(Circle().fill(Color.white))
-                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    }
-                    .accessibilityLabel(AppLocalization.string("Medical Card"))
+        VStack(alignment: .leading, spacing: 20) {
+            if stackedHeader {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(AppBrand.displayName)
+                        .font(.system(.title, design: .rounded, weight: .heavy))
+                        .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    headerUtilityButtons
+                }
+            } else {
+                HStack(alignment: .center) {
+                    Text(AppBrand.displayName)
+                        .font(.system(.title, design: .rounded, weight: .heavy))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    Spacer(minLength: 8)
+                    headerUtilityButtons
                 }
             }
             
-            // Greeting and Avatar
-            HStack {
-                if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 50, height: 50)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 50, height: 50)
-                        .foregroundStyle(.white, Color.mint)
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    if profile.name.isEmpty {
-                        Text(AppLocalization.string("Hello, Friend!"))
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                    } else {
-                        Text(AppLocalization.format("Hello, %@!", profile.name))
-                            .font(.system(.title2, design: .rounded, weight: .bold))
+            // Greeting and Avatar — stacked at 樂齡 / Accessibility sizes so the greeting never clips.
+            if stackedHeader {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top, spacing: 12) {
+                        headerAvatar(profile)
+                        greetingCopy(profile)
                     }
-                    Text(AppLocalization.string("Let's stay on track today."))
-                        .font(.system(.subheadline, design: .rounded))
-                        .foregroundColor(.secondary)
+                    ProfileSwitcher(profiles: profiles, active: profile, compact: false)
                 }
-                .padding(.leading, 8)
-                
-                Spacer()
+            } else {
+                HStack(alignment: .top) {
+                    headerAvatar(profile)
+                    greetingCopy(profile)
+                        .padding(.leading, 8)
+                    Spacer(minLength: 0)
+                    ProfileSwitcher(profiles: profiles, active: profile, compact: true)
+                }
             }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var headerUtilityButtons: some View {
+        HStack(spacing: 10) {
+            Button(action: {
+                showingSetupGuide = true
+            }) {
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.mint)
+                    .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            }
+            .accessibilityLabel(AppLocalization.string("How to Set Up"))
+            
+            Button(action: {
+                showingVisitPack = true
+            }) {
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.mint)
+                    .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            }
+            .accessibilityLabel(AppLocalization.string("Medication List"))
+            
+            Button(action: {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    showingMedicalCard = true
+                }
+            }) {
+                Image(systemName: "person.text.rectangle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.mint)
+                    .frame(minWidth: ElderMode.minTap, minHeight: ElderMode.minTap)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            }
+            .accessibilityLabel(AppLocalization.string("Medical Card"))
+        }
+        .accessibilityElement(children: .contain)
+    }
+    
+    @ViewBuilder
+    private func headerAvatar(_ profile: UserProfile) -> some View {
+        if let data = profile.profileImageData, let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .frame(width: 50, height: 50)
+                .foregroundStyle(.white, Color.mint)
+                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .accessibilityHidden(true)
         }
     }
     
+    private func greetingCopy(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if profile.name.isEmpty {
+                Text(AppLocalization.string("Hello, Friend!"))
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(AppLocalization.format("Hello, %@!", profile.name))
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text(AppLocalization.string("Let's stay on track today."))
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+    
+    private var clinicPackCard: some View {
+        Button {
+            showingVisitPack = true
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mint.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "doc.text.fill")
+                        .foregroundColor(.mint)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(AppLocalization.string("Medication List"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text(AppLocalization.string("Share a bilingual medication summary for your clinic visit."))
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "square.and.arrow.up")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(.mint)
+                    .padding(.top, 4)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(22)
+            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("Medication List"))
+    }
+    
+    private var historyTeaser: some View {
+        Button {
+            selectedTab = .history
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mint.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "calendar")
+                        .foregroundColor(.mint)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(AppLocalization.format("%lld complete days in a row", AdherenceStats.consecutiveDayStreak(logs: logs)))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(AppLocalization.format("Adherence: %lld%%", AdherenceStats.weekSummary(logs: logs).adherencePercent))
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                Spacer(minLength: 8)
+                if !stackedHeader {
+                    Text(AppLocalization.string("History"))
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundColor(.mint)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.secondary)
+                    .padding(.top, 6)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(22)
+            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("History"))
+    }
+    
     func skipSheetContent(for log: MedicationLog) -> some View {
-        let reminderTitle = log.doseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
+        let reminderTitle = log.liveDoseRecords.first(where: { $0.id == activeSkipReminderId })?.localizedDisplayTitle
             ?? AppLocalization.string("Missed Details")
         
         return NavigationView {
@@ -282,6 +455,7 @@ struct HomeView: View {
                                 DatePicker("", selection: $skippedTime, displayedComponents: .hourAndMinute)
                                     .labelsHidden()
                                     .tint(.mint)
+                                    .accessibilityLabel(AppLocalization.string("Time"))
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
@@ -322,12 +496,15 @@ struct HomeView: View {
                                 .font(.system(.headline, design: .rounded, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
+                                .frame(minHeight: ElderMode.buttonHeight)
                                 .padding(.vertical, 16)
                                 .background(Color.mint)
                                 .cornerRadius(20)
                                 .shadow(color: Color.mint.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(AppLocalization.string("Save"))
+                        .accessibilityHint(AppLocalization.string("Skip / Missed"))
                         .padding(.top, 4)
                     }
                     .padding(.horizontal, 20)
@@ -577,10 +754,18 @@ struct HomeView: View {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
     }
+    
+    private func refreshActiveDay() {
+        guard let profile else { return }
+        profile.ensureRemindersMigrated()
+        HouseholdData.ensureTodayLog(for: profile, logs: logs, context: modelContext)
+        if NotificationPreferences.isEnabled {
+            NotificationManager.shared.rescheduleFromStore()
+        }
+    }
 }
 
 struct TodayCard: View {
-    @Bindable var log: MedicationLog
     var profile: UserProfile
     @Binding var showingSkipSheet: Bool
     @Binding var activeSkipReminderId: UUID?
@@ -588,42 +773,67 @@ struct TodayCard: View {
     @Binding var skipReaction: String
     @Binding var skipNotes: String
     
+    @Query(sort: \MedicationLog.date, order: .reverse) private var allLogs: [MedicationLog]
     @State private var selectedMood: MoodStatus? = nil
     @State private var remarkText: String = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
+    private var stackedControls: Bool {
+        elderMode || dynamicTypeSize.prefersStackedLayout
+    }
+    
+    /// Always the in-context @Query row. Never the instance that screenshot seeding just deleted.
+    private var log: MedicationLog? {
+        HouseholdData.todayLog(for: profile, in: allLogs)
+    }
     
     var body: some View {
+        if let log {
+            cardContent(log: log)
+        }
+    }
+    
+    @ViewBuilder
+    private func cardContent(log: MedicationLog) -> some View {
         VStack(spacing: 20) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(AppLocalization.string("Today's Medication"))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundColor(.secondary)
+                        .accessibilityAddTraits(.isHeader)
                     
                     Text(AppLocalization.string("Log each reminder time"))
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     HStack(spacing: 6) {
                         Image(systemName: "clock.fill")
-                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.doseRecords.count, 1)))
+                        Text(AppLocalization.format("%lld of %lld doses done", log.takenDoseCount, max(log.liveDoseRecords.count, 1)))
                     }
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.mint)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 Spacer(minLength: 12)
                 
-                ZStack {
-                    Circle()
-                        .fill(Color.mint.opacity(0.15))
-                        .frame(width: 70, height: 70)
-                    Image(systemName: "pills.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(.mint)
+                if !stackedControls {
+                    ZStack {
+                        Circle()
+                            .fill(Color.mint.opacity(0.15))
+                            .frame(width: 70, height: 70)
+                        Image(systemName: "pills.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(.mint)
+                    }
+                    .accessibilityHidden(true)
                 }
             }
             
-            if log.sortedDoseRecords.contains(where: \.isPending) {
+            if log.sortedDoseRecords.contains(where: \.isOpen) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(AppLocalization.string("How are you feeling today?"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
@@ -639,6 +849,8 @@ struct TodayCard: View {
                                 MoodFaceChip(mood: mood, isSelected: selectedMood == mood)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(AppLocalization.string(mood.rawValue))
+                            .accessibilityAddTraits(selectedMood == mood ? [.isSelected] : [])
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -651,11 +863,14 @@ struct TodayCard: View {
                 }
             }
             
+            dueNowBanner
+            
             VStack(spacing: 12) {
                 ForEach(log.sortedDoseRecords) { record in
                     let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
                         ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
                     doseSlotCard(
+                        log: log,
                         record: record,
                         color: StatsRingPalette.color(for: reminder),
                         prefersLightText: StatsRingPalette.prefersLightText(for: reminder)
@@ -683,17 +898,88 @@ struct TodayCard: View {
         .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         .onAppear {
             log.syncDoseRecords(with: profile)
+            log.refreshOccurrenceStates()
         }
         .onChange(of: profile.reminders) { _, _ in
             log.syncDoseRecords(with: profile)
+            log.refreshOccurrenceStates()
         }
         .onChange(of: profile.medications) { _, _ in
             log.syncDoseRecords(with: profile)
+            log.refreshOccurrenceStates()
         }
     }
     
     @ViewBuilder
-    private func doseSlotCard(record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
+    private var dueNowBanner: some View {
+        let due = log?.dueOrSnoozedRecords ?? []
+        if !due.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bell.badge.fill")
+                        .foregroundColor(.orange)
+                    Text(AppLocalization.string("Due now"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                    Spacer()
+                }
+                
+                ForEach(due) { record in
+                    let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
+                        ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
+                    let meds = profile.medications(for: reminder)
+                    HStack(alignment: .top, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .fixedSize(horizontal: false, vertical: true)
+                            if record.isSnoozed, let until = record.snoozedUntil {
+                                Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            } else {
+                                Text(record.timeDescription)
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        Spacer(minLength: 8)
+                        Button {
+                            withAnimation {
+                                log?.markTaken(
+                                    reminderId: record.id,
+                                    mood: selectedMood?.rawValue,
+                                    remark: remarkText.isEmpty ? nil : remarkText,
+                                    medications: meds
+                                )
+                            }
+                        } label: {
+                            Text(AppLocalization.string("Take Now"))
+                                .font(.system(.caption, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .frame(minHeight: stackedControls ? ElderMode.minTap : 0)
+                                .background(Color.mint)
+                                .cornerRadius(10)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppLocalization.format("Take now: %@", record.localizedDisplayTitle))
+                    }
+                    .padding(12)
+                    .background(Color.orange.opacity(0.12))
+                    .cornerRadius(14)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.08))
+            .cornerRadius(20)
+        }
+    }
+    
+    @ViewBuilder
+    private func doseSlotCard(log: MedicationLog, record: ReminderDoseRecord, color: Color, prefersLightText: Bool) -> some View {
         let reminder = profile.sortedReminders.first(where: { $0.id == record.id })
             ?? ReminderSlot(id: record.id, hour: record.hour, minute: record.minute, label: record.label)
         let meds = profile.medications(for: reminder)
@@ -702,21 +988,23 @@ struct TodayCard: View {
         let secondaryColor = StatsRingPalette.secondaryText(for: reminder)
         
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
                 Circle()
                     .fill(prefersLightText ? Color.white : Color(white: 0.15))
                     .frame(width: 12, height: 12)
+                    .padding(.top, 6)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(record.localizedLabel.isEmpty ? record.timeDescription : record.localizedLabel)
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundColor(titleColor)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(record.timeDescription)
                         .font(.system(.caption, design: .rounded, weight: .medium))
                         .foregroundColor(secondaryColor)
                 }
                 
-                Spacer()
+                Spacer(minLength: 8)
                 
                 statusChip(for: record, onSolid: true)
             }
@@ -726,18 +1014,31 @@ struct TodayCard: View {
                     .font(.system(.caption, design: .rounded))
                     .foregroundColor(secondaryColor)
             } else {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(meds) { med in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
-                                .font(.system(.subheadline, design: .rounded, weight: .medium))
-                                .foregroundColor(titleColor.opacity(0.9))
-                            if !med.remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                Text(med.remark)
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundColor(secondaryColor)
+                        HStack(alignment: .center, spacing: 12) {
+                            MedicationPhotoView(data: med.photoData, size: stackedControls ? 44 : 40)
+                                .accessibilityLabel(med.hasPhoto
+                                    ? AppLocalization.format("Photo of %@", med.name)
+                                    : AppLocalization.string("Medication photo"))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(med.name)\(med.dose.isEmpty ? "" : " · \(med.dose)")")
+                                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                    .foregroundColor(titleColor.opacity(0.9))
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if !med.remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    Text(med.remark)
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundColor(secondaryColor)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .accessibilityElement(children: .contain)
                     }
                 }
             }
@@ -748,51 +1049,90 @@ struct TodayCard: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-            } else if record.isSkipped {
+            } else if record.isSkipped || record.isMissed {
+                if record.isSnoozed, let until = record.snoozedUntil {
+                    Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundColor(secondaryColor)
+                }
                 if let reaction = record.physicalReaction, !reaction.isEmpty {
                     Text(AppLocalization.format("Reaction: %@", reaction))
                         .font(.system(.caption, design: .rounded))
                         .foregroundColor(secondaryColor)
                 }
-                undoButton(reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
+                undoButton(log: log, reminderId: record.id, titleColor: titleColor, prefersLightText: prefersLightText)
             } else {
-                HStack(spacing: 10) {
-                    Button {
-                        withAnimation {
-                            log.markTaken(
-                                reminderId: record.id,
-                                mood: selectedMood?.rawValue,
-                                remark: remarkText.isEmpty ? nil : remarkText,
-                                medications: meds
-                            )
+                if record.isSnoozed, let until = record.snoozedUntil {
+                    Text(AppLocalization.format("Snoozed until %@", until.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(AppLocalization.locale))))
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundColor(secondaryColor)
+                }
+                VStack(spacing: 8) {
+                        Button {
+                            withAnimation {
+                                log.markTaken(
+                                    reminderId: record.id,
+                                    mood: selectedMood?.rawValue,
+                                    remark: remarkText.isEmpty ? nil : remarkText,
+                                    medications: meds
+                                )
+                            }
+                        } label: {
+                            Text(AppLocalization.string("Take Now"))
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: stackedControls ? ElderMode.buttonHeight : 0.0)
+                                .padding(.vertical, stackedControls ? 0 : 12)
+                                .background(accent)
+                                .cornerRadius(14)
                         }
-                    } label: {
-                        Text(AppLocalization.string("Take Now"))
-                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(accent)
-                            .cornerRadius(14)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Button {
-                        activeSkipReminderId = record.id
-                        skippedTime = Date()
-                        skipReaction = ""
-                        skipNotes = ""
-                        showingSkipSheet = true
-                    } label: {
-                        Text(AppLocalization.string("Skip / Missed"))
-                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundColor(titleColor)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.55))
-                            .cornerRadius(14)
-                    }
-                    .buttonStyle(.plain)
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppLocalization.format("Take now: %@", record.localizedDisplayTitle))
+                        
+                        if stackedControls {
+                            snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor, large: true)
+                                .frame(maxWidth: .infinity)
+                            Button {
+                                activeSkipReminderId = record.id
+                                skippedTime = Date()
+                                skipReaction = ""
+                                skipNotes = ""
+                                showingSkipSheet = true
+                            } label: {
+                                Text(AppLocalization.string("Skip / Missed"))
+                                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                    .foregroundColor(titleColor)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: ElderMode.buttonHeight)
+                                    .background(Color.white.opacity(0.55))
+                                    .cornerRadius(14)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(AppLocalization.format("Skip or missed: %@", record.localizedDisplayTitle))
+                        } else {
+                            HStack(spacing: 10) {
+                                snoozeMenu(log: log, reminderId: record.id, titleColor: titleColor, large: false)
+                                
+                                Button {
+                                    activeSkipReminderId = record.id
+                                    skippedTime = Date()
+                                    skipReaction = ""
+                                    skipNotes = ""
+                                    showingSkipSheet = true
+                                } label: {
+                                    Text(AppLocalization.string("Skip / Missed"))
+                                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                        .foregroundColor(titleColor)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.white.opacity(0.55))
+                                        .cornerRadius(14)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(AppLocalization.format("Skip or missed: %@", record.localizedDisplayTitle))
+                            }
+                        }
                 }
             }
         }
@@ -811,9 +1151,18 @@ struct TodayCard: View {
         } else if record.isSkipped {
             title = AppLocalization.string("Skipped")
             tint = .red
-        } else {
-            title = AppLocalization.string("Pending")
+        } else if record.isMissed {
+            title = AppLocalization.string("Missed")
+            tint = .red
+        } else if record.isSnoozed {
+            title = AppLocalization.string("Snoozed")
             tint = .orange
+        } else if record.isDue {
+            title = AppLocalization.string("Due")
+            tint = .orange
+        } else {
+            title = AppLocalization.string("Scheduled")
+            tint = .mint
         }
         
         return Text(title)
@@ -823,9 +1172,35 @@ struct TodayCard: View {
             .padding(.vertical, 5)
             .background(onSolid ? Color.white.opacity(0.92) : tint.opacity(0.15))
             .cornerRadius(10)
+            .accessibilityLabel(title)
     }
     
-    private func undoButton(reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
+    private func snoozeMenu(log: MedicationLog, reminderId: UUID, titleColor: Color, large: Bool) -> some View {
+        Menu {
+            Button(AppLocalization.string("Snooze 10 min")) {
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 10) }
+            }
+            Button(AppLocalization.string("Snooze 30 min")) {
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 30) }
+            }
+            Button(AppLocalization.string("Snooze 1 hour")) {
+                withAnimation { log.markSnoozed(reminderId: reminderId, minutes: 60) }
+            }
+        } label: {
+            Text(AppLocalization.string("Snooze"))
+                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                .foregroundColor(titleColor)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: large ? ElderMode.buttonHeight : 0)
+                .padding(.vertical, large ? 0 : 12)
+                .background(Color.white.opacity(0.55))
+                .cornerRadius(14)
+        }
+        .accessibilityLabel(AppLocalization.string("Snooze"))
+        .accessibilityHint(AppLocalization.string("Postpone this dose by 10 minutes, 30 minutes, or 1 hour."))
+    }
+    
+    private func undoButton(log: MedicationLog, reminderId: UUID, titleColor: Color, prefersLightText: Bool) -> some View {
         Button {
             withAnimation { log.undoDose(reminderId: reminderId) }
         } label: {
@@ -846,11 +1221,12 @@ struct TodayCard: View {
             .cornerRadius(14)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(AppLocalization.string("Undo"))
     }
 }
 
 struct VitalsCard: View {
-    @Bindable var log: MedicationLog
+    var log: MedicationLog
     @Binding var showingBPSheet: Bool
     @Binding var showingBPChart: Bool
     @Binding var bpSystolic: String
@@ -863,6 +1239,12 @@ struct VitalsCard: View {
     }
     
     var body: some View {
+        if log.isStoredInContext {
+            vitalsContent
+        }
+    }
+    
+    private var vitalsContent: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
@@ -998,7 +1380,7 @@ struct VitalsCard: View {
 }
 
 struct HeartRateCard: View {
-    @Bindable var log: MedicationLog
+    var log: MedicationLog
     @Binding var showingHRSheet: Bool
     @Binding var showingHRChart: Bool
     @Binding var hrBPM: String
@@ -1010,6 +1392,12 @@ struct HeartRateCard: View {
     }
     
     var body: some View {
+        if log.isStoredInContext {
+            heartRateContent
+        }
+    }
+    
+    private var heartRateContent: some View {
         VStack(spacing: 24) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
@@ -1149,6 +1537,7 @@ struct MoodStatsCard: View {
         let calendar = Calendar.current
         let today = Date()
         return logs.filter {
+            $0.isStoredInContext &&
             calendar.isDate($0.date, equalTo: today, toGranularity: .month)
             && MoodStatus.from(string: $0.mood) != nil
         }

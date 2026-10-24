@@ -6,7 +6,17 @@ import AppIntents
 // MARK: - Providers
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), log: nil, profile: nil, dayStreak: 0)
+        SimpleEntry(
+            date: Date(),
+            profileDisplayName: nil,
+            medicationCount: 0,
+            dayStreak: 0,
+            isTakenToday: false,
+            hasDueOrSnoozed: false,
+            hasSkippedOrMissed: false,
+            hasBPToday: false,
+            nextDoseDate: nil
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
@@ -16,9 +26,11 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let entry = fetchEntry()
-        // Update at midnight
-        let midnight = Calendar.current.startOfDay(for: Date()).addingTimeInterval(86400)
-        let timeline = Timeline(entries: [entry], policy: .after(midnight))
+        var nextUpdate = Calendar.current.startOfDay(for: Date()).addingTimeInterval(86400)
+        if let soonest = entry.nextDoseDate, soonest < nextUpdate {
+            nextUpdate = soonest
+        }
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
     
@@ -27,40 +39,52 @@ struct Provider: TimelineProvider {
         let modelContext = ModelContext(container)
         let todayStart = Calendar.current.startOfDay(for: Date())
         
+        let profileDescriptor = FetchDescriptor<UserProfile>()
+        let profiles = (try? modelContext.fetch(profileDescriptor)) ?? []
+        let profile = ActiveProfileStore.resolve(from: profiles)
+        
         let logDescriptor = FetchDescriptor<MedicationLog>()
         let logs = (try? modelContext.fetch(logDescriptor)) ?? []
-        let todayLog = logs.first(where: { Calendar.current.startOfDay(for: $0.date) == todayStart })
+        let profileLogs = profile.map { HouseholdData.logs(for: $0, in: logs) } ?? logs
+        let todayLog = profileLogs.first(where: { Calendar.current.startOfDay(for: $0.date) == todayStart })
         
-        let profileDescriptor = FetchDescriptor<UserProfile>()
-        let profile = (try? modelContext.fetch(profileDescriptor))?.first
-        
-        // Calculate streak
-        let sortedLogs = logs.filter { $0.isTaken && $0.date < todayStart }.sorted(by: { $0.date > $1.date })
-        var currentStreak = 0
-        var expectedDate = Calendar.current.date(byAdding: .day, value: -1, to: todayStart)!
-        
-        for log in sortedLogs {
-            if Calendar.current.isDate(log.date, inSameDayAs: expectedDate) {
-                currentStreak += 1
-                expectedDate = Calendar.current.date(byAdding: .day, value: -1, to: expectedDate)!
-            } else if log.date < expectedDate {
-                break
+        let currentStreak = AdherenceStats.consecutiveDayStreak(logs: profileLogs)
+        let records = todayLog?.liveDoseRecords ?? []
+        let now = Date()
+        let logDay = todayLog?.date ?? todayStart
+        let nextDoseDate = records.compactMap { record -> Date? in
+            if let until = record.snoozedUntil, until > now { return until }
+            if record.isOpen {
+                let scheduled = record.scheduledDate(on: logDay)
+                return scheduled > now ? scheduled : nil
             }
-        }
+            return nil
+        }.min()
         
-        if todayLog?.isTaken == true {
-            currentStreak += 1
-        }
-        
-        return SimpleEntry(date: Date(), log: todayLog, profile: profile, dayStreak: currentStreak)
+        return SimpleEntry(
+            date: Date(),
+            profileDisplayName: profile?.displayName,
+            medicationCount: profile?.medications.count ?? 0,
+            dayStreak: currentStreak,
+            isTakenToday: todayLog?.isTaken ?? false,
+            hasDueOrSnoozed: records.contains { $0.isDue || $0.isSnoozed },
+            hasSkippedOrMissed: todayLog?.skippedTime != nil || records.contains { $0.isSkipped || $0.isMissed },
+            hasBPToday: todayLog?.systolic != nil && todayLog?.diastolic != nil,
+            nextDoseDate: nextDoseDate
+        )
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let log: MedicationLog?
-    let profile: UserProfile?
+    let profileDisplayName: String?
+    let medicationCount: Int
     let dayStreak: Int
+    let isTakenToday: Bool
+    let hasDueOrSnoozed: Bool
+    let hasSkippedOrMissed: Bool
+    let hasBPToday: Bool
+    let nextDoseDate: Date?
 }
 
 // MARK: - 1. Small Widget (Status & Streak)
@@ -69,13 +93,19 @@ struct MedTrackerWidgetEntryView : View {
 
     var body: some View {
         VStack(spacing: 12) {
-            if let log = entry.log, log.isTaken {
+            if entry.isTakenToday {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.green)
                 Text(AppLocalization.string("Taken Today"))
                     .font(.system(.subheadline, design: .rounded, weight: .bold))
-            } else if let log = entry.log, log.skippedTime != nil {
+            } else if entry.hasDueOrSnoozed {
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.orange)
+                Text(AppLocalization.string("Due now"))
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+            } else if entry.hasSkippedOrMissed {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.red)
@@ -91,14 +121,14 @@ struct MedTrackerWidgetEntryView : View {
             }
             
             HStack {
-                Image(systemName: "flame.fill")
-                    .foregroundColor(.orange)
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.mint)
                 Text("\(entry.dayStreak) \(AppLocalization.string("Days"))")
                     .font(.system(.caption, design: .rounded, weight: .bold))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(Color.orange.opacity(0.2))
+            .background(Color.mint.opacity(0.18))
             .cornerRadius(10)
         }
         .containerBackground(for: .widget) {
@@ -115,7 +145,7 @@ struct MedTrackerWidget: Widget {
             MedTrackerWidgetEntryView(entry: entry)
         }
         .configurationDisplayName(AppLocalization.string("Daily Status"))
-        .description(AppLocalization.string("Shows your medication status and day streak."))
+        .description(AppLocalization.string("Shows your medication status and recent days."))
         .supportedFamilies([.systemSmall])
     }
 }
@@ -128,31 +158,21 @@ struct MedTrackerMediumWidgetEntryView : View {
         HStack(alignment: .top, spacing: 16) {
             // Left: Medications
             VStack(alignment: .leading, spacing: 8) {
-                Text(AppLocalization.string("Medications"))
-                    .font(.system(.headline, design: .rounded, weight: .bold))
-                    .foregroundColor(.mint)
-                
-                if let profile = entry.profile, !profile.medications.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(profile.medications.prefix(3)) { med in
-                            HStack {
-                                Text(med.name)
-                                    .font(.system(.caption, design: .rounded, weight: .medium))
-                                    .lineLimit(1)
-                                Spacer()
-                                Text(med.dose)
-                                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                                    .padding(.horizontal, 4)
-                                    .background(Color.mint.opacity(0.2))
-                                    .cornerRadius(4)
-                            }
-                        }
-                        if profile.medications.count > 3 {
-                            Text("...")
-                                .font(.system(.caption))
-                                .foregroundColor(.secondary)
-                        }
+                HStack {
+                    Text(AppLocalization.string("Medications"))
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundColor(.mint)
+                    Spacer()
+                    if let name = entry.profileDisplayName {
+                        Text(name)
+                            .font(.system(.caption2, design: .rounded, weight: .bold))
+                            .foregroundColor(.secondary)
                     }
+                }
+                
+                if entry.medicationCount > 0 {
+                    Text(AppLocalization.format("%lld medications", entry.medicationCount))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 } else {
                     Text(AppLocalization.string("No medications added."))
                         .font(.caption)
@@ -170,22 +190,9 @@ struct MedTrackerMediumWidgetEntryView : View {
                     .font(.system(.headline, design: .rounded, weight: .bold))
                     .foregroundColor(.blue)
                 
-                if let log = entry.log, let sys = log.systolic, let dia = log.diastolic {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(AppLocalization.string("Blood Pressure"))
-                            .font(.system(.caption2, design: .rounded, weight: .bold))
-                            .foregroundColor(.secondary)
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text("\(sys)")
-                                .font(.system(.title3, design: .rounded, weight: .black))
-                                .foregroundColor(sys > 130 ? .red : .primary)
-                            Text("/")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("\(dia)")
-                                .font(.system(.subheadline, design: .rounded, weight: .bold))
-                        }
-                    }
+                if entry.hasBPToday {
+                    Text(AppLocalization.string("BP recorded today."))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 } else {
                     Text(AppLocalization.string("No BP recorded today."))
                         .font(.caption)
@@ -194,7 +201,7 @@ struct MedTrackerMediumWidgetEntryView : View {
                 
                 Spacer()
                 
-                if let log = entry.log, log.isTaken {
+                if entry.isTakenToday {
                     HStack {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
                         Text(AppLocalization.string("Taken")).font(.caption.bold())
@@ -218,7 +225,7 @@ struct MedTrackerMediumWidget: Widget {
             MedTrackerMediumWidgetEntryView(entry: entry)
         }
         .configurationDisplayName(AppLocalization.string("Overview"))
-        .description(AppLocalization.string("Shows medications and recent health data."))
+        .description(AppLocalization.string("Shows your daily status without medicine names."))
         .supportedFamilies([.systemMedium])
     }
 }
@@ -234,7 +241,7 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            if let log = entry.log, log.isTaken {
+            if entry.isTakenToday {
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 32))
@@ -242,7 +249,43 @@ struct MedTrackerInteractiveWidgetEntryView : View {
                     Text(AppLocalization.string("Taken Today"))
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                 }
-            } else if let log = entry.log, log.skippedTime != nil {
+            } else if entry.hasDueOrSnoozed {
+                VStack(spacing: 6) {
+                    Text(AppLocalization.string("Due now"))
+                        .font(.system(.caption, design: .rounded, weight: .bold))
+                        .foregroundColor(.orange)
+                    HStack(spacing: 12) {
+                        Button(intent: LogMedicationIntent(isTaken: true)) {
+                            VStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 24))
+                                Text(AppLocalization.string("Take"))
+                                    .font(.system(.caption, design: .rounded, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.mint)
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(intent: LogMedicationIntent(isTaken: false)) {
+                            VStack(spacing: 6) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 24))
+                                Text(AppLocalization.string("Skip"))
+                                    .font(.system(.caption, design: .rounded, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.red.opacity(0.8))
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .frame(maxHeight: 80)
+                }
+            } else if entry.hasSkippedOrMissed {
                 VStack(spacing: 8) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 32))

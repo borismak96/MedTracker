@@ -1,2 +1,5 @@
 /* Localized app name under the Home Screen icon */
 "CFBundleDisplayName" = "PillPal";
+"NSPhotoLibraryUsageDescription" = "PillPal uses your photo library when you choose a profile picture or a medication photo for identification. Photos stay on this device.";
+"NSCameraUsageDescription" = "PillPal uses the camera only when you photograph a medication for identification. Photos stay on this device.";
+"NSUserNotificationsUsageDescription" = "PillPal sends time-sensitive reminders when it is time to take medication, including Take, Snooze, Skip, and follow-up alerts.";

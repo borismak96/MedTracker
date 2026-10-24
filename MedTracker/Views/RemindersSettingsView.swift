@@ -3,8 +3,8 @@ import SwiftData
 
 struct RemindersSettingsView: View {
     @Bindable var profile: UserProfile
-    @AppStorage("isNotificationEnabled") private var isNotificationEnabled = false
-    @AppStorage("isNotificationSoundEnabled") private var isNotificationSoundEnabled = true
+    @AppStorage("isNotificationEnabled", store: AppLocalization.sharedDefaults) private var isNotificationEnabled = false
+    @AppStorage("isNotificationSoundEnabled", store: AppLocalization.sharedDefaults) private var isNotificationSoundEnabled = true
     
     private let suggestedLabels = ["Morning", "Afternoon", "Night", "Custom"]
     
@@ -218,8 +218,6 @@ struct RemindersSettingsView: View {
     private func syncNotifications() {
         guard isNotificationEnabled else { return }
         profile.ensureRemindersMigrated()
-        NotificationManager.shared.scheduleReminders(profile.sortedReminders, playSound: isNotificationSoundEnabled) { reminder in
-            profile.medications(for: reminder)
-        }
+        NotificationManager.shared.rescheduleFromStore()
     }
 }

@@ -9,10 +9,13 @@ enum AppTab: Hashable {
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [UserProfile]
     @Query private var logs: [MedicationLog]
     
     @State private var selectedTab: AppTab = .today
+    @AppStorage(ActiveProfileStore.idKey, store: AppLocalization.sharedDefaults) private var activeProfileID = ""
+    @AppStorage(ElderMode.enabledKey, store: AppLocalization.sharedDefaults) private var elderMode = false
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -34,34 +37,53 @@ struct ContentView: View {
                 }
                 .tag(AppTab.profile)
         }
+        .modifier(ElderDynamicType(enabled: elderMode))
         .onAppear {
             initializeData()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                initializeData()
+                NotificationManager.shared.rescheduleFromStore()
+            }
+        }
+        .onChange(of: activeProfileID) { _, _ in
+            if let profile = ActiveProfileStore.resolve(from: profiles.filter(\.isStoredInContext)) {
+                HouseholdData.ensureTodayLog(for: profile, logs: logs.filter(\.isStoredInContext), context: modelContext)
+                NotificationManager.shared.rescheduleFromStore()
+            }
         }
     }
     
     private func initializeData() {
-        // Initialize UserProfile if empty
-        if profiles.isEmpty {
-            modelContext.insert(UserProfile())
-        }
-        
-        // Generate up to 30 days of logs if missing
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        for i in 0..<31 {
-            if let date = calendar.date(byAdding: .day, value: -i, to: today) {
-                if !logs.contains(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-                    modelContext.insert(MedicationLog(date: date))
-                }
-            }
-        }
-        
-        try? modelContext.save()
+        let liveProfiles = profiles.filter(\.isStoredInContext)
+        let liveLogs = logs.filter(\.isStoredInContext)
+        HouseholdData.bootstrap(profiles: liveProfiles, logs: liveLogs, context: modelContext)
+        NotificationManager.shared.registerCategories()
     }
 }
 
 #Preview {
     ContentView()
         .modelContainer(for: [MedicationLog.self, UserProfile.self], inMemory: true)
+}
+
+private struct ElderDynamicType: ViewModifier {
+    var enabled: Bool
+    
+    func body(content: Content) -> some View {
+        if enabled {
+            // Floor at xxLarge for 樂齡; allow Accessibility 1–3 (~200–310%) so text can wrap instead of clip.
+            content.dynamicTypeSize(.xxLarge ... .accessibility3)
+        } else {
+            content
+        }
+    }
+}
+
+extension DynamicTypeSize {
+    /// Stacked, wrapping layouts for VoiceOver / Larger Text at ~200% and above.
+    var prefersStackedLayout: Bool {
+        isAccessibilitySize
+    }
 }

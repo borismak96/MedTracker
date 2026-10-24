@@ -449,8 +449,9 @@ enum MedTrackerExportDocument {
                 
                 // History — only days with actual recorded data
                 func logHasRecordedData(_ log: MedicationLog) -> Bool {
+                    guard log.isStoredInContext else { return false }
                     if log.isTaken || log.skippedTime != nil { return true }
-                    if log.doseRecords.contains(where: { $0.isTaken || $0.isSkipped }) { return true }
+                    if log.liveDoseRecords.contains(where: { $0.isTaken || $0.isSkipped }) { return true }
                     if let mood = log.mood, !mood.isEmpty { return true }
                     if let notes = log.notes, !notes.isEmpty { return true }
                     if let medicine = log.medicineName, !medicine.isEmpty { return true }
@@ -475,10 +476,10 @@ enum MedTrackerExportDocument {
                         let dose = (log.dose ?? "").replacingOccurrences(of: "\n", with: ", ")
                         let status: String
                         let statusColor: UIColor
-                        if log.isTaken || log.doseRecords.contains(where: \.isTaken) {
+                        if log.isTaken || log.liveDoseRecords.contains(where: \.isTaken) {
                             status = AppLocalization.string("Taken")
                             statusColor = UIColor.systemGreen
-                        } else if log.skippedTime != nil || log.doseRecords.contains(where: \.isSkipped) {
+                        } else if log.skippedTime != nil || log.liveDoseRecords.contains(where: \.isSkipped) {
                             status = AppLocalization.string("Skipped")
                             statusColor = UIColor.systemRed
                         } else {
